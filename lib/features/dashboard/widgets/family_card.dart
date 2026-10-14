@@ -1,18 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/app_card.dart';
-import 'package:mydr/core/widgets/coming_soon_badge.dart';
 
-/// Highlighted "My family" card. Shows an empty state until family
-/// profiles are implemented.
+/// Highlighted "My family" card with a summary of the family members from
+/// the shared [FamilyController].
 class FamilyCard extends StatelessWidget {
   const FamilyCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = AppScope.of(context).familyController;
+
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) =>
+          _buildCard(context, controller.members.map((m) => m.name).toList()),
+    );
+  }
+
+  Widget _buildCard(BuildContext context, List<String> memberNames) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final foreground = colorScheme.onPrimaryContainer;
+    final hasMembers = memberNames.isNotEmpty;
 
     return AppCard(
       color: colorScheme.primaryContainer,
@@ -38,32 +49,39 @@ class FamilyCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      AppStrings.familyCardTitle,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: foreground,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const ComingSoonBadge(),
-                  ],
+                Text(
+                  AppStrings.familyCardTitle,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  AppStrings.familyCardEmpty,
+                  hasMembers
+                      ? AppStrings.familyCardCount(memberNames.length)
+                      : AppStrings.familyCardEmpty,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (hasMembers) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    memberNames.join(', '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: foreground,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Text(
-                  AppStrings.familyCardDescription,
+                  hasMembers
+                      ? AppStrings.familyCardManageHint
+                      : AppStrings.familyCardEmptyHint,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: foreground.withValues(alpha: 0.8),
                   ),
