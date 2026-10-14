@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/app_card.dart';
 
-/// Titled card used for each group of details on the profile screen.
+/// Titled card used for each group of details on a details screen.
 class DetailSection extends StatelessWidget {
   const DetailSection({
     super.key,
@@ -87,6 +87,40 @@ class TagList extends StatelessWidget {
             side: BorderSide.none,
           ),
       ],
+    );
+  }
+}
+
+/// A label with its value, or [NotSpecifiedText] when [value] is null.
+/// Read together by screen readers.
+class LabeledValue extends StatelessWidget {
+  const LabeledValue({super.key, required this.label, required this.value});
+
+  final String label;
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentValue = value;
+
+    return MergeSemantics(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 2),
+          if (currentValue == null)
+            const NotSpecifiedText()
+          else
+            Text(currentValue, style: theme.textTheme.bodyLarge),
+        ],
+      ),
     );
   }
 }

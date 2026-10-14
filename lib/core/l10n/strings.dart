@@ -38,10 +38,13 @@ abstract final class AppStrings {
   static const String actionLogSymptom = 'תיעוד תסמין';
   static const String actionDoctorQuestions = 'שאלות לרופא';
 
-  static const String nextAppointmentTitle = 'התור הקרוב';
+  static const String nextAppointmentTitle = 'התורים הקרובים';
   static const String nextAppointmentEmptyTitle = 'אין תורים מתוכננים';
   static const String nextAppointmentEmptyMessage =
-      'לאחר הוספת תורים, התור הקרוב יוצג כאן.';
+      'תורים עתידיים שתוסיפו יופיעו כאן.';
+  static String moreUpcomingAppointments(int count) => count == 1
+      ? 'ועוד תור אחד בלשונית "תורים".'
+      : 'ועוד $count תורים בלשונית "תורים".';
 
   // Emergency card
   static const String emergencyTitle = 'עזרה ראשונה וחירום';
@@ -141,11 +144,105 @@ abstract final class AppStrings {
   static const String delete = 'מחיקה';
   static const String retryDelete = 'ניסיון חוזר';
 
+  // Appointments list
+  static const String filterAllFamily = 'כל המשפחה';
+  static const String upcomingAppointmentsSection = 'תורים קרובים';
+  static const String pastAppointmentsSection = 'תורים שעברו';
+  static const String noUpcomingAppointments = 'אין תורים קרובים.';
+  static const String noPastAppointments = 'אין תורים שעברו.';
+  static const String appointmentsEmptyTitle = 'אין תורים עדיין';
+  static const String appointmentsEmptyMessage =
+      'התורים שתוסיפו יופיעו כאן, מסודרים לפי תאריך.';
+  static String appointmentsEmptyForMember(String name) =>
+      'אין תורים עבור $name';
+  static const String appointmentsEmptyForMemberMessage =
+      'אפשר לבחור בן משפחה אחר או להציג את התורים של כל המשפחה.';
+  static const String showAllFamily = 'הצגת כל המשפחה';
+  static const String appointmentsLoadErrorTitle = 'לא הצלחנו לטעון את התורים';
+  static const String appointmentsLoadErrorMessage = 'בדקו שוב בעוד רגע.';
+  static const String appointmentsRefreshError =
+      'לא הצלחנו לרענן את רשימת התורים. ייתכן שהיא אינה מעודכנת.';
+  static const String newAppointment = 'תור חדש';
+  static const String unknownMember = 'בן משפחה לא ידוע';
+  static const String today = 'היום';
+  static const String tomorrow = 'מחר';
+  static const String yesterday = 'אתמול';
+
+  // Appointment details
+  static const String appointmentStatusUpcoming = 'תור קרוב';
+  static const String appointmentStatusPast = 'התור עבר';
+  static const String appointmentTimeSection = 'מועד התור';
+  static const String appointmentInfoSection = 'פרטי התור';
+  static const String dateLabel = 'תאריך';
+  static const String timeLabel = 'שעה';
+  static const String doctorLabel = 'רופא/ה';
+  static const String specialtyLabel = 'תחום התמחות';
+  static const String familyMemberLabel = 'בן משפחה';
+  static const String locationLabel = 'מיקום';
+  static const String appointmentNotFoundTitle = 'התור לא נמצא';
+  static const String appointmentNotFoundMessage =
+      'ייתכן שהתור נמחק או שאינו קיים עוד.';
+  static const String backToAppointments = 'חזרה לרשימת התורים';
+
+  // Appointment form
+  static const String editAppointmentTitle = 'עריכת תור';
+  static const String editAppointment = 'עריכת תור';
+  static const String memberRequired = 'נא לבחור בן משפחה';
+  static const String doctorNameLabel = 'שם הרופא/ה';
+  static const String doctorNameRequired = 'נא להזין את שם הרופא/ה';
+  static const String specialtyOptionalLabel = 'תחום התמחות (אופציונלי)';
+  static const String locationOptionalLabel = 'מיקום (אופציונלי)';
+  static const String dateRequired = 'נא לבחור תאריך';
+  static const String timeRequired = 'נא לבחור שעה';
+  static const String appointmentDatePickerHelp = 'בחירת תאריך התור';
+  static const String appointmentTimePickerHelp = 'בחירת שעת התור';
+  static const String noFamilyForAppointmentTitle =
+      'כדי לקבוע תור צריך קודם בן משפחה';
+  static const String noFamilyForAppointmentMessage =
+      'כל תור שייך לבן משפחה. הוסיפו בן משפחה, ואז תוכלו לחזור ולקבוע תור.';
+  static String moveAppointmentTitle(String newMemberName) =>
+      'להעביר את התור ל$newMemberName?';
+  static String moveAppointmentMessage(int count, String originalName) =>
+      'לתור משויכות $count שאלות לרופא של $originalName. הן יוסרו מהתור '
+      'ויישארו אצל $originalName כשאלות כלליות.';
+  static const String moveAndSave = 'העברה ושמירה';
+  static const String linkedQuestionsCheckFailed =
+      'לא הצלחנו לבדוק אם יש שאלות שמשויכות לתור, ולכן התור לא נשמר. '
+      'נסו שוב.';
+  static const String selectedMemberMissing =
+      'בן המשפחה שנבחר כבר לא קיים. בחרו בן משפחה אחר.';
+  static const String appointmentMissingOnSave =
+      'התור כבר לא קיים, ייתכן שנמחק. השינויים לא נשמרו.';
+  static String saveFailedAfterDetaching(String originalName) =>
+      'השמירה נכשלה. השאלות שהיו משויכות לתור כבר הוסרו ממנו ונשארו אצל '
+      '$originalName כשאלות כלליות. נסו לשמור שוב.';
+
+  // Appointment deletion
+  static const String deleteAppointment = 'מחיקת תור';
+  static const String deleteAppointmentTitle = 'למחוק את התור?';
+  static const String deleteAppointmentQuestionsLoading =
+      'בודקים אם יש שאלות לרופא שמשויכות לתור…';
+  static const String deleteAppointmentQuestionsFailed =
+      'לא הצלחנו לבדוק אם יש שאלות שמשויכות לתור, ולכן אי אפשר למחוק כרגע.';
+  static const String deleteAppointmentNoQuestions =
+      'אין שאלות לרופא שמשויכות לתור.';
+  static String deleteAppointmentQuestions(int count, String memberName) =>
+      count == 1
+      ? 'לתור משויכת שאלה אחת לרופא. היא לא תימחק: היא תוסר מהתור '
+            'ותישאר אצל $memberName כשאלה כללית.'
+      : 'לתור משויכות $count שאלות לרופא. הן לא יימחקו: הן יוסרו מהתור '
+            'ויישארו אצל $memberName כשאלות כלליות.';
+  static const String deleteAppointmentFailed =
+      'מחיקת התור נכשלה ושום דבר לא השתנה. אפשר לנסות שוב.';
+  static String deleteAppointmentPartiallyFailed(String memberName) =>
+      'מחיקת התור לא הושלמה, והתור עדיין קיים. השאלות שהיו משויכות אליו '
+      'כבר הוסרו ממנו ונשארו אצל $memberName כשאלות כלליות. הן לא נמחקו. '
+      'אפשר לנסות שוב.';
+  static const String appointmentDeleted = 'התור נמחק';
+
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';
   static const String comingSoon = 'המסך יהיה זמין בקרוב';
-  static const String appointmentsPlaceholder =
-      'כאן תוכלו לנהל תורים ושאלות לרופא.';
   static const String symptomsPlaceholder =
       'כאן תוכלו לתעד תסמינים ולצפות בהיסטוריה.';
 }

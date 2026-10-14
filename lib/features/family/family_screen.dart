@@ -3,6 +3,7 @@ import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/demo_data_banner.dart';
 import 'package:mydr/core/widgets/empty_state.dart';
+import 'package:mydr/core/widgets/load_error_views.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/family/member_detail_screen.dart';
 import 'package:mydr/features/family/member_form_screen.dart';
@@ -22,6 +23,8 @@ class FamilyScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.familyTitle)),
       floatingActionButton: FloatingActionButton.extended(
+        // Each tab's button needs its own tag: all tabs live in one route.
+        heroTag: 'family-add-button',
         onPressed: () =>
             Navigator.of(context).push(MemberFormScreen.addRoute()),
         icon: const Icon(Icons.person_add_alt_1),
@@ -58,7 +61,11 @@ class _FamilyBody extends StatelessWidget {
       if (controller.isLoading) {
         content = const Center(child: CircularProgressIndicator());
       } else if (controller.hasLoadError) {
-        content = _LoadErrorView(onRetry: controller.load);
+        content = LoadErrorView(
+          title: AppStrings.familyLoadErrorTitle,
+          message: AppStrings.familyLoadErrorMessage,
+          onRetry: controller.load,
+        );
       } else {
         content = const SingleChildScrollView(
           padding: EdgeInsets.all(24),
@@ -88,7 +95,10 @@ class _FamilyBody extends StatelessWidget {
         const DemoDataBanner(),
         if (controller.hasLoadError) ...[
           const SizedBox(height: 12),
-          _RefreshErrorCard(onRetry: controller.load),
+          RefreshErrorCard(
+            message: AppStrings.familyRefreshError,
+            onRetry: controller.load,
+          ),
         ],
         for (final member in members) ...[
           const SizedBox(height: 12),
@@ -100,71 +110,6 @@ class _FamilyBody extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// Full-screen error shown when nothing could be loaded.
-class _LoadErrorView extends StatelessWidget {
-  const _LoadErrorView({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const EmptyState(
-            icon: Icons.error_outline,
-            title: AppStrings.familyLoadErrorTitle,
-            message: AppStrings.familyLoadErrorMessage,
-          ),
-          const SizedBox(height: 16),
-          FilledButton.tonalIcon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text(AppStrings.retry),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Inline warning shown above an existing list that failed to refresh.
-class _RefreshErrorCard extends StatelessWidget {
-  const _RefreshErrorCard({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsetsDirectional.fromSTEB(12, 8, 4, 8),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              AppStrings.familyRefreshError,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onErrorContainer,
-              ),
-            ),
-          ),
-          TextButton(onPressed: onRetry, child: const Text(AppStrings.retry)),
-        ],
-      ),
     );
   }
 }

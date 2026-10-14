@@ -65,6 +65,12 @@ class FamilyController extends ChangeNotifier {
   bool _hasLoadError = false;
   final Set<String> _deletingIds = {};
   final Set<String> _incompleteDeletionIds = {};
+  int _relatedDataRevision = 0;
+
+  /// Increases after every member deletion attempt, successful or not,
+  /// since either may have removed appointments, questions or symptoms.
+  /// Other controllers watch it to know when to reload their data.
+  int get relatedDataRevision => _relatedDataRevision;
 
   /// Members ordered by relation, then by name.
   List<FamilyMember> get members => _members;
@@ -191,6 +197,7 @@ class FamilyController extends ChangeNotifier {
       _incompleteDeletionIds.add(memberId);
     }
     _deletingIds.remove(memberId);
+    _relatedDataRevision++;
 
     await _fetchMembers();
     notifyListeners();

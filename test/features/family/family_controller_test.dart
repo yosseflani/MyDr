@@ -225,6 +225,25 @@ void main() {
   });
 
   group('delete', () {
+    test(
+      'relatedDataRevision increases after every deletion attempt only',
+      () async {
+        final start = controller.relatedDataRevision;
+
+        await controller.add(newMember());
+        await controller.load();
+        expect(controller.relatedDataRevision, start);
+
+        questionRepository.failDeleteByMember = true;
+        await controller.delete(MockData.daughterId, userConfirmed: true);
+        expect(controller.relatedDataRevision, start + 1);
+
+        questionRepository.failDeleteByMember = false;
+        await controller.delete(MockData.daughterId, userConfirmed: true);
+        expect(controller.relatedDataRevision, start + 2);
+      },
+    );
+
     test('refuses to run without user confirmation', () async {
       await expectLater(
         controller.delete(MockData.daughterId, userConfirmed: false),

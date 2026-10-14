@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/models/doctor_question.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/data/repositories/in_memory/in_memory_appointment_repository.dart';
@@ -69,7 +70,59 @@ class FlakyFamilyRepository extends InMemoryFamilyRepository {
 class FlakyAppointmentRepository extends InMemoryAppointmentRepository {
   FlakyAppointmentRepository([super.initialAppointments]);
 
+  bool failGetAll = false;
+  bool failAdd = false;
+  bool failUpdate = false;
+  bool failDelete = false;
   bool failDeleteByMember = false;
+
+  /// Number of times [getAll] was called.
+  int getAllCalls = 0;
+
+  /// When set, [getAll] waits for it to complete, to observe loading states.
+  Completer<void>? getAllGate;
+
+  @override
+  Future<List<Appointment>> getAll({String? memberId}) async {
+    getAllCalls++;
+    await getAllGate?.future;
+    if (failGetAll) throw const SimulatedFailure();
+    return super.getAll(memberId: memberId);
+  }
+
+  /// When set, [add] waits for it to complete, to observe saving states.
+  Completer<void>? addGate;
+
+  /// Number of times [add] was called.
+  int addCalls = 0;
+
+  @override
+  Future<void> add(Appointment item) async {
+    addCalls++;
+    await addGate?.future;
+    if (failAdd) throw const SimulatedFailure();
+    return super.add(item);
+  }
+
+  @override
+  Future<void> update(Appointment item) async {
+    if (failUpdate) throw const SimulatedFailure();
+    return super.update(item);
+  }
+
+  /// When set, [delete] waits for it to complete, to observe deleting states.
+  Completer<void>? deleteGate;
+
+  /// Number of times [delete] was called.
+  int deleteCalls = 0;
+
+  @override
+  Future<void> delete(String id) async {
+    deleteCalls++;
+    await deleteGate?.future;
+    if (failDelete) throw const SimulatedFailure();
+    return super.delete(id);
+  }
 
   @override
   Future<void> deleteByMember(String memberId) async {
@@ -83,12 +136,27 @@ class FlakyDoctorQuestionRepository extends InMemoryDoctorQuestionRepository {
 
   bool failGetAll = false;
   bool failDeleteByMember = false;
+  bool failDetach = false;
+
+  /// When set, [getAll] waits for it to complete, to observe loading states.
+  Completer<void>? getAllGate;
+
+  /// Number of times [detachFromAppointment] was called.
+  int detachCalls = 0;
+
+  @override
+  Future<void> detachFromAppointment(String appointmentId) async {
+    detachCalls++;
+    if (failDetach) throw const SimulatedFailure();
+    return super.detachFromAppointment(appointmentId);
+  }
 
   @override
   Future<List<DoctorQuestion>> getAll({
     String? memberId,
     String? appointmentId,
   }) async {
+    await getAllGate?.future;
     if (failGetAll) throw const SimulatedFailure();
     return super.getAll(memberId: memberId, appointmentId: appointmentId);
   }

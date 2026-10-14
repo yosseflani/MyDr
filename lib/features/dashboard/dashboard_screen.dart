@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/section_header.dart';
+import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/dashboard/widgets/dashboard_header.dart';
 import 'package:mydr/features/dashboard/widgets/emergency_card.dart';
 import 'package:mydr/features/dashboard/widgets/family_card.dart';
@@ -10,7 +11,10 @@ import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.clock = DateTime.now});
+
+  /// Source of the current time; replaceable in tests.
+  final DateTime Function() clock;
 
   /// Content stays readable on tablets instead of stretching edge to edge.
   static const double _maxContentWidth = 600;
@@ -35,16 +39,20 @@ class DashboardScreen extends StatelessWidget {
                 24,
               ),
               children: [
-                DashboardHeader(date: DateTime.now()),
+                DashboardHeader(date: clock()),
                 const SizedBox(height: 16),
                 const EmergencyCard(),
                 const SizedBox(height: 24),
                 const FamilyCard(),
                 const SizedBox(height: 24),
                 const SectionHeader(title: AppStrings.quickActionsTitle),
-                const QuickActionsRow(),
+                QuickActionsRow(
+                  onNewAppointment: () => Navigator.of(
+                    context,
+                  ).push(AppointmentFormScreen.addRoute(clock: clock)),
+                ),
                 const SizedBox(height: 24),
-                const NextAppointmentCard(),
+                NextAppointmentCard(clock: clock),
               ],
             );
           },

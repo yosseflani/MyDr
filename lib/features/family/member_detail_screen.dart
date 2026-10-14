@@ -3,11 +3,11 @@ import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/app_card.dart';
 import 'package:mydr/core/widgets/demo_data_banner.dart';
+import 'package:mydr/core/widgets/detail_section.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/features/family/member_form_screen.dart';
 import 'package:mydr/features/family/member_formatting.dart';
 import 'package:mydr/features/family/widgets/delete_member_dialog.dart';
-import 'package:mydr/features/family/widgets/detail_section.dart';
 import 'package:mydr/features/family/widgets/member_avatar.dart';
 import 'package:mydr/features/family/widgets/member_not_found_view.dart';
 
@@ -135,7 +135,7 @@ class _MemberDetails extends StatelessWidget {
         DetailSection(
           title: AppStrings.personalDetailsSection,
           icon: Icons.badge_outlined,
-          child: _LabeledValue(
+          child: LabeledValue(
             label: AppStrings.birthDateLabel,
             value: birthDate == null
                 ? null
@@ -253,39 +253,6 @@ class _ProfileHeader extends StatelessWidget {
               color: colorScheme.onPrimaryContainer,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A label with its value, or "not specified" when [value] is null.
-class _LabeledValue extends StatelessWidget {
-  const _LabeledValue({required this.label, required this.value});
-
-  final String label;
-  final String? value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currentValue = value;
-
-    return MergeSemantics(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 2),
-          if (currentValue == null)
-            const NotSpecifiedText()
-          else
-            Text(currentValue, style: theme.textTheme.bodyLarge),
         ],
       ),
     );

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/demo_data_banner.dart';
+import 'package:mydr/core/widgets/discard_changes_dialog.dart';
+import 'package:mydr/core/widgets/inline_error_message.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/family/family_relation_label.dart';
@@ -186,25 +188,8 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
 
   Future<void> _confirmLeave() async {
     if (_isSaving) return;
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(AppStrings.discardChangesTitle),
-        content: const Text(AppStrings.discardChangesMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(AppStrings.discardChanges),
-          ),
-          FilledButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(AppStrings.keepEditing),
-          ),
-        ],
-      ),
-    );
-    if (leave == true && mounted) {
+    final leave = await showDiscardChangesDialog(context);
+    if (leave && mounted) {
       setState(() => _canLeave = true);
       Navigator.of(context).pop();
     }
@@ -339,7 +324,7 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (_saveError case final error?) ...[
-                    _SaveErrorMessage(message: error),
+                    InlineErrorMessage(message: error),
                     const SizedBox(height: 8),
                   ],
                   FilledButton(
@@ -359,43 +344,6 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _SaveErrorMessage extends StatelessWidget {
-  const _SaveErrorMessage({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline, color: colorScheme.onErrorContainer),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onErrorContainer,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

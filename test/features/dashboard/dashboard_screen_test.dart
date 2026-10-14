@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/coming_soon_badge.dart';
+import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/dashboard/dashboard_screen.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
@@ -29,29 +30,57 @@ void main() {
     expect(find.text(AppStrings.emergencyNoInstructions), findsOneWidget);
   });
 
-  testWidgets('quick actions are shown as unavailable', (tester) async {
-    tester.setScreenSize(const Size(400, 1600));
-    await tester.pumpApp(const DashboardScreen());
+  group('quick actions', () {
+    Finder tile(String label) => find.widgetWithText(QuickActionTile, label);
 
-    final tiles = find.byType(QuickActionTile);
-    expect(tiles, findsNWidgets(3));
-    for (final label in [
-      AppStrings.actionNewAppointment,
-      AppStrings.actionLogSymptom,
-      AppStrings.actionDoctorQuestions,
-    ]) {
-      expect(find.text(label), findsOneWidget);
-    }
+    testWidgets('symptoms and questions are still shown as unavailable', (
+      tester,
+    ) async {
+      tester.setScreenSize(const Size(400, 1600));
+      await tester.pumpApp(const DashboardScreen());
 
-    // Each tile has a "coming soon" badge and no tap handler.
-    expect(
-      find.descendant(of: tiles, matching: find.byType(ComingSoonBadge)),
-      findsNWidgets(3),
-    );
-    expect(
-      find.descendant(of: tiles, matching: find.byType(InkWell)),
-      findsNothing,
-    );
+      expect(find.byType(QuickActionTile), findsNWidgets(3));
+      for (final label in [
+        AppStrings.actionLogSymptom,
+        AppStrings.actionDoctorQuestions,
+      ]) {
+        expect(
+          find.descendant(
+            of: tile(label),
+            matching: find.byType(ComingSoonBadge),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: tile(label), matching: find.byType(InkWell)),
+          findsNothing,
+        );
+      }
+    });
+
+    testWidgets('"new appointment" is available and opens the form', (
+      tester,
+    ) async {
+      tester.setScreenSize(const Size(400, 1600));
+      await tester.pumpApp(const DashboardScreen());
+      final newAppointment = tile(AppStrings.actionNewAppointment);
+
+      expect(
+        find.descendant(
+          of: newAppointment,
+          matching: find.byType(ComingSoonBadge),
+        ),
+        findsNothing,
+      );
+
+      await tester.tap(newAppointment);
+      await tester.pumpAndSettle();
+
+      final form = tester.widget<AppointmentFormScreen>(
+        find.byType(AppointmentFormScreen),
+      );
+      expect(form.appointmentId, isNull);
+    });
   });
 
   testWidgets('next appointment card shows the empty state', (tester) async {

@@ -5,27 +5,40 @@ import 'package:mydr/app.dart';
 import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/theme/app_theme.dart';
+import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 
 extension PumpApp on WidgetTester {
   /// Pumps [child] with the same theme, Hebrew locale, RTL setup and
   /// [AppScope] as the app. Uses fresh empty repositories unless
-  /// [dependencies] is given, and a [FamilyController] built on them unless
-  /// [familyController] is given.
+  /// [dependencies] is given, and controllers built on them unless
+  /// [familyController] or [appointmentController] is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
     FamilyController? familyController,
+    AppointmentController? appointmentController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
         familyController ?? FamilyController(resolvedDependencies);
     if (familyController == null) addTearDown(resolvedController.dispose);
+    final resolvedAppointmentController =
+        appointmentController ??
+        AppointmentController(
+          dependencies: resolvedDependencies,
+          familyController: resolvedController,
+        );
+    // Tear-downs run in reverse order, so this one is disposed first.
+    if (appointmentController == null) {
+      addTearDown(resolvedAppointmentController.dispose);
+    }
 
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
         familyController: resolvedController,
+        appointmentController: resolvedAppointmentController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,
