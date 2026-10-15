@@ -159,7 +159,7 @@ class SymptomController extends ChangeNotifier {
 
   /// The form in which names are compared: [tidyName], in lower case (for
   /// names written in Latin letters).
-  static String normalizeName(String name) => tidyName(name).toLowerCase();
+  static String normalizeName(String name) => SymptomEntry.nameKey(name);
 
   String createId() => _symptomRepository.createId();
 

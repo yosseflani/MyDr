@@ -1,0 +1,151 @@
+# שמירת נתונים מקומית ומוצפנת ב־MyDr
+
+המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא ותיעוד תסמינים. הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
+
+> **חשוב:** המנגנון נבנה בזהירות ונבדק, אבל הוא לא עבר בדיקת אבטחה חיצונית. אין להציג את האפליקציה כמאובטחת לשימוש רפואי אמיתי לפני ביקורת מקצועית מתאימה.
+
+## 1. מצב רגיל ומצב Demo
+
+| | מצב רגיל (ברירת המחדל) | מצב Demo (פיתוח בלבד) |
+|---|---|---|
+| הפעלה | `flutter run` | `flutter run --dart-define=MYDR_DEMO=true` |
+| אחסון | מסד SQLite מוצפן במכשיר | בזיכרון בלבד |
+| נתונים בהתחלה | ריק. **לא נוצרים נתוני הדגמה** | נתוני הדגמה בדויים |
+| שמירה בין הפעלות | כן | לא |
+| באנר "נתוני הדגמה, שינויים אינם נשמרים" | לא מוצג | מוצג |
+
+- **הבחירה במצב:** נעשית ב־`lib/main.dart`.
+- **`AppDependencies.local(database)`:** מחבר את ה־Repositories המקומיים.
+- **`AppDependencies.withMockData`:** מצב Demo.
+- **`AppDependencies.empty`:** משמש את הבדיקות, בזיכרון.
+- **`persistsData`:** הדגל שקובע אם הבאנר מוצג.
+
+## 2. מבנה
+
+```
+lib/app_bootstrap.dart              Startup: opens the database, loading and error screens
+lib/data/local/
+  schema.drift                      The schema (SQL), version 1
+  local_database.dart (+ .g.dart)   Drift database; migration policy
+  local_database_opener.dart        Opening: key, encryption, foreign keys, schema checks
+  local_database_exception.dart     Opening errors, safe to log
+  database_key_store.dart           Key generation and storage in the OS secure storage
+  storage_codecs.dart               Conversions between models and stored values
+  local_ids.dart                    Random UUID v4 ids
+  local_transaction_runner.dart     Atomic transactions
+  repositories/                     The four Repositories over the database
+lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non-atomic)
+```
+
+- **Controllers ו־UI:** לא תלויים במימוש. הם עובדים מול ממשקי ה־Repositories ומול `TransactionRunner`.
+- **פעולות מרובות שלבים** רצות ב־Transaction אחת, ולכן באחסון המקומי הן אטומיות. אלה הפעולות:
+  - מחיקת בן משפחה עם כל הרשומות שלו.
+  - מחיקת תור (ניתוק השאלות שלו, ואז מחיקה).
+  - העברת תור לבן משפחה אחר (ניתוק השאלות, ואז עדכון).
+- **אם שלב נכשל:** שום שינוי לא נשמר, ואין מחיקה חלקית.
+
+## 3. מבנה מסד הנתונים (Schema גרסה 1)
+
+ארבע טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions` ו־`symptom_entries`. ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
+
+- **מפתחות:**
+  - כל רשומה מזוהה ב־`id` טקסטואלי (UUID).
+  - כל הטבלאות מקושרות ל־`family_members` במצב `RESTRICT`.
+- **שלמות נתונים ברמת המסד:**
+  - **אין רשומות יתומות:** אי אפשר למחוק בן משפחה או תור שעדיין מפנים אליהם.
+  - **שאלה מקושרת רק לתור של אותו בן משפחה:** מפתח זר מורכב `(appointment_id, member_id)`.
+  - **פרופיל "אני" אחד בלבד:** אינדקס ייחודי חלקי.
+  - **ערכים תקינים:** CHECK על שמות לא ריקים, קרבה ממערך סגור, חומרה 1–5, סטטוס תסמין, משך שאינו שלילי, פורמט תאריכים ו־JSON תקין.
+- **Foreign Keys:** מופעלים בכל פתיחה (`PRAGMA foreign_keys = ON`), ונבדקים.
+- **פורמטים:**
+  - **שעון מקומי:** `YYYY-MM-DDTHH:MM:SS.ffffff`, ברוחב קבוע, ומיון הטקסט הוא מיון הזמן. שינוי אזור זמן או שעון קיץ לא מזיז אותו.
+  - **תאריך:** `YYYY-MM-DD`.
+  - **רגע בזמן** (`created_at`): מיקרו־שניות מאז epoch.
+  - **רשימות:** מערך JSON.
+  - **שמירה מדויקת:** כל ההמרות שומרות על הערך בדיוק, עד למיקרו־שנייה.
+
+## 4. הצפנה וניהול מפתחות
+
+- **מנוע:** SQLCipher 4.18 (community), שנבנה דרך ה־hooks של החבילה `sqlite3` (`hooks.user_defines.sqlite3.source: sqlcipher` ב־`pubspec.yaml`).
+  - כל קובץ המסד מוצפן, כולל ה־header.
+  - **אין שום דרך שבה נוצר מסד לא מוצפן:** לפני הכנסת המפתח המערכת מוודאת ש־`cipher_version` קיים, ואם לא, הפתיחה נעצרת.
+- **המפתח:**
+  - 32 בתים מ־`Random.secure()`, שנוצרים בהפעלה הראשונה.
+  - נשמרים ב־`flutter_secure_storage`: ב־Android ב־Keystore (בהצפנת AES-GCM), וב־iOS ב־Keychain במצב `first_unlock_this_device`, שלא מסונכרן ולא משוחזר במכשיר אחר.
+  - SQLCipher מקבל את המפתח כמפתח גולמי (`x'…'`).
+  - המפתח לא נמצא בקוד, לא בלוגים, ולא בשום קובץ גלוי.
+- **קובץ המסד:** `mydr.sqlite` בתיקייה הפרטית של האפליקציה, עם הרשאות `rw-------`.
+- **גיבויים (Android):**
+  - `allowBackup="false"` ו־`fullBackupContent="false"`.
+  - `data_extraction_rules.xml` חוסם גם גיבוי לענן וגם העברה בין מכשירים (Android 12 ומעלה).
+- **לוגים:**
+  - הודעות השגיאה (`LocalDatabaseException` ו־`LocalDataException`) כוללות רק את סוג השגיאה, בלי SQL, בלי פרמטרים ובלי ערכים.
+  - `PRAGMA cipher_log_level = NONE`.
+  - `toString()` של כל המודלים מחזיר מזהה בלבד.
+- **רשת:** אין שום שירות ענן ושום שליחה של מידע לרשת. הגישה היחידה לאינטרנט היא הורדת ספריית SQLCipher **בזמן ה־build** (ראו סעיף 7).
+
+## 5. פתיחה, שגיאות ומחיקה
+
+- **`LocalDatabaseOpener`:** אף פעם לא מוחק, מאפס או דורס.
+
+  | מצב | מה קורה |
+  |---|---|
+  | אין קובץ ואין מפתח (התקנה ראשונה) | נוצרים מפתח חדש ומסד ריק |
+  | יש קובץ אבל אין מפתח | `keyMissing`. **לא** נוצר מפתח חדש, והקובץ לא נוגע |
+  | מפתח שגוי או קובץ פגום | `wrongKeyOrDamaged`, והקובץ לא נוגע |
+  | הקובץ נשמר בגרסת Schema חדשה יותר | `unsupportedSchema`, והקובץ לא נוגע |
+  | האחסון המאובטח לא זמין | `keyStoreUnavailable`, ושום דבר לא נוצר |
+  | אין רכיב הצפנה | `encryptionUnavailable`, ושום דבר לא נוצר |
+
+- **מסך האתחול (`MyDrBootstrap`)** בכל אחד מהמצבים האלה:
+  - מסביר מה קרה ואומר ש"שום מידע לא נמחק".
+  - מציע "ניסיון חוזר".
+  - **משאיר זמינים את כפתור 101 ואת מרכז החירום, כולל ספריית העזרה הראשונה.**
+- **מחיקת רשומות:** נעשית רק בפעולה מפורשת של המשתמש, עם אישור, כפי שהיה עד עכשיו.
+
+## 6. מדיניות Migrations
+
+- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 1`, ונשמרת ב־`PRAGMA user_version`.
+- **שינוי Schema:** מעלים את הגרסה, ומוסיפים שלב ב־`onUpgrade` של `LocalDatabase` לכל מעבר גרסה.
+- **שלב Migration לעולם לא מוחק נתונים:** אפשר להוסיף, להעביר או להמיר. כל Migration צריכה בדיקה עם קובץ מהגרסה הקודמת.
+- **גרסה חדשה יותר מהאפליקציה:** קובץ כזה לא נפתח, ומוצגת הודעה. אין downgrade.
+- **מומלץ לפני Migration הראשונה:** לשמור עותק מוצפן של הקובץ לפני השדרוג. זה עדיין לא ממומש, כי אין עדיין גרסה 2.
+
+## 7. מגבלות וסיכונים ידועים
+
+1. **מכשיר פרוץ או נוזקה:** במכשיר עם root או jailbreak, או עם נוזקה בזמן שהמכשיר פתוח, ההצפנה לא מבטיחה הגנה. ה־Keystore מגן על המפתח, אבל תוקף עם הרשאות מתאימות יכול להשתמש בו.
+2. **אובדן מפתח:** אם המפתח נמחק (למשל בניקוי האחסון המאובטח או בתקלה ב־Keystore), המידע לא ניתן לשחזור. האפליקציה תציג הודעה ולא תמחק כלום.
+   - עדיין אין תהליך "התחלה מחדש": כרגע הדרך היחידה היא לנקות את נתוני האפליקציה בהגדרות המכשיר, וזה מוחק את המידע.
+   - ב־Android, `SharedPreferences` נשמרים בזיכרון התהליך, ולכן אחרי שהמפתח חוזר נדרשת הפעלה מחדש. "ניסיון חוזר" לא יספיק.
+3. **אין גיבוי ואין מעבר מכשיר:** המידע לא נכלל בגיבויים ולא עובר לטלפון חדש. ייצוא מוצפן נדחה לשלב עתידי.
+4. **אין נעילת אפליקציה ואין `FLAG_SECURE`:** מי שמחזיק טלפון פתוח רואה את המידע, ואפשר לצלם את המסך. נדחה לשלב מאוחר יותר.
+5. **רישיונות:** SQLCipher community ו־OpenSSL (שכלול בבנייה ל־Android) דורשים לצרף את הרישיונות שלהם לפני הפצה.
+6. **Build ראשון:** ה־hook של `sqlite3` מוריד את הספרייה המוצפנת מ־GitHub, ומאמת אותה מול SHA-256. ה־build הראשון דורש רשת, ואחריו יש cache.
+7. **ביצועים:** המסד רץ ב־isolate הראשי. בכמויות של משפחה זה זניח. אם הנתונים יגדלו, אפשר לעבור ל־`NativeDatabase.createInBackground`.
+8. **iOS:** הארכיטקטורה תומכת ב־iOS, אבל נבדק רק Android. ב־iOS צריך לוודא שקובץ המסד מוחרג מגיבוי iCloud, וזה דורש קוד נייטיב קטן.
+
+## 8. הרצה ובדיקות
+
+```sh
+flutter pub get
+flutter run                                  # regular mode: encrypted database
+flutter run --dart-define=MYDR_DEMO=true     # demo mode: in memory
+
+# After changing schema.drift (the builders use build hooks, so JIT mode is needed):
+dart run build_runner build --force-jit
+
+flutter analyze
+flutter test                                 # unit and widget tests, against real SQLCipher on the host
+
+# On a device or emulator (uses its own file and key; removes them at the end):
+flutter test integration_test -d <device-id>
+```
+
+> **אזהרה:** `flutter test` על מכשיר מתקין גרסת בדיקה במקום האפליקציה, **ומסיר אותה בסיום**, וכך נמחקים נתוני האפליקציה במכשיר. אין להריץ זאת על מכשיר שיש בו מידע אמיתי.
+
+**מה בודקות הבדיקות:**
+- **`test/data/repositories/repository_contract_test.dart`:** אותה התנהגות בדיוק בזיכרון ובמסד.
+- **`test/data/local/`:** פתיחה, הצפנה, מפתחות, אילוצים, פורמטים, טרנזקציות וטעויות.
+- **`test/features/atomic_operations_test.dart`:** אטומיות של מחיקות ועדכונים.
+- **`test/app_bootstrap_test.dart`:** אתחול, שמירה בין הפעלות, מסכי שגיאה, חירום בזמן כשל ומצב Demo.
+- **`integration_test/`:** הצפנה, Keystore ושמירה בין הפעלות, על מכשיר אמיתי.

@@ -14,9 +14,16 @@ import 'package:mydr/features/shell/home_shell.dart';
 /// Root widget. Hebrew is the only supported locale, so the whole
 /// widget tree is laid out right-to-left.
 class MyDrApp extends StatefulWidget {
-  const MyDrApp({super.key, required this.dependencies});
+  const MyDrApp({
+    super.key,
+    required this.dependencies,
+    this.home = const HomeShell(),
+  });
 
   final AppDependencies dependencies;
+
+  /// The first screen; the tabbed app unless the app is still starting.
+  final Widget home;
 
   static const Locale hebrew = Locale('he');
 
@@ -81,7 +88,7 @@ class _MyDrAppState extends State<MyDrApp> {
         locale: MyDrApp.hebrew,
         supportedLocales: const [MyDrApp.hebrew],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        home: const HomeShell(),
+        home: widget.home,
       ),
     );
   }

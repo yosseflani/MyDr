@@ -1,0 +1,89 @@
+-- MyDr local database, schema version 1.
+--
+-- Mirrors the models in lib/data/models exactly. Formats:
+--   * local date and time: 'YYYY-MM-DDTHH:MM:SS.ffffff' (wall-clock time,
+--     no time zone, so a time zone or DST change never moves it);
+--   * date: 'YYYY-MM-DD';
+--   * instant: microseconds since the Unix epoch;
+--   * lists: a JSON array of strings.
+-- See storage_codecs.dart.
+--
+-- Foreign keys restrict: a family member or appointment can only be
+-- deleted once nothing refers to it any more, so no record is ever left
+-- pointing at nothing.
+
+CREATE TABLE family_members (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  relation TEXT NOT NULL CHECK (relation IN
+    ('self', 'spouse', 'child', 'parent', 'sibling', 'grandparent', 'other')),
+  birth_date TEXT CHECK (birth_date IS NULL OR (length(birth_date) = 10
+    AND birth_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')),
+  allergies TEXT NOT NULL DEFAULT '[]'
+    CHECK (json_valid(allergies) AND json_type(allergies) = 'array'),
+  chronic_conditions TEXT NOT NULL DEFAULT '[]'
+    CHECK (json_valid(chronic_conditions)
+      AND json_type(chronic_conditions) = 'array'),
+  notes TEXT
+) STRICT AS FamilyMemberRow;
+
+-- At most one "self" profile.
+CREATE UNIQUE INDEX family_members_single_self
+  ON family_members (relation) WHERE relation = 'self';
+
+CREATE TABLE appointments (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  doctor_name TEXT NOT NULL CHECK (length(trim(doctor_name)) > 0),
+  scheduled_at TEXT NOT NULL CHECK (length(scheduled_at) = 26 AND scheduled_at GLOB
+    '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9][0-9][0-9][0-9]'),
+  specialty TEXT,
+  location TEXT,
+  notes TEXT,
+  -- Target of the composite key in doctor_questions.
+  UNIQUE (id, member_id)
+) STRICT AS AppointmentRow;
+
+CREATE INDEX appointments_by_member ON appointments (member_id, scheduled_at);
+
+CREATE TABLE doctor_questions (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  -- Null for a general question.
+  appointment_id TEXT,
+  question_text TEXT NOT NULL CHECK (length(trim(question_text)) > 0),
+  created_at INTEGER NOT NULL,
+  is_resolved INTEGER NOT NULL DEFAULT 0 CHECK (is_resolved IN (0, 1)),
+  doctor_answer TEXT,
+  -- A linked appointment must belong to the same family member.
+  FOREIGN KEY (appointment_id, member_id)
+    REFERENCES appointments (id, member_id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT
+) STRICT AS DoctorQuestionRow;
+
+CREATE INDEX doctor_questions_by_member
+  ON doctor_questions (member_id, created_at);
+CREATE INDEX doctor_questions_by_appointment
+  ON doctor_questions (appointment_id);
+
+CREATE TABLE symptom_entries (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  -- The name as compared for grouping (trimmed, single spaces, lower case).
+  name_key TEXT NOT NULL CHECK (length(name_key) > 0),
+  started_at TEXT NOT NULL CHECK (length(started_at) = 26 AND started_at GLOB
+    '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9].[0-9][0-9][0-9][0-9][0-9][0-9]'),
+  severity INTEGER NOT NULL CHECK (severity BETWEEN 1 AND 5),
+  status TEXT NOT NULL DEFAULT 'ongoing'
+    CHECK (status IN ('ongoing', 'resolved')),
+  duration_micros INTEGER
+    CHECK (duration_micros IS NULL OR duration_micros >= 0),
+  notes TEXT
+) STRICT AS SymptomEntryRow;
+
+CREATE INDEX symptom_entries_by_group
+  ON symptom_entries (member_id, name_key, started_at);

@@ -46,6 +46,12 @@ class SymptomEntry {
 
   bool get isOngoing => status == SymptomStatus.ongoing;
 
+  /// The form in which symptom names are compared: trimmed, with single
+  /// spaces, in lower case (for names written in Latin letters). Records
+  /// whose names give the same key are the same symptom.
+  static String nameKey(String name) =>
+      name.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+
   /// Nullable fields take a function so they can be cleared:
   /// `copyWith(duration: () => null)`.
   SymptomEntry copyWith({

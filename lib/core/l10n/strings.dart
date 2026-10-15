@@ -104,6 +104,29 @@ abstract final class AppStrings {
       'המידע באפליקציה אינו תחליף לפנייה למוקד חירום או לאיש מקצוע רפואי. '
       'במצב חירום חייגו 101 מיד.';
 
+  // Local storage startup
+  static const String storageOpening = 'טוען את המידע השמור…';
+  static const String storageUnavailableTitle = 'לא ניתן לפתוח את המידע השמור';
+  static const String storageNothingDeleted = 'שום מידע לא נמחק.';
+  static const String storageKeyMissing =
+      'מפתח ההצפנה של המידע השמור לא נמצא במכשיר, ולכן אי אפשר לפתוח אותו.';
+  static const String storageKeyInvalid =
+      'מפתח ההצפנה השמור במכשיר אינו תקין, ולכן אי אפשר לפתוח את המידע.';
+  static const String storageUnreadable =
+      'המידע השמור לא נפתח עם מפתח ההצפנה של המכשיר, או שהקובץ פגום.';
+  static const String storageNewerVersion =
+      'המידע נשמר בגרסה חדשה יותר של האפליקציה. עדכנו את האפליקציה כדי '
+      'לפתוח אותו.';
+  static const String storageKeyStoreUnavailable =
+      'האחסון המאובטח של המכשיר אינו זמין כרגע. נסו שוב בעוד רגע.';
+  static const String storageEncryptionUnavailable =
+      'רכיב ההצפנה אינו זמין, ולכן המידע לא נפתח. שום מידע לא נשמר בלי '
+      'הצפנה.';
+  static const String storageOpenFailed =
+      'אירעה שגיאה בפתיחת המידע השמור. נסו שוב.';
+  static const String storageEmergencyStillAvailable =
+      'גם עכשיו אפשר לחייג למוקד חירום ולהיכנס למרכז החירום.';
+
   // Demo data
   static const String demoDataBanner =
       'נתוני הדגמה בדויים. שינויים אינם נשמרים לאחר סגירת האפליקציה.';

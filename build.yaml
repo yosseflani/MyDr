@@ -1,0 +1,8 @@
+# Code generation (drift) runs only for the local database.
+# Run with: dart run build_runner build --force-jit
+targets:
+  $default:
+    builders:
+      drift_dev:
+        generate_for:
+          - lib/data/local/**

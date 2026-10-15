@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:mydr/core/app_dependencies.dart';
+import 'package:mydr/data/repositories/transaction_runner.dart';
 import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
@@ -59,6 +60,7 @@ class AppointmentController extends ChangeNotifier {
   }) : _appointmentRepository = dependencies.appointmentRepository,
        _doctorQuestionRepository = dependencies.doctorQuestionRepository,
        _familyRepository = dependencies.familyRepository,
+       _transactions = dependencies.transactions,
        _familyController = familyController,
        _seenFamilyRevision = familyController.relatedDataRevision {
     _familyController.addListener(_onFamilyChanged);
@@ -67,6 +69,7 @@ class AppointmentController extends ChangeNotifier {
   final AppointmentRepository _appointmentRepository;
   final DoctorQuestionRepository _doctorQuestionRepository;
   final FamilyRepository _familyRepository;
+  final TransactionRunner _transactions;
   final FamilyController _familyController;
   int _seenFamilyRevision;
 
@@ -167,12 +170,16 @@ class AppointmentController extends ChangeNotifier {
         return AppointmentSaveResult.memberNotFound;
       }
 
-      if (stored.memberId != appointment.memberId) {
-        detachAttempted = true;
-        await _doctorQuestionRepository.detachFromAppointment(appointment.id);
-        questionsDetached = true;
-      }
-      await _appointmentRepository.update(appointment);
+      // Unlinking and saving together: with an atomic runner, a failed
+      // save also undoes the unlinking.
+      await _transactions.run(() async {
+        if (stored.memberId != appointment.memberId) {
+          detachAttempted = true;
+          await _doctorQuestionRepository.detachFromAppointment(appointment.id);
+          questionsDetached = true;
+        }
+        await _appointmentRepository.update(appointment);
+      });
     } catch (_) {
       // Question links may have changed even though saving failed, so
       // listeners must still hear about it.
@@ -180,7 +187,7 @@ class AppointmentController extends ChangeNotifier {
         _questionLinksRevision++;
         await _refresh();
       }
-      return questionsDetached
+      return questionsDetached && !_transactions.isAtomic
           ? AppointmentSaveResult.failedAfterDetachingQuestions
           : AppointmentSaveResult.failed;
     }
@@ -223,21 +230,17 @@ class AppointmentController extends ChangeNotifier {
     }
 
     var result = const AppointmentDeletionResult.success();
+    var step = AppointmentDeletionStep.detachQuestions;
     try {
-      await _doctorQuestionRepository.detachFromAppointment(appointmentId);
-    } catch (_) {
-      result = const AppointmentDeletionResult.failed(
-        AppointmentDeletionStep.detachQuestions,
-      );
-    }
-    if (result.isSuccess) {
-      try {
+      // The questions are kept, only unlinked. With an atomic runner, a
+      // failed deletion also undoes the unlinking.
+      await _transactions.run(() async {
+        await _doctorQuestionRepository.detachFromAppointment(appointmentId);
+        step = AppointmentDeletionStep.appointment;
         await _appointmentRepository.delete(appointmentId);
-      } catch (_) {
-        result = const AppointmentDeletionResult.failed(
-          AppointmentDeletionStep.appointment,
-        );
-      }
+      });
+    } catch (_) {
+      result = AppointmentDeletionResult.failed(step);
     }
 
     // Unlinking was attempted, so question links may have changed even if a

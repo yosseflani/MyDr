@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:mydr/core/app_dependencies.dart';
+import 'package:mydr/data/repositories/transaction_runner.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
@@ -53,12 +54,14 @@ class FamilyController extends ChangeNotifier {
     : _familyRepository = dependencies.familyRepository,
       _appointmentRepository = dependencies.appointmentRepository,
       _doctorQuestionRepository = dependencies.doctorQuestionRepository,
-      _symptomRepository = dependencies.symptomRepository;
+      _symptomRepository = dependencies.symptomRepository,
+      _transactions = dependencies.transactions;
 
   final FamilyRepository _familyRepository;
   final AppointmentRepository _appointmentRepository;
   final DoctorQuestionRepository _doctorQuestionRepository;
   final SymptomRepository _symptomRepository;
+  final TransactionRunner _transactions;
 
   List<FamilyMember> _members = const [];
   bool _isLoading = false;
@@ -181,19 +184,25 @@ class FamilyController extends ChangeNotifier {
     notifyListeners();
 
     var result = const MemberDeletionResult.success();
-    for (final (step, run) in steps) {
-      try {
-        await run();
-      } catch (_) {
-        result = MemberDeletionResult.failed(step);
-        break;
-      }
+    var currentStep = steps.first.$1;
+    try {
+      // With an atomic runner (the local database), a failure undoes every
+      // step, so nothing is ever half deleted.
+      await _transactions.run(() async {
+        for (final (step, run) in steps) {
+          currentStep = step;
+          await run();
+        }
+      });
+    } catch (_) {
+      result = MemberDeletionResult.failed(currentStep);
     }
 
-    // Any failure may have removed part of the data, even within one step.
     if (result.isSuccess) {
       _incompleteDeletionIds.remove(memberId);
-    } else {
+    } else if (!_transactions.isAtomic) {
+      // Without rollback, any failure may have removed part of the data,
+      // even within one step.
       _incompleteDeletionIds.add(memberId);
     }
     _deletingIds.remove(memberId);
