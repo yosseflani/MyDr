@@ -9,6 +9,7 @@ import 'package:mydr/features/dashboard/widgets/emergency_card.dart';
 import 'package:mydr/features/dashboard/widgets/family_card.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
+import 'package:mydr/features/questions/doctor_questions_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key, this.clock = DateTime.now});
@@ -50,6 +51,9 @@ class DashboardScreen extends StatelessWidget {
                   onNewAppointment: () => Navigator.of(
                     context,
                   ).push(AppointmentFormScreen.addRoute(clock: clock)),
+                  onDoctorQuestions: () => Navigator.of(
+                    context,
+                  ).push(DoctorQuestionsScreen.route(clock: clock)),
                 ),
                 const SizedBox(height: 24),
                 NextAppointmentCard(clock: clock),

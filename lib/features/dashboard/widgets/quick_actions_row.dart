@@ -4,12 +4,18 @@ import 'package:mydr/core/theme/app_colors.dart';
 import 'package:mydr/core/widgets/app_card.dart';
 import 'package:mydr/core/widgets/coming_soon_badge.dart';
 
-/// Three shortcut tiles. "New appointment" opens the appointment form; the
-/// others are shown as unavailable until their features exist.
+/// Three shortcut tiles. "New appointment" and "Questions for the doctor"
+/// open their screens; "Log a symptom" is shown as unavailable until that
+/// feature exists.
 class QuickActionsRow extends StatelessWidget {
-  const QuickActionsRow({super.key, required this.onNewAppointment});
+  const QuickActionsRow({
+    super.key,
+    required this.onNewAppointment,
+    required this.onDoctorQuestions,
+  });
 
   final VoidCallback onNewAppointment;
+  final VoidCallback onDoctorQuestions;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +37,7 @@ class QuickActionsRow extends StatelessWidget {
             icon: Icons.question_answer_outlined,
             label: AppStrings.actionDoctorQuestions,
             color: AppColors.skyBlue,
-            onTap: null,
+            onTap: onDoctorQuestions,
           ),
         ];
 

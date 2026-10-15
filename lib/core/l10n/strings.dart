@@ -240,6 +240,94 @@ abstract final class AppStrings {
       'אפשר לנסות שוב.';
   static const String appointmentDeleted = 'התור נמחק';
 
+  // Questions to the doctor
+  static const String doctorQuestionsTitle = 'שאלות לרופא';
+  static const String questionsFilterAll = 'הכל';
+  static const String unresolvedQuestionsSection = 'טרם טופלו';
+  static const String resolvedQuestionsSection = 'טופלו';
+  static const String questionStatusUnresolved = 'טרם טופלה';
+  static const String questionStatusResolved = 'טופלה';
+  static const String markQuestionResolved = 'סימון השאלה כטופלה';
+  static const String markQuestionUnresolved = 'סימון השאלה כטרם טופלה';
+  static const String generalQuestion = 'שאלה כללית';
+  static const String linkedAppointmentMissing = 'משויכת לתור שאינו זמין';
+  static const String recordedAnswerLabel = 'התשובה שרשמתם';
+  static const String noUnresolvedQuestions = 'אין שאלות שטרם טופלו.';
+  static const String noResolvedQuestions = 'אין שאלות שטופלו.';
+  static const String questionsEmptyTitle = 'אין שאלות לרופא עדיין';
+  static const String questionsEmptyMessage =
+      'כאן תוכלו לרשום שאלות ונושאים שתרצו להעלות בפני הרופא.';
+  static String questionsEmptyForMember(String name) => 'אין שאלות עבור $name';
+  static const String questionsEmptyForMemberMessage =
+      'אפשר לבחור בן משפחה אחר או להציג את השאלות של כל המשפחה.';
+  static const String questionsLoadErrorTitle = 'לא הצלחנו לטעון את השאלות';
+  static const String questionsLoadErrorMessage = 'בדקו שוב בעוד רגע.';
+  static const String questionsRefreshError =
+      'לא הצלחנו לרענן את רשימת השאלות. ייתכן שהיא אינה מעודכנת.';
+  static const String newQuestion = 'שאלה חדשה';
+  static const String questionUpdateFailed =
+      'לא הצלחנו לעדכן את השאלה. נסו שוב.';
+  static const String questionNoLongerExists = 'השאלה כבר לא קיימת.';
+
+  // Question form
+  static const String editQuestionTitle = 'עריכת שאלה';
+  static const String questionNotFoundTitle = 'השאלה לא נמצאה';
+  static const String questionNotFoundMessage =
+      'ייתכן שהשאלה נמחקה או שאינה קיימת עוד.';
+  static const String backToQuestions = 'חזרה לשאלות';
+  static const String questionTextLabel = 'השאלה או הנושא';
+  static const String questionTextRequired = 'נא לכתוב את השאלה';
+  static const String linkedAppointmentLabel = 'שיוך לתור (אופציונלי)';
+  static const String noAppointmentOption = 'שאלה כללית, ללא תור';
+  static const String pastAppointmentSuffix = 'תור שעבר';
+  static const String selectMemberFirst = 'בחרו קודם בן משפחה';
+  static const String noAppointmentsForMember =
+      'לבן המשפחה הזה אין תורים, ולכן השאלה תישמר כשאלה כללית.';
+  static const String appointmentLinkClearedOnMemberChange =
+      'השיוך לתור הוסר, כי כל תור שייך לבן משפחה אחד.';
+  static const String linkedAppointmentDeletedWhileEditing =
+      'התור שהשאלה הייתה משויכת אליו נמחק. אם לא תבחרו תור אחר, השאלה '
+      'תישמר כשאלה כללית.';
+  static const String questionResolvedLabel = 'השאלה טופלה';
+  static const String doctorAnswerLabel =
+      'תשובת הרופא / הערות מהביקור (אופציונלי)';
+  static String moveQuestionTitle(String newMemberName) =>
+      'להעביר את השאלה ל$newMemberName?';
+  static String moveQuestionMessage(String doctorName, String originalName) =>
+      'השאלה משויכת כרגע לתור אצל $doctorName של $originalName. '
+      'השיוך לתור יוסר.';
+  static const String questionMissingOnSave =
+      'השאלה כבר לא קיימת, ייתכן שנמחקה. השינויים לא נשמרו.';
+  static const String questionDeletedWhileEditing =
+      'השאלה נמחקה בזמן שהטופס היה פתוח, ולכן אי אפשר לשמור אותה.';
+  static const String selectedAppointmentMissing =
+      'התור שנבחר כבר לא קיים. בחרו תור אחר או השאירו את השאלה כללית.';
+  static const String appointmentOfAnotherMemberError =
+      'התור שנבחר שייך לבן משפחה אחר.';
+  static const String noFamilyForQuestionTitle =
+      'כדי לרשום שאלה צריך קודם בן משפחה';
+  static const String noFamilyForQuestionMessage =
+      'כל שאלה שייכת לבן משפחה. הוסיפו בן משפחה, ואז תוכלו לחזור ולרשום שאלה.';
+
+  // Questions in other screens
+  static String unresolvedQuestionsCount(int count) => switch (count) {
+    0 => 'אין שאלות שטרם טופלו',
+    1 => 'שאלה אחת שטרם טופלה',
+    _ => '$count שאלות שטרם טופלו',
+  };
+  static const String allQuestions = 'לכל השאלות';
+  static const String addQuestionToAppointment = 'הוספת שאלה לתור';
+  static const String noQuestionsForAppointment = 'אין שאלות שמשויכות לתור.';
+
+  // Question deletion
+  static const String deleteQuestion = 'מחיקת שאלה';
+  static const String deleteQuestionTitle = 'למחוק את השאלה?';
+  static const String deleteQuestionKeepsOthers =
+      'התור ובן המשפחה שהשאלה משויכת אליהם לא יושפעו.';
+  static const String deleteQuestionFailed =
+      'מחיקת השאלה נכשלה, והשאלה לא נמחקה. אפשר לנסות שוב.';
+  static const String questionDeleted = 'השאלה נמחקה';
+
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';
   static const String comingSoon = 'המסך יהיה זמין בקרוב';

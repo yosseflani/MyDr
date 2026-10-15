@@ -9,6 +9,7 @@ import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/appointments/appointment_formatting.dart';
 import 'package:mydr/features/appointments/widgets/delete_appointment_dialog.dart';
+import 'package:mydr/features/questions/widgets/appointment_questions_section.dart';
 
 /// Details of one appointment.
 ///
@@ -87,6 +88,7 @@ class AppointmentDetailScreen extends StatelessWidget {
             appointment: appointment,
             memberName: memberName,
             now: now,
+            clock: clock,
             onDelete: () =>
                 _confirmAndDelete(context, appointment, memberName, now),
           );
@@ -136,12 +138,14 @@ class _AppointmentDetails extends StatelessWidget {
     required this.appointment,
     required this.memberName,
     required this.now,
+    required this.clock,
     required this.onDelete,
   });
 
   final Appointment appointment;
   final String memberName;
   final DateTime now;
+  final DateTime Function() clock;
   final VoidCallback onDelete;
 
   /// Null for an empty or missing optional field, shown as "not specified".
@@ -225,6 +229,8 @@ class _AppointmentDetails extends StatelessWidget {
           icon: Icons.notes,
           child: notes == null ? const NotSpecifiedText() : Text(notes),
         ),
+        const SizedBox(height: 24),
+        AppointmentQuestionsSection(appointment: appointment, clock: clock),
         // Destructive action, kept apart from the regular actions.
         const SizedBox(height: 32),
         OutlinedButton.icon(

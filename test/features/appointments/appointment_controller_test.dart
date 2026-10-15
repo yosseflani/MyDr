@@ -398,6 +398,47 @@ void main() {
     });
   });
 
+  group('questionLinksRevision', () {
+    test('increases after every deletion attempt', () async {
+      final start = controller.questionLinksRevision;
+
+      await controller.delete('soon', userConfirmed: true);
+      expect(controller.questionLinksRevision, start + 1);
+
+      appointmentRepository.failDelete = true;
+      await controller.delete('later', userConfirmed: true);
+      expect(controller.questionLinksRevision, start + 2);
+    });
+
+    test('increases when the member changes, even if saving fails', () async {
+      final start = controller.questionLinksRevision;
+      final soon = controller.appointmentById('soon')!;
+
+      await controller.update(soon.copyWith(memberId: 'm3'));
+      expect(controller.questionLinksRevision, start + 1);
+
+      appointmentRepository.failUpdate = true;
+      final later = controller.appointmentById('later')!;
+      final notifiedBefore = notifications;
+      await controller.update(later.copyWith(memberId: 'm3'));
+      expect(controller.questionLinksRevision, start + 2);
+      // Listeners hear about it even though the update failed.
+      expect(notifications, greaterThan(notifiedBefore));
+    });
+
+    test('stays the same for other changes', () async {
+      final start = controller.questionLinksRevision;
+      final soon = controller.appointmentById('soon')!;
+
+      await controller.load();
+      await controller.add(appointment('x', 'm3', const Duration(days: 1)));
+      await controller.update(soon.copyWith(doctorName: 'ד״ר אחר'));
+      await controller.update(soon.copyWith(memberId: 'missing-member'));
+
+      expect(controller.questionLinksRevision, start);
+    });
+  });
+
   group('sync with FamilyController', () {
     test('reloads after a family member is deleted', () async {
       await familyController.delete('m1', userConfirmed: true);

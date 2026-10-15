@@ -10,7 +10,7 @@ import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/appointments/appointment_detail_screen.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/appointments/widgets/appointment_card.dart';
-import 'package:mydr/features/appointments/widgets/member_filter_chips.dart';
+import 'package:mydr/core/widgets/member_filter_chips.dart';
 import 'package:mydr/features/family/family_controller.dart';
 
 /// "Appointments" tab: upcoming and past appointments from the shared

@@ -6,6 +6,7 @@ import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/dashboard/dashboard_screen.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
+import 'package:mydr/features/questions/doctor_questions_screen.dart';
 
 import '../../helpers/pump_app.dart';
 
@@ -33,29 +34,47 @@ void main() {
   group('quick actions', () {
     Finder tile(String label) => find.widgetWithText(QuickActionTile, label);
 
-    testWidgets('symptoms and questions are still shown as unavailable', (
+    testWidgets('"log a symptom" is still shown as unavailable', (
       tester,
     ) async {
       tester.setScreenSize(const Size(400, 1600));
       await tester.pumpApp(const DashboardScreen());
+      final symptoms = tile(AppStrings.actionLogSymptom);
 
       expect(find.byType(QuickActionTile), findsNWidgets(3));
-      for (final label in [
-        AppStrings.actionLogSymptom,
-        AppStrings.actionDoctorQuestions,
-      ]) {
-        expect(
-          find.descendant(
-            of: tile(label),
-            matching: find.byType(ComingSoonBadge),
-          ),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: tile(label), matching: find.byType(InkWell)),
-          findsNothing,
-        );
-      }
+      expect(
+        find.descendant(of: symptoms, matching: find.byType(ComingSoonBadge)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: symptoms, matching: find.byType(InkWell)),
+        findsNothing,
+      );
+    });
+
+    testWidgets('"questions for the doctor" opens all questions, and back '
+        'returns home', (tester) async {
+      tester.setScreenSize(const Size(400, 1600));
+      await tester.pumpApp(const DashboardScreen());
+      final questions = tile(AppStrings.actionDoctorQuestions);
+
+      expect(
+        find.descendant(of: questions, matching: find.byType(ComingSoonBadge)),
+        findsNothing,
+      );
+
+      await tester.tap(questions);
+      await tester.pumpAndSettle();
+
+      final screen = tester.widget<DoctorQuestionsScreen>(
+        find.byType(DoctorQuestionsScreen),
+      );
+      expect(screen.initialMemberId, isNull);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(DoctorQuestionsScreen), findsNothing);
+      expect(find.byType(DashboardScreen), findsOneWidget);
     });
 
     testWidgets('"new appointment" is available and opens the form', (

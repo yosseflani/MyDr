@@ -3,14 +3,13 @@ import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/demo_data_banner.dart';
 import 'package:mydr/core/widgets/discard_changes_dialog.dart';
-import 'package:mydr/core/widgets/empty_state.dart';
 import 'package:mydr/core/widgets/inline_error_message.dart';
 import 'package:mydr/core/widgets/not_found_view.dart';
 import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/appointments/widgets/date_time_fields.dart';
 import 'package:mydr/features/family/family_controller.dart';
-import 'package:mydr/features/family/member_form_screen.dart';
+import 'package:mydr/features/family/widgets/no_family_members_view.dart';
 
 /// Form for adding an appointment, or editing one when [appointmentId] is
 /// set.
@@ -364,7 +363,10 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
         } else if (hasNoMembers && _family.isLoading) {
           body = const Center(child: CircularProgressIndicator());
         } else if (hasNoMembers) {
-          body = const _NoFamilyMembers();
+          body = const NoFamilyMembersView(
+            title: AppStrings.noFamilyForAppointmentTitle,
+            message: AppStrings.noFamilyForAppointmentMessage,
+          );
         } else {
           body = _buildForm();
         }
@@ -542,35 +544,6 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Every appointment belongs to a family member, so without any there is
-/// nothing to fill in; offers to add one instead.
-class _NoFamilyMembers extends StatelessWidget {
-  const _NoFamilyMembers();
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const EmptyState(
-            icon: Icons.group_add_outlined,
-            title: AppStrings.noFamilyForAppointmentTitle,
-            message: AppStrings.noFamilyForAppointmentMessage,
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: () =>
-                Navigator.of(context).push(MemberFormScreen.addRoute()),
-            icon: const Icon(Icons.person_add_alt_1),
-            label: const Text(AppStrings.addFamilyMember),
           ),
         ],
       ),

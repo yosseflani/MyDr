@@ -75,6 +75,14 @@ class AppointmentController extends ChangeNotifier {
   bool _hasLoadError = false;
   bool _isDisposed = false;
 
+  int _questionLinksRevision = 0;
+
+  /// Increases whenever an operation unlinked, or tried to unlink, questions
+  /// from an appointment: every deletion attempt, and updates that change
+  /// the family member. Other controllers watch it to know when to reload
+  /// questions. Plain edits, additions and loads leave it unchanged.
+  int get questionLinksRevision => _questionLinksRevision;
+
   /// Increases with every [load], so only the latest one applies its result.
   int _loadGeneration = 0;
 
@@ -150,6 +158,7 @@ class AppointmentController extends ChangeNotifier {
   /// the appointment saved. A question never ends up linked to an
   /// appointment of a different member.
   Future<AppointmentSaveResult> update(Appointment appointment) async {
+    var detachAttempted = false;
     var questionsDetached = false;
     try {
       final stored = await _appointmentRepository.getById(appointment.id);
@@ -159,15 +168,23 @@ class AppointmentController extends ChangeNotifier {
       }
 
       if (stored.memberId != appointment.memberId) {
+        detachAttempted = true;
         await _doctorQuestionRepository.detachFromAppointment(appointment.id);
         questionsDetached = true;
       }
       await _appointmentRepository.update(appointment);
     } catch (_) {
+      // Question links may have changed even though saving failed, so
+      // listeners must still hear about it.
+      if (detachAttempted) {
+        _questionLinksRevision++;
+        await _refresh();
+      }
       return questionsDetached
           ? AppointmentSaveResult.failedAfterDetachingQuestions
           : AppointmentSaveResult.failed;
     }
+    if (detachAttempted) _questionLinksRevision++;
     await _refresh();
     return AppointmentSaveResult.success;
   }
@@ -223,6 +240,9 @@ class AppointmentController extends ChangeNotifier {
       }
     }
 
+    // Unlinking was attempted, so question links may have changed even if a
+    // step failed.
+    _questionLinksRevision++;
     await _refresh();
     return result;
   }

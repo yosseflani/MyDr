@@ -259,7 +259,8 @@ class _AppointmentSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
+        // Contrasts with the dialog's own surface color.
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

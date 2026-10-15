@@ -6,6 +6,7 @@ import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
+import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/shell/home_shell.dart';
 
 /// Root widget. Hebrew is the only supported locale, so the whole
@@ -32,9 +33,18 @@ class _MyDrAppState extends State<MyDrApp> {
         familyController: _familyController,
       )..load();
 
+  late final DoctorQuestionController _doctorQuestionController =
+      DoctorQuestionController(
+        dependencies: widget.dependencies,
+        familyController: _familyController,
+        appointmentController: _appointmentController,
+      )..load();
+
   @override
   void dispose() {
-    // Disposed first, since it listens to the family controller.
+    // Disposed in reverse order of creation, since each listens to the
+    // ones created before it.
+    _doctorQuestionController.dispose();
     _appointmentController.dispose();
     _familyController.dispose();
     super.dispose();
@@ -46,6 +56,7 @@ class _MyDrAppState extends State<MyDrApp> {
       dependencies: widget.dependencies,
       familyController: _familyController,
       appointmentController: _appointmentController,
+      doctorQuestionController: _doctorQuestionController,
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

@@ -137,6 +137,54 @@ class FlakyDoctorQuestionRepository extends InMemoryDoctorQuestionRepository {
   bool failGetAll = false;
   bool failDeleteByMember = false;
   bool failDetach = false;
+  bool failAdd = false;
+  bool failUpdate = false;
+  bool failDelete = false;
+
+  /// Number of times [getAll] was called.
+  int getAllCalls = 0;
+
+  /// When set, [add] waits for it to complete, to observe saving states.
+  Completer<void>? addGate;
+
+  /// Number of times [add] was called.
+  int addCalls = 0;
+
+  @override
+  Future<void> add(DoctorQuestion item) async {
+    addCalls++;
+    await addGate?.future;
+    if (failAdd) throw const SimulatedFailure();
+    return super.add(item);
+  }
+
+  /// When set, [update] waits for it to complete, to observe saving states.
+  Completer<void>? updateGate;
+
+  /// Number of times [update] was called.
+  int updateCalls = 0;
+
+  @override
+  Future<void> update(DoctorQuestion item) async {
+    updateCalls++;
+    await updateGate?.future;
+    if (failUpdate) throw const SimulatedFailure();
+    return super.update(item);
+  }
+
+  /// When set, [delete] waits for it to complete, to observe deleting states.
+  Completer<void>? deleteGate;
+
+  /// Number of times [delete] was called.
+  int deleteCalls = 0;
+
+  @override
+  Future<void> delete(String id) async {
+    deleteCalls++;
+    await deleteGate?.future;
+    if (failDelete) throw const SimulatedFailure();
+    return super.delete(id);
+  }
 
   /// When set, [getAll] waits for it to complete, to observe loading states.
   Completer<void>? getAllGate;
@@ -156,6 +204,7 @@ class FlakyDoctorQuestionRepository extends InMemoryDoctorQuestionRepository {
     String? memberId,
     String? appointmentId,
   }) async {
+    getAllCalls++;
     await getAllGate?.future;
     if (failGetAll) throw const SimulatedFailure();
     return super.getAll(memberId: memberId, appointmentId: appointmentId);
