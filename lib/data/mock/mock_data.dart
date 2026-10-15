@@ -132,6 +132,22 @@ abstract final class MockData {
       notes: 'בעיקר בלילה',
     ),
     SymptomEntry(
+      id: 'symptom-4',
+      memberId: sonId,
+      name: 'שיעול',
+      startedAt: now.subtract(const Duration(days: 1)),
+      severity: 4,
+      notes: 'התגבר במהלך הלילה',
+    ),
+    SymptomEntry(
+      id: 'symptom-5',
+      memberId: sonId,
+      name: 'שיעול',
+      startedAt: now.subtract(const Duration(hours: 3)),
+      severity: 2,
+      notes: 'פחות מאתמול',
+    ),
+    SymptomEntry(
       id: 'symptom-2',
       memberId: selfId,
       name: 'כאב ראש',

@@ -25,7 +25,7 @@ class SymptomEntry {
   }
 
   static const int minSeverity = 1;
-  static const int maxSeverity = 10;
+  static const int maxSeverity = 5;
 
   final String id;
 
@@ -34,7 +34,8 @@ class SymptomEntry {
   final String name;
   final DateTime startedAt;
 
-  /// User-reported intensity, from [minSeverity] to [maxSeverity].
+  /// The user's own rating of how strong it felt, from [minSeverity] to
+  /// [maxSeverity]. Subjective, never a medical assessment.
   final int severity;
   final SymptomStatus status;
 

@@ -7,7 +7,7 @@ import 'package:mydr/core/widgets/inline_error_message.dart';
 import 'package:mydr/core/widgets/not_found_view.dart';
 import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
-import 'package:mydr/features/appointments/widgets/date_time_fields.dart';
+import 'package:mydr/core/widgets/date_time_fields.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/family/widgets/no_family_members_view.dart';
 
@@ -466,8 +466,9 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                AppointmentDateField(
+                DatePickerField(
                   initialValue: _date,
+                  helpText: AppStrings.appointmentDatePickerHelp,
                   enabled: enabled,
                   today: today,
                   firstDate: DateTime(
@@ -483,8 +484,9 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
                   onChanged: (date) => setState(() => _date = date),
                 ),
                 const SizedBox(height: 16),
-                AppointmentTimeField(
+                TimePickerField(
                   initialValue: _time,
+                  helpText: AppStrings.appointmentTimePickerHelp,
                   enabled: enabled,
                   onChanged: (time) => setState(() => _time = time),
                 ),

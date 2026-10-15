@@ -328,9 +328,109 @@ abstract final class AppStrings {
       'מחיקת השאלה נכשלה, והשאלה לא נמחקה. אפשר לנסות שוב.';
   static const String questionDeleted = 'השאלה נמחקה';
 
+  // Symptom journal
+  static const String symptomsDisclaimer =
+      'המידע מיועד לתיעוד בלבד ואינו מחליף ייעוץ רפואי';
+  static const String symptomsEmptyTitle = 'אין תיעודי תסמינים עדיין';
+  static const String symptomsEmptyMessage =
+      'תסמינים שיתועדו יופיעו כאן לפי תאריך, מהחדש לישן.';
+  static String symptomsEmptyForMember(String name) =>
+      'אין תיעודי תסמינים עבור $name';
+  static const String symptomsEmptyForMemberMessage =
+      'אפשר לבחור בן משפחה אחר או להציג את התיעודים של כל המשפחה.';
+  static const String symptomsLoadErrorTitle =
+      'לא הצלחנו לטעון את יומן התסמינים';
+  static const String symptomsLoadErrorMessage = 'בדקו שוב בעוד רגע.';
+  static const String symptomsRefreshError =
+      'לא הצלחנו לרענן את יומן התסמינים. ייתכן שהוא אינו מעודכן.';
+
+  /// The user's own rating, worded so it never reads as a medical scale.
+  static String symptomSeverity(int severity, int max) =>
+      'עוצמה לפי הדיווח: $severity מתוך $max';
+
+  // Symptom form
+  static const String editSymptomTitle = 'עריכת תיעוד תסמין';
+  static const String symptomNameLabel = 'שם התסמין';
+  static const String symptomNameRequired = 'נא להזין את שם התסמין';
+  static const String symptomNameSuggestions = 'הצעות';
+  static const List<String> commonSymptomNames = [
+    'שיעול',
+    'חום',
+    'כאב ראש',
+    'כאב בטן',
+    'כאב גרון',
+    'נזלת',
+    'בחילה',
+    'עייפות',
+  ];
+  static const String symptomDatePickerHelp = 'בחירת תאריך התיעוד';
+  static const String symptomTimePickerHelp = 'בחירת שעת התיעוד';
+  static const String symptomDateInFuture = 'לא ניתן לתעד מועד עתידי';
+  static String symptomDateTooOld(int years) =>
+      'ניתן לתעד עד $years שנים אחורה';
+  static const String severityLabel = 'עוצמה לפי התחושה';
+  static const String severityHint =
+      '1 – קלה מאוד, 5 – חזקה מאוד. דירוג אישי לתיעוד בלבד, ולא הערכה רפואית.';
+  static const String severityRequired = 'נא לבחור עוצמה';
+  static String severityOption(int level, int max) => 'עוצמה $level מתוך $max';
+  static const String symptomNotesLabel = 'תיאור והערות (לא חובה)';
+  static const String symptomNotFoundTitle = 'התיעוד לא נמצא';
+  static const String symptomNotFoundMessage =
+      'ייתכן שהתיעוד נמחק. אפשר לחזור ליומן התסמינים.';
+  static const String backToSymptoms = 'חזרה ליומן התסמינים';
+  static const String symptomDeletedWhileEditing =
+      'התיעוד נמחק בזמן העריכה, ולכן אי אפשר לשמור אותו.';
+  static const String symptomMemberDeletedWhileEditing =
+      'בן המשפחה שנבחר נמחק. נא לבחור בן משפחה.';
+  static const String symptomMissingOnSave =
+      'התיעוד כבר לא קיים, ולכן השינויים לא נשמרו.';
+  static const String noFamilyForSymptomTitle = 'כדי לתעד תסמין צריך בן משפחה';
+  static const String noFamilyForSymptomMessage =
+      'הוסיפו בן משפחה, ואחר כך תוכלו לתעד עבורו תסמינים.';
+  static String moveSymptomTitle(String newMemberName) =>
+      'להעביר את התיעוד ל$newMemberName?';
+  static String moveSymptomMessage(String symptomName, String originalName) =>
+      'התיעוד "$symptomName" ישויך לבן משפחה אחר ולא יופיע עוד אצל '
+      '$originalName.';
+
+  // Symptom summaries (home screen, profile)
+  static const String recentSymptomsTitle = 'תסמינים אחרונים';
+  static const String recentSymptomsEmptyTitle = 'אין תיעודי תסמינים';
+  static const String recentSymptomsEmptyMessage = 'תסמינים שתתעדו יופיעו כאן.';
+  static const String showAllSymptoms = 'הצגת כל התסמינים';
+  static const String memberSymptomsEmpty =
+      'עדיין לא תועדו תסמינים עבור בן משפחה זה.';
+  static const String allMemberSymptoms = 'כל התיעודים';
+
+  // Symptom track
+  static const String symptomTrackTitle = 'מעקב אחר תסמין';
+  static String symptomRecordCount(int count) =>
+      count == 1 ? 'תיעוד אחד' : '$count תיעודים';
+  static String openSymptomTrack(int count) =>
+      'מעקב · ${symptomRecordCount(count)}';
+  static String lastRecordedAt(String when) => 'תיעוד אחרון: $when';
+  static const String symptomTrackDisclaimer =
+      'כאן מוצגים יחד כל התיעודים של תסמין בשם זה, כפי שהוזנו. ייתכן שהם '
+      'שייכים לתקופות או לאירועים שונים, והאפליקציה אינה מפרשת אותם.';
+  static const String symptomTrackOrder = 'כל התיעודים, מהישן לחדש';
+  static const String addFollowUpRecord = 'הוספת תיעוד המשך';
+  static String symptomTrackEmptyTitle(String name) =>
+      'אין עוד תיעודים של "$name"';
+  static const String symptomTrackEmptyMessage =
+      'ייתכן שהתיעודים נמחקו, או ששם התסמין או בן המשפחה שלהם שונו.';
+  static const String symptomTrackMemberMissingTitle = 'בן המשפחה לא נמצא';
+  static const String symptomTrackMemberMissingMessage =
+      'ייתכן שהפרופיל נמחק יחד עם התיעודים שלו.';
+
+  // Symptom deletion
+  static const String deleteSymptom = 'מחיקת תיעוד';
+  static const String deleteSymptomTitle = 'למחוק את התיעוד?';
+  static const String deleteSymptomKeepsOthers =
+      'תיעודים אחרים של אותו תסמין לא יימחקו.';
+  static const String deleteSymptomFailed =
+      'מחיקת התיעוד נכשלה, והתיעוד לא נמחק. אפשר לנסות שוב.';
+  static const String symptomDeleted = 'התיעוד נמחק';
+
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';
-  static const String comingSoon = 'המסך יהיה זמין בקרוב';
-  static const String symptomsPlaceholder =
-      'כאן תוכלו לתעד תסמינים ולצפות בהיסטוריה.';
 }

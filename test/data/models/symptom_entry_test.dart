@@ -15,15 +15,15 @@ void main() {
   }
 
   group('severity', () {
-    test('accepts the full 1-10 range', () {
+    test('accepts the full 1-5 range', () {
       expect(buildEntry(severity: 1).severity, 1);
-      expect(buildEntry(severity: 10).severity, 10);
+      expect(buildEntry(severity: 5).severity, 5);
     });
 
-    test('rejects values outside 1-10', () {
+    test('rejects values outside 1-5', () {
       expect(() => buildEntry(severity: 0), throwsRangeError);
-      expect(() => buildEntry(severity: 11), throwsRangeError);
-      expect(() => buildEntry().copyWith(severity: 11), throwsRangeError);
+      expect(() => buildEntry(severity: 6), throwsRangeError);
+      expect(() => buildEntry().copyWith(severity: 6), throwsRangeError);
     });
   });
 
@@ -47,8 +47,8 @@ void main() {
 
   test('copyWith changes only the given fields', () {
     final entry = buildEntry();
-    final updated = entry.copyWith(severity: 6, notes: () => null);
-    expect(updated.severity, 6);
+    final updated = entry.copyWith(severity: 2, notes: () => null);
+    expect(updated.severity, 2);
     expect(updated.notes, isNull);
     expect(updated.id, entry.id);
     expect(updated.name, entry.name);

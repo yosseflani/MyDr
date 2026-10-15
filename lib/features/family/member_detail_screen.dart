@@ -11,6 +11,7 @@ import 'package:mydr/features/family/widgets/delete_member_dialog.dart';
 import 'package:mydr/features/family/widgets/member_avatar.dart';
 import 'package:mydr/features/family/widgets/member_not_found_view.dart';
 import 'package:mydr/features/questions/widgets/member_questions_section.dart';
+import 'package:mydr/features/symptoms/widgets/member_symptoms_section.dart';
 
 /// Profile of one family member.
 ///
@@ -165,6 +166,8 @@ class _MemberDetails extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         MemberQuestionsSection(memberId: member.id),
+        const SizedBox(height: 12),
+        MemberSymptomsSection(memberId: member.id),
         // Destructive action, kept apart from the regular actions.
         const SizedBox(height: 32),
         OutlinedButton.icon(

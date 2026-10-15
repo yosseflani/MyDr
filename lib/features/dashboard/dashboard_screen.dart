@@ -9,10 +9,19 @@ import 'package:mydr/features/dashboard/widgets/emergency_card.dart';
 import 'package:mydr/features/dashboard/widgets/family_card.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
+import 'package:mydr/features/dashboard/widgets/recent_symptoms_card.dart';
 import 'package:mydr/features/questions/doctor_questions_screen.dart';
+import 'package:mydr/features/symptoms/symptom_form_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key, this.clock = DateTime.now});
+  const DashboardScreen({
+    super.key,
+    this.onShowAllSymptoms,
+    this.clock = DateTime.now,
+  });
+
+  /// Shows the whole symptom journal (the "Symptoms" tab).
+  final VoidCallback? onShowAllSymptoms;
 
   /// Source of the current time; replaceable in tests.
   final DateTime Function() clock;
@@ -51,12 +60,17 @@ class DashboardScreen extends StatelessWidget {
                   onNewAppointment: () => Navigator.of(
                     context,
                   ).push(AppointmentFormScreen.addRoute(clock: clock)),
+                  onLogSymptom: () => Navigator.of(
+                    context,
+                  ).push(SymptomFormScreen.addRoute(clock: clock)),
                   onDoctorQuestions: () => Navigator.of(
                     context,
                   ).push(DoctorQuestionsScreen.route(clock: clock)),
                 ),
                 const SizedBox(height: 24),
                 NextAppointmentCard(clock: clock),
+                const SizedBox(height: 24),
+                RecentSymptomsCard(onShowAll: onShowAllSymptoms, clock: clock),
               ],
             );
           },

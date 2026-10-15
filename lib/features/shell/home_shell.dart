@@ -17,26 +17,30 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  static const List<_ShellTab> _tabs = [
+  static const int _symptomsTabIndex = 3;
+
+  late final List<_ShellTab> _tabs = [
     _ShellTab(
       label: AppStrings.tabHome,
       icon: Icons.home_outlined,
       selectedIcon: Icons.home,
-      screen: DashboardScreen(),
+      screen: DashboardScreen(
+        onShowAllSymptoms: () => _onTabSelected(_symptomsTabIndex),
+      ),
     ),
-    _ShellTab(
+    const _ShellTab(
       label: AppStrings.tabFamily,
       icon: Icons.people_outline,
       selectedIcon: Icons.people,
       screen: FamilyScreen(),
     ),
-    _ShellTab(
+    const _ShellTab(
       label: AppStrings.tabAppointments,
       icon: Icons.event_outlined,
       selectedIcon: Icons.event,
       screen: AppointmentsScreen(),
     ),
-    _ShellTab(
+    const _ShellTab(
       label: AppStrings.tabSymptoms,
       icon: Icons.monitor_heart_outlined,
       selectedIcon: Icons.monitor_heart,

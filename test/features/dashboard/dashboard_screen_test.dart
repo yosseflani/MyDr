@@ -7,6 +7,8 @@ import 'package:mydr/features/dashboard/dashboard_screen.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:mydr/features/questions/doctor_questions_screen.dart';
+import 'package:mydr/features/symptoms/symptom_form_screen.dart';
+import 'package:mydr/features/dashboard/widgets/recent_symptoms_card.dart';
 
 import '../../helpers/pump_app.dart';
 
@@ -20,6 +22,7 @@ void main() {
     expect(find.text(AppStrings.familyCardTitle), findsOneWidget);
     expect(find.text(AppStrings.quickActionsTitle), findsOneWidget);
     expect(find.text(AppStrings.nextAppointmentTitle), findsOneWidget);
+    expect(find.text(AppStrings.recentSymptomsTitle), findsOneWidget);
   });
 
   testWidgets('emergency card keeps the 101 number and the disclaimer', (
@@ -34,7 +37,7 @@ void main() {
   group('quick actions', () {
     Finder tile(String label) => find.widgetWithText(QuickActionTile, label);
 
-    testWidgets('"log a symptom" is still shown as unavailable', (
+    testWidgets('"log a symptom" opens the symptom form for a new record', (
       tester,
     ) async {
       tester.setScreenSize(const Size(400, 1600));
@@ -42,14 +45,16 @@ void main() {
       final symptoms = tile(AppStrings.actionLogSymptom);
 
       expect(find.byType(QuickActionTile), findsNWidgets(3));
-      expect(
-        find.descendant(of: symptoms, matching: find.byType(ComingSoonBadge)),
-        findsOneWidget,
+      expect(find.byType(ComingSoonBadge), findsNothing);
+
+      await tester.tap(symptoms);
+      await tester.pumpAndSettle();
+
+      final form = tester.widget<SymptomFormScreen>(
+        find.byType(SymptomFormScreen),
       );
-      expect(
-        find.descendant(of: symptoms, matching: find.byType(InkWell)),
-        findsNothing,
-      );
+      expect(form.entryId, isNull);
+      expect(form.initialMemberId, isNull);
     });
 
     testWidgets('"questions for the doctor" opens all questions, and back '
@@ -119,14 +124,14 @@ void main() {
 
       await tester.pumpApp(const DashboardScreen());
       await tester.scrollUntilVisible(
-        find.byType(NextAppointmentCard),
+        find.byType(RecentSymptomsCard),
         300,
         scrollable: find.byType(Scrollable),
       );
 
       // Any RenderFlex overflow would be reported as a test failure.
       expect(tester.takeException(), isNull);
-      expect(find.byType(NextAppointmentCard), findsOneWidget);
+      expect(find.byType(RecentSymptomsCard), findsOneWidget);
     });
   }
 }

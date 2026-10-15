@@ -3,17 +3,22 @@ import 'package:mydr/core/l10n/strings.dart';
 
 /// Required date field that opens a date picker limited to
 /// [firstDate]–[lastDate], opening on [today] when nothing is chosen yet.
-class AppointmentDateField extends FormField<DateTime> {
-  AppointmentDateField({
+///
+/// [validator] adds checks of its own once a date is chosen.
+class DatePickerField extends FormField<DateTime> {
+  DatePickerField({
     super.key,
     super.initialValue,
     required DateTime firstDate,
     required DateTime lastDate,
     required DateTime today,
+    required String helpText,
     required ValueChanged<DateTime> onChanged,
+    FormFieldValidator<DateTime>? validator,
     super.enabled,
   }) : super(
-         validator: (value) => value == null ? AppStrings.dateRequired : null,
+         validator: (value) =>
+             value == null ? AppStrings.dateRequired : validator?.call(value),
          builder: (field) {
            final context = field.context;
            final value = field.value;
@@ -35,7 +40,7 @@ class AppointmentDateField extends FormField<DateTime> {
                firstDate: first,
                lastDate: last,
                initialDate: value ?? fallback,
-               helpText: AppStrings.appointmentDatePickerHelp,
+               helpText: helpText,
              );
              if (picked == null) return;
              field.didChange(picked);
@@ -56,14 +61,19 @@ class AppointmentDateField extends FormField<DateTime> {
 }
 
 /// Required time field that opens a 24-hour time picker.
-class AppointmentTimeField extends FormField<TimeOfDay> {
-  AppointmentTimeField({
+///
+/// [validator] adds checks of its own once a time is chosen.
+class TimePickerField extends FormField<TimeOfDay> {
+  TimePickerField({
     super.key,
     super.initialValue,
+    required String helpText,
     required ValueChanged<TimeOfDay> onChanged,
+    FormFieldValidator<TimeOfDay>? validator,
     super.enabled,
   }) : super(
-         validator: (value) => value == null ? AppStrings.timeRequired : null,
+         validator: (value) =>
+             value == null ? AppStrings.timeRequired : validator?.call(value),
          builder: (field) {
            final context = field.context;
            final value = field.value;
@@ -72,7 +82,7 @@ class AppointmentTimeField extends FormField<TimeOfDay> {
              final picked = await showTimePicker(
                context: context,
                initialTime: value ?? const TimeOfDay(hour: 9, minute: 0),
-               helpText: AppStrings.appointmentTimePickerHelp,
+               helpText: helpText,
                builder: (context, child) => MediaQuery(
                  data: MediaQuery.of(
                    context,

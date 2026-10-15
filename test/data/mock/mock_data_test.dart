@@ -48,4 +48,19 @@ void main() {
     expect(symptoms.where((s) => s.isOngoing), isNotEmpty);
     expect(symptoms.where((s) => !s.isOngoing), isNotEmpty);
   });
+
+  test('one symptom is recorded several times, to show its progress', () {
+    final counts = <String, int>{};
+    for (final s in symptoms) {
+      final key = '${s.memberId}/${s.name}';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    expect(counts.values.any((count) => count >= 2), isTrue);
+  });
+
+  test('symptom dates are in the past', () {
+    for (final s in symptoms) {
+      expect(s.startedAt.isAfter(now), isFalse);
+    }
+  });
 }

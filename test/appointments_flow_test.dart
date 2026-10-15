@@ -5,7 +5,7 @@ import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/features/appointments/appointment_detail_screen.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
-import 'package:mydr/features/appointments/widgets/date_time_fields.dart';
+import 'package:mydr/core/widgets/date_time_fields.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:mydr/features/family/widgets/member_card.dart';
@@ -51,7 +51,7 @@ void main() {
       'ד״ר חדש',
     );
     // The 15th of next month: always in the future, whatever today is.
-    await tester.tap(find.byType(AppointmentDateField));
+    await tester.tap(find.byType(DatePickerField));
     await tester.pumpAndSettle();
     final localizations = MaterialLocalizations.of(
       tester.element(find.byType(DatePickerDialog)),
@@ -68,7 +68,7 @@ void main() {
     );
     await tester.tap(find.text(localizations.okButtonLabel));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(AppointmentTimeField));
+    await tester.tap(find.byType(TimePickerField));
     await tester.pumpAndSettle();
     await tester.tap(find.text(localizations.okButtonLabel));
     await tester.pumpAndSettle();

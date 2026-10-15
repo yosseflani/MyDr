@@ -8,19 +8,21 @@ import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
+import 'package:mydr/features/symptoms/symptom_controller.dart';
 
 extension PumpApp on WidgetTester {
   /// Pumps [child] with the same theme, Hebrew locale, RTL setup and
   /// [AppScope] as the app. Uses fresh empty repositories unless
   /// [dependencies] is given, and controllers built on them unless
-  /// [familyController], [appointmentController] or
-  /// [doctorQuestionController] is given.
+  /// [familyController], [appointmentController],
+  /// [doctorQuestionController] or [symptomController] is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
     FamilyController? familyController,
     AppointmentController? appointmentController,
     DoctorQuestionController? doctorQuestionController,
+    SymptomController? symptomController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -46,6 +48,15 @@ extension PumpApp on WidgetTester {
     if (doctorQuestionController == null) {
       addTearDown(resolvedQuestionController.dispose);
     }
+    final resolvedSymptomController =
+        symptomController ??
+        SymptomController(
+          dependencies: resolvedDependencies,
+          familyController: resolvedController,
+        );
+    if (symptomController == null) {
+      addTearDown(resolvedSymptomController.dispose);
+    }
 
     return pumpWidget(
       AppScope(
@@ -53,6 +64,7 @@ extension PumpApp on WidgetTester {
         familyController: resolvedController,
         appointmentController: resolvedAppointmentController,
         doctorQuestionController: resolvedQuestionController,
+        symptomController: resolvedSymptomController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

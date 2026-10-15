@@ -13,7 +13,7 @@ import 'package:mydr/features/appointments/appointment_detail_screen.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/appointments/appointments_screen.dart';
 import 'package:mydr/features/appointments/widgets/appointment_card.dart';
-import 'package:mydr/features/appointments/widgets/date_time_fields.dart';
+import 'package:mydr/core/widgets/date_time_fields.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/family/member_form_screen.dart';
 
@@ -143,7 +143,7 @@ void main() {
 
   /// Picks [day] of the month the picker opens on.
   Future<void> pickDay(WidgetTester tester, int day) async {
-    await tester.tap(find.byType(AppointmentDateField));
+    await tester.tap(find.byType(DatePickerField));
     await tester.pumpAndSettle();
     await tester.tap(
       find
@@ -165,7 +165,7 @@ void main() {
 
   /// Accepts the time picker's initial time (9:00 for a new appointment).
   Future<void> pickDefaultTime(WidgetTester tester) async {
-    await tester.tap(find.byType(AppointmentTimeField));
+    await tester.tap(find.byType(TimePickerField));
     await tester.pumpAndSettle();
     await tapOk(tester, TimePickerDialog);
   }
@@ -331,7 +331,7 @@ void main() {
       await setUpWith();
       await openAddForm(tester);
 
-      await tester.tap(find.byType(AppointmentDateField));
+      await tester.tap(find.byType(DatePickerField));
       await tester.pumpAndSettle();
 
       final picker = tester.widget<DatePickerDialog>(
@@ -363,7 +363,7 @@ void main() {
       await setUpWith();
       await openAddForm(tester);
 
-      await tester.tap(find.byType(AppointmentTimeField));
+      await tester.tap(find.byType(TimePickerField));
       await tester.pumpAndSettle();
 
       final pickerContext = tester.element(find.byType(TimePickerDialog));
