@@ -18,15 +18,27 @@ class AssetFirstAidRepository implements FirstAidRepository {
     this.assetPath = hebrewContentPath,
     this.approvals = FirstAidApprovals.trusted,
     this.clock = DateTime.now,
+    this.mode = FirstAidContentMode.published,
   });
 
+  /// The drafts awaiting professional review, for the developer review
+  /// preview only.
+  const AssetFirstAidRepository.review({
+    this.bundle,
+    this.assetPath = hebrewDraftPath,
+    this.clock = DateTime.now,
+  }) : approvals = const [],
+       mode = FirstAidContentMode.review;
+
   static const String hebrewContentPath = 'assets/first_aid/he.json';
+  static const String hebrewDraftPath = 'assets/first_aid/review/he.draft.json';
 
   /// Defaults to the app's root bundle.
   final AssetBundle? bundle;
   final String assetPath;
   final List<ContentApproval> approvals;
   final DateTime Function() clock;
+  final FirstAidContentMode mode;
 
   @override
   Future<FirstAidContentPack> load() async {
@@ -42,6 +54,7 @@ class AssetFirstAidRepository implements FirstAidRepository {
     return FirstAidContentParser(
       approvals: approvals,
       clock: clock,
+      mode: mode,
     ).parse(text);
   }
 }

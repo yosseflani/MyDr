@@ -1,15 +1,24 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mydr/data/first_aid/content_approvals.dart';
 import 'package:mydr/data/first_aid/first_aid_content_parser.dart';
 import 'package:mydr/data/models/first_aid_content.dart';
 
-/// Test content is placeholder text only; it never contains real medical
-/// instructions.
+/// Test content is synthetic placeholder text only; it never contains real
+/// medical instructions, and every approval here is a test approval of
+/// that placeholder content.
 void main() {
   final today = DateTime(2026, 10, 15, 12);
+
+  Map<String, Object?> source(String id) => {
+    'id': id,
+    'publisher': 'מפרסם בדיקה',
+    'title': 'מסמך בדיקה $id',
+    'url': 'https://example.org/$id',
+    'published': '2025-10',
+    'accessedOn': '2026-10-01',
+  };
 
   Map<String, Object?> pendingTopic(String id) => {
     'id': id,
@@ -19,41 +28,62 @@ void main() {
     'summary': 'תיאור בדיקה',
   };
 
-  Map<String, Object?> verifiedTopic(String id) => {
+  Map<String, Object?> variant(String id) => {
     'id': id,
-    'kind': 'emergency',
-    'status': 'verified',
-    'title': 'נושא $id',
-    'summary': 'תיאור בדיקה',
-    'callAdvice': 'טקסט הפניה לבדיקה',
+    'label': 'מצב בדיקה $id',
+    'appliesTo': 'קבוצת בדיקה',
     'steps': [
       {'order': 1, 'text': 'שלב בדיקה א'},
       {'order': 2, 'text': 'שלב בדיקה ב', 'note': 'הערת בדיקה'},
     ],
-    'warnings': ['אזהרת בדיקה'],
-    'source': {
-      'publisher': 'מקור בדיקה',
-      'title': 'מסמך בדיקה',
-      'url': 'https://example.org/test',
-    },
-    'verification': {'verifiedAt': '2026-10-01', 'verifiedBy': 'בודק/ת בדיקה'},
+    'doNot': ['איסור בדיקה'],
   };
 
+  Map<String, Object?> contentTopic(String id, String status) => {
+    'id': id,
+    'kind': 'emergency',
+    'status': status,
+    'title': 'נושא $id',
+    'summary': 'תיאור בדיקה',
+    'overview': 'הסבר בדיקה',
+    'recognize': ['סימן בדיקה'],
+    'callNow': ['הפניית בדיקה'],
+    'variants': [variant('first'), variant('second')],
+    'warnings': ['אזהרת בדיקה'],
+    'afterCare': ['המשך בדיקה'],
+    'sourceIds': ['s1'],
+  };
+
+  Map<String, Object?> verifiedTopic(String id) => contentTopic(id, 'verified')
+    ..['verification'] = {
+      'verifiedAt': '2026-10-01',
+      'verifiedBy': 'סוקר/ת בדיקה',
+    };
+
+  Map<String, Object?> draftTopic(String id) =>
+      contentTopic(id, 'draft')..['reviewNotes'] = ['שאלת בדיקה לסוקר'];
+
   Map<String, Object?> pack(List<Map<String, Object?>> topics) => {
-    'schemaVersion': 1,
+    'schemaVersion': 2,
     'contentVersion': 3,
     'locale': 'he',
     'publishedAt': '2026-10-15',
+    'sources': [source('s1'), source('s2')],
     'topics': topics,
   };
 
   FirstAidContentPack parse(
     Object? json, {
     List<ContentApproval> approvals = const [],
+    FirstAidContentMode mode = FirstAidContentMode.published,
   }) => FirstAidContentParser(
     approvals: approvals,
     clock: () => today,
+    mode: mode,
   ).parse(json is String ? json : jsonEncode(json));
+
+  FirstAidContentPack review(Object? json) =>
+      parse(json, mode: FirstAidContentMode.review);
 
   Matcher throwsContentError(FirstAidContentError error) => throwsA(
     isA<FirstAidContentException>().having((e) => e.error, 'error', error),
@@ -67,15 +97,19 @@ void main() {
     topicId: id,
     locale: locale,
     contentSha256: fingerprint,
-    approvedBy: 'בודק/ת בדיקה',
+    approvedBy: 'סוקר/ת בדיקה',
     approvedOn: '2026-10-02',
   );
+
+  /// The fingerprint an approval of [topic] would need.
+  String fingerprintOf(Map<String, Object?> topic) =>
+      parse(pack([topic])).unapprovedFingerprints[topic['id']]!;
 
   group('valid content', () {
     test('reads the pack and pending topics', () {
       final result = parse(pack([pendingTopic('a'), pendingTopic('b')]));
 
-      expect(result.schemaVersion, 1);
+      expect(result.schemaVersion, 2);
       expect(result.contentVersion, 3);
       expect(result.locale, 'he');
       expect(result.publishedAt, DateTime.utc(2026, 10, 15));
@@ -83,59 +117,17 @@ void main() {
       final topic = result.topicById('a')!;
       expect(topic.status, ContentStatus.pending);
       expect(topic.kind, FirstAidTopicKind.emergency);
-      expect(topic.steps, isEmpty);
-      expect(topic.warnings, isEmpty);
-      expect(topic.callAdvice, isNull);
+      expect(topic.hasInstructions, isFalse);
+      expect(topic.variants, isEmpty);
+      expect(topic.sources, isEmpty);
+      expect(topic.lastChecked, isNull);
       expect(result.unapprovedFingerprints, isEmpty);
       expect(result.topicById('missing'), isNull);
     });
 
-    test('the bundled Hebrew file: seven pending topics, no instructions', () {
-      final file = File('assets/first_aid/he.json').readAsStringSync();
-      final result = FirstAidContentParser(clock: () => today).parse(file);
-
-      expect(result.locale, 'he');
-      expect(
-        [for (final t in result.topics) t.id],
-        [
-          'cpr',
-          'choking',
-          'bleeding',
-          'burns',
-          'unconsciousness',
-          'seizures',
-          'severe_allergic_reaction',
-        ],
-      );
-      expect(
-        [for (final t in result.topics) t.title],
-        [
-          'החייאה',
-          'חנק',
-          'דימום',
-          'כוויות',
-          'איבוד הכרה',
-          'פרכוסים',
-          'תגובה אלרגית חמורה',
-        ],
-      );
-      for (final topic in result.topics) {
-        expect(topic.status, ContentStatus.pending, reason: topic.id);
-        expect(topic.steps, isEmpty, reason: topic.id);
-        expect(topic.warnings, isEmpty, reason: topic.id);
-        expect(topic.callAdvice, isNull, reason: topic.id);
-      }
-      expect(result.unapprovedFingerprints, isEmpty);
-    });
-
-    test("the bundled descriptions don't repeat the in-preparation notice", () {
-      final file = File('assets/first_aid/he.json').readAsStringSync();
-      final result = FirstAidContentParser(clock: () => today).parse(file);
-
-      for (final topic in result.topics) {
-        expect(topic.summary, isNot(contains('בהכנה')), reason: topic.id);
-        expect(topic.summary, contains(topic.title), reason: topic.id);
-      }
+    test('sources are optional for a pack of pending topics', () {
+      final result = parse(pack([pendingTopic('a')])..remove('sources'));
+      expect(result.topics.single.isVerified, isFalse);
     });
 
     test('the shipped app trusts no approvals yet', () {
@@ -146,7 +138,7 @@ void main() {
   group('rejects', () {
     test('text that is not JSON', () {
       expect(
-        () => parse('{"schemaVersion": 1,'),
+        () => parse('{"schemaVersion": 2,'),
         throwsContentError(FirstAidContentError.malformed),
       );
     });
@@ -160,26 +152,32 @@ void main() {
         () => parse(pack([])..['topics'] = ['cpr']),
         throwsContentError(FirstAidContentError.malformed),
       );
+      expect(
+        () => parse(pack([pendingTopic('a')])..['sources'] = ['s1']),
+        throwsContentError(FirstAidContentError.malformed),
+      );
     });
 
     test('an unsupported or missing schema version', () {
-      expect(
-        () => parse(pack([pendingTopic('a')])..['schemaVersion'] = 2),
-        throwsContentError(FirstAidContentError.unsupportedSchema),
-      );
+      for (final version in [1, 3]) {
+        expect(
+          () => parse(pack([pendingTopic('a')])..['schemaVersion'] = version),
+          throwsContentError(FirstAidContentError.unsupportedSchema),
+        );
+      }
       expect(
         () => parse(pack([pendingTopic('a')])..remove('schemaVersion')),
         throwsContentError(FirstAidContentError.missingField),
       );
       expect(
-        () => parse(pack([pendingTopic('a')])..['schemaVersion'] = '1'),
+        () => parse(pack([pendingTopic('a')])..['schemaVersion'] = '2'),
         throwsContentError(FirstAidContentError.invalidValue),
       );
     });
 
-    test('a newer schema even if its other fields look broken', () {
+    test('another schema even if its other fields look broken', () {
       expect(
-        () => parse({'schemaVersion': 2, 'something': 'else'}),
+        () => parse({'schemaVersion': 3, 'something': 'else'}),
         throwsContentError(FirstAidContentError.unsupportedSchema),
       );
     });
@@ -197,6 +195,25 @@ void main() {
       test('a topic without $field', () {
         expect(
           () => parse(pack([pendingTopic('a')..remove(field)])),
+          throwsContentError(FirstAidContentError.missingField),
+        );
+      });
+    }
+
+    for (final field in [
+      'id',
+      'publisher',
+      'title',
+      'url',
+      'published',
+      'accessedOn',
+    ]) {
+      test('a source without $field', () {
+        expect(
+          () => parse(
+            pack([pendingTopic('a')])
+              ..['sources'] = [source('s1')..remove(field)],
+          ),
           throwsContentError(FirstAidContentError.missingField),
         );
       });
@@ -220,17 +237,35 @@ void main() {
       'a non-text summary': () => pack([pendingTopic('a')..['summary'] = 5]),
       'steps out of order': () => pack([
         verifiedTopic('a')
-          ..['steps'] = [
-            {'order': 2, 'text': 'שלב בדיקה'},
+          ..['variants'] = [
+            variant('v')
+              ..['steps'] = [
+                {'order': 2, 'text': 'שלב בדיקה'},
+              ],
+          ],
+      ]),
+      'a variant without steps': () => pack([
+        verifiedTopic('a')..['variants'] = [variant('v')..['steps'] = []],
+      ]),
+      'a blank do-not item': () => pack([
+        verifiedTopic('a')
+          ..['variants'] = [
+            variant('v')..['doNot'] = ['  '],
           ],
       ]),
       'a verification date in the future': () => pack([
         verifiedTopic('a')
           ..['verification'] = {
             'verifiedAt': '2026-10-16',
-            'verifiedBy': 'בודק/ת בדיקה',
+            'verifiedBy': 'סוקר/ת בדיקה',
           },
       ]),
+      'a source checked in the future': () =>
+          pack([pendingTopic('a')])
+            ..['sources'] = [source('s1')..['accessedOn'] = '2026-10-16'],
+      'a source publication date in another format': () =>
+          pack([pendingTopic('a')])
+            ..['sources'] = [source('s1')..['published'] = 'October 2025'],
     };
     invalidValues.forEach((name, build) {
       test(name, () {
@@ -240,6 +275,22 @@ void main() {
         );
       });
     });
+
+    for (final url in [
+      'http://example.org/test',
+      'example.org/test',
+      'https://',
+    ]) {
+      test('a source link that is not https: "$url"', () {
+        expect(
+          () => parse(
+            pack([pendingTopic('a')])
+              ..['sources'] = [source('s1')..['url'] = url],
+          ),
+          throwsContentError(FirstAidContentError.invalidValue),
+        );
+      });
+    }
 
     test('fields the schema does not define (e.g. a typo)', () {
       expect(
@@ -252,35 +303,90 @@ void main() {
       );
       expect(
         () => parse(
+          pack([pendingTopic('a')])
+            ..['sources'] = [source('s1')..['approved'] = true],
+        ),
+        throwsContentError(FirstAidContentError.unknownField),
+      );
+      expect(
+        () => parse(
           pack([
             verifiedTopic('a')
-              ..['source'] = {
-                'publisher': 'מקור',
-                'title': 'מסמך',
-                'url': 'https://example.org',
-                'approved': true,
-              },
+              ..['variants'] = [variant('v')..['approvedBy'] = 'מישהו'],
           ]),
         ),
         throwsContentError(FirstAidContentError.unknownField),
       );
-    });
-
-    test('duplicate topic ids', () {
+      // The v1 fields are gone.
       expect(
-        () => parse(pack([pendingTopic('a'), pendingTopic('a')])),
-        throwsContentError(FirstAidContentError.duplicateTopicId),
+        () => parse(pack([verifiedTopic('a')..['callAdvice'] = 'טקסט'])),
+        throwsContentError(FirstAidContentError.unknownField),
       );
     });
 
-    final pendingWithInstructions = {
-      'steps': [
-        {'order': 1, 'text': 'שלב בדיקה'},
-      ],
+    test('duplicate topic, variant or source ids', () {
+      expect(
+        () => parse(pack([pendingTopic('a'), pendingTopic('a')])),
+        throwsContentError(FirstAidContentError.duplicateId),
+      );
+      expect(
+        () => parse(
+          pack([
+            verifiedTopic('a')..['variants'] = [variant('v'), variant('v')],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.duplicateId),
+      );
+      expect(
+        () => parse(
+          pack([pendingTopic('a')])..['sources'] = [source('s1'), source('s1')],
+        ),
+        throwsContentError(FirstAidContentError.duplicateId),
+      );
+      expect(
+        () => parse(
+          pack([
+            verifiedTopic('a')..['sourceIds'] = ['s1', 's1'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.duplicateId),
+      );
+    });
+
+    test('a topic citing a source the file does not list', () {
+      expect(
+        () => parse(
+          pack([
+            verifiedTopic('a')..['sourceIds'] = ['missing'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.unknownSource),
+      );
+      expect(
+        () => review(
+          pack([
+            draftTopic('a')..['sourceIds'] = ['missing'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.unknownSource),
+      );
+    });
+
+    final pendingWithContent = <String, Object?>{
+      'overview': 'הסבר בדיקה',
+      'recognize': ['סימן בדיקה'],
+      'callNow': ['הפניית בדיקה'],
+      'variants': [variant('v')],
       'warnings': ['אזהרת בדיקה'],
-      'callAdvice': 'טקסט הפניה',
+      'afterCare': ['המשך בדיקה'],
+      'sourceIds': ['s1'],
+      'reviewNotes': ['שאלת בדיקה'],
+      'verification': {
+        'verifiedAt': '2026-10-01',
+        'verifiedBy': 'סוקר/ת בדיקה',
+      },
     };
-    pendingWithInstructions.forEach((field, value) {
+    pendingWithContent.forEach((field, value) {
       test('a pending topic with $field entered by mistake', () {
         expect(
           () => parse(pack([pendingTopic('a')..[field] = value])),
@@ -289,7 +395,7 @@ void main() {
       });
     });
 
-    for (final field in ['steps', 'source', 'verification', 'callAdvice']) {
+    for (final field in ['variants', 'sourceIds', 'callNow', 'verification']) {
       test('a topic marked verified without $field', () {
         expect(
           () => parse(pack([verifiedTopic('a')..remove(field)])),
@@ -308,28 +414,220 @@ void main() {
         throwsContentError(FirstAidContentError.missingField),
       );
     });
+  });
 
-    for (final url in [
-      'http://example.org/test',
-      'example.org/test',
-      'https://',
-    ]) {
-      test('a source link that is not https: "$url"', () {
+  group('drafts and review mode', () {
+    test('the app content rejects drafts: a draft never reaches the app', () {
+      expect(
+        () => parse(pack([pendingTopic('a'), draftTopic('b')])),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+      // Even with an approval of the same wording.
+      final draft = draftTopic('b')..remove('reviewNotes');
+      expect(
+        () => parse(
+          pack([draft]),
+          approvals: [approvalFor('b', fingerprintOf(verifiedTopic('b')))],
+        ),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    test('the app content rejects review notes on a verified topic', () {
+      expect(
+        () => parse(
+          pack([
+            verifiedTopic('a')..['reviewNotes'] = ['שאלה'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    test('the review file reads drafts with their review notes', () {
+      final result = review(pack([draftTopic('a'), pendingTopic('b')]));
+
+      final topic = result.topicById('a')!;
+      expect(topic.status, ContentStatus.draft);
+      expect(topic.isDraft, isTrue);
+      expect(topic.isVerified, isFalse);
+      expect(topic.verification, isNull);
+      expect(topic.overview, 'הסבר בדיקה');
+      expect(topic.recognize, ['סימן בדיקה']);
+      expect(topic.callNow, ['הפניית בדיקה']);
+      expect([for (final v in topic.variants) v.id], ['first', 'second']);
+      final first = topic.variants.first;
+      expect(first.label, 'מצב בדיקה first');
+      expect(first.appliesTo, 'קבוצת בדיקה');
+      expect([for (final s in first.steps) s.order], [1, 2]);
+      expect(first.steps[1].note, 'הערת בדיקה');
+      expect(first.doNot, ['איסור בדיקה']);
+      expect(topic.warnings, ['אזהרת בדיקה']);
+      expect(topic.afterCare, ['המשך בדיקה']);
+      expect(topic.sources.single.id, 's1');
+      expect(topic.sources.single.url, Uri.parse('https://example.org/s1'));
+      expect(topic.sources.single.published, '2025-10');
+      expect(topic.sources.single.accessedOn, DateTime.utc(2026, 10, 1));
+      expect(topic.lastChecked, DateTime.utc(2026, 10, 1));
+      expect(topic.reviewNotes, ['שאלת בדיקה לסוקר']);
+      expect(result.topicById('b')!.status, ContentStatus.pending);
+      expect(result.unapprovedFingerprints, isEmpty);
+    });
+
+    test('the review file can never claim an approval', () {
+      expect(
+        () => review(pack([verifiedTopic('a')])),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+      expect(
+        () => review(
+          pack([
+            draftTopic('a')
+              ..['verification'] = {
+                'verifiedAt': '2026-10-01',
+                'verifiedBy': 'סוקר/ת בדיקה',
+              },
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    test('approvals do not apply in the review file', () {
+      final topic = verifiedTopic('a');
+      final approvals = [approvalFor('a', fingerprintOf(topic))];
+      expect(
+        () => FirstAidContentParser(
+          approvals: approvals,
+          clock: () => today,
+          mode: FirstAidContentMode.review,
+        ).parse(jsonEncode(pack([topic]))),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    for (final field in ['variants', 'sourceIds', 'callNow']) {
+      test('a draft without $field', () {
         expect(
-          () => parse(
-            pack([
-              verifiedTopic('a')
-                ..['source'] = {
-                  'publisher': 'מקור בדיקה',
-                  'title': 'מסמך בדיקה',
-                  'url': url,
-                },
-            ]),
-          ),
+          () => review(pack([draftTopic('a')..remove(field)])),
           throwsContentError(FirstAidContentError.incompleteVerification),
         );
       });
     }
+
+    test('a general-information draft does not need call advice', () {
+      final result = review(
+        pack([
+          draftTopic('a')
+            ..['kind'] = 'generalInfo'
+            ..remove('callNow'),
+        ]),
+      );
+      expect(result.topics.single.isDraft, isTrue);
+    });
+  });
+
+  group('sourced content', () {
+    Map<String, Object?> sourcedTopic(String id) => contentTopic(id, 'sourced');
+
+    test('is read with all its instructions and sources, never as '
+        'verified', () {
+      final result = parse(pack([sourcedTopic('a'), pendingTopic('b')]));
+
+      final topic = result.topicById('a')!;
+      expect(topic.status, ContentStatus.sourced);
+      expect(topic.isSourced, isTrue);
+      expect(topic.isPublished, isTrue);
+      expect(topic.isVerified, isFalse);
+      expect(topic.verification, isNull);
+      expect([for (final v in topic.variants) v.id], ['first', 'second']);
+      expect(topic.callNow, ['הפניית בדיקה']);
+      expect(topic.sources.single.id, 's1');
+      expect(topic.reviewNotes, isEmpty);
+      expect(result.topicById('b')!.isPublished, isFalse);
+      expect(result.unapprovedFingerprints, isEmpty);
+    });
+
+    for (final field in ['variants', 'sourceIds', 'callNow']) {
+      test('is refused without $field: no instructions without a source', () {
+        expect(
+          () => parse(pack([sourcedTopic('a')..remove(field)])),
+          throwsContentError(FirstAidContentError.incompleteVerification),
+        );
+      });
+    }
+
+    test('is refused when it cites a source the file does not list', () {
+      expect(
+        () => parse(
+          pack([
+            sourcedTopic('a')..['sourceIds'] = ['missing'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.unknownSource),
+      );
+      expect(
+        () => parse(pack([sourcedTopic('a')])..remove('sources')),
+        throwsContentError(FirstAidContentError.unknownSource),
+      );
+    });
+
+    test('can never claim a reviewer or carry review notes', () {
+      expect(
+        () => parse(
+          pack([
+            sourcedTopic('a')
+              ..['verification'] = {
+                'verifiedAt': '2026-10-01',
+                'verifiedBy': 'סוקר/ת בדיקה',
+              },
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+      expect(
+        () => parse(
+          pack([
+            sourcedTopic('a')..['reviewNotes'] = ['שאלה'],
+          ]),
+        ),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    test('is not accepted in the review file', () {
+      expect(
+        () => review(pack([sourcedTopic('a')])),
+        throwsContentError(FirstAidContentError.wrongContentMode),
+      );
+    });
+
+    test('an approval does not turn it into verified content', () {
+      final hash = fingerprintOf(verifiedTopic('a'));
+      final result = parse(
+        pack([sourcedTopic('a')]),
+        approvals: [approvalFor('a', hash)],
+      );
+      expect(result.topicById('a')!.isVerified, isFalse);
+      expect(result.topicById('a')!.isSourced, isTrue);
+    });
+
+    test('has the same review fingerprint as the draft of the same '
+        'wording', () {
+      final sourced = parse(pack([sourcedTopic('a')])).topics.single;
+      final draft = review(pack([draftTopic('a')])).topics.single;
+      expect(
+        FirstAidContentParser.reviewFingerprint(sourced),
+        FirstAidContentParser.reviewFingerprint(draft),
+      );
+    });
+
+    test('a verified claim without approval falls back to pending, not to '
+        'sourced', () {
+      final result = parse(pack([verifiedTopic('a')]));
+      expect(result.topicById('a')!.status, ContentStatus.pending);
+      expect(result.topicById('a')!.hasInstructions, isFalse);
+    });
   });
 
   group('approval of verified content', () {
@@ -340,90 +638,181 @@ void main() {
       final topic = result.topicById('a')!;
       expect(topic.status, ContentStatus.pending);
       expect(topic.isVerified, isFalse);
-      expect(topic.steps, isEmpty);
-      expect(topic.warnings, isEmpty);
-      expect(topic.callAdvice, isNull);
+      expect(topic.hasInstructions, isFalse);
+      expect(topic.variants, isEmpty);
+      expect(topic.sources, isEmpty);
+      expect(topic.verification, isNull);
       expect(result.unapprovedFingerprints.keys, ['a']);
       expect(result.unapprovedFingerprints['a'], matches(r'^[0-9a-f]{64}$'));
     });
 
     test('a trusted approval of that exact content makes it verified', () {
-      final fingerprint = parse(
-        pack([verifiedTopic('a')]),
-      ).unapprovedFingerprints['a']!;
-
       final result = parse(
         pack([verifiedTopic('a')]),
-        approvals: [approvalFor('a', fingerprint)],
+        approvals: [approvalFor('a', fingerprintOf(verifiedTopic('a')))],
       );
 
       final topic = result.topicById('a')!;
       expect(topic.status, ContentStatus.verified);
-      expect([for (final s in topic.steps) s.order], [1, 2]);
-      expect(topic.steps[1].note, 'הערת בדיקה');
-      expect(topic.warnings, ['אזהרת בדיקה']);
-      expect(topic.callAdvice, 'טקסט הפניה לבדיקה');
-      expect(topic.source!.url, Uri.parse('https://example.org/test'));
+      expect([for (final v in topic.variants) v.id], ['first', 'second']);
+      expect(topic.variants.first.steps[1].note, 'הערת בדיקה');
+      expect(topic.callNow, ['הפניית בדיקה']);
+      expect(topic.sources.single.url, Uri.parse('https://example.org/s1'));
       expect(topic.verification!.verifiedAt, DateTime.utc(2026, 10, 1));
-      expect(topic.verification!.verifiedBy, 'בודק/ת בדיקה');
+      expect(topic.verification!.verifiedBy, 'סוקר/ת בדיקה');
+      expect(topic.reviewNotes, isEmpty);
       expect(result.unapprovedFingerprints, isEmpty);
     });
 
-    test('any change after approval voids it', () {
-      final fingerprint = parse(
+    test('the approval matches the published fingerprint of the topic', () {
+      final hash = fingerprintOf(verifiedTopic('a'));
+      final topic = parse(
         pack([verifiedTopic('a')]),
-      ).unapprovedFingerprints['a']!;
-      final approvals = [approvalFor('a', fingerprint)];
+        approvals: [approvalFor('a', hash)],
+      ).topics.single;
+      expect(FirstAidContentParser.publishedFingerprint(topic), hash);
+      // The review fingerprint leaves out the verification, so it differs.
+      expect(FirstAidContentParser.reviewFingerprint(topic), isNot(hash));
+    });
+
+    test('the review fingerprint of a draft is the same wording once it is '
+        'published, and ignores review notes', () {
+      final draft = review(pack([draftTopic('a')])).topics.single;
+      final withOtherNotes = review(
+        pack([
+          draftTopic('a')..['reviewNotes'] = ['שאלה אחרת'],
+        ]),
+      ).topics.single;
+      final published = parse(
+        pack([verifiedTopic('a')]),
+        approvals: [approvalFor('a', fingerprintOf(verifiedTopic('a')))],
+      ).topics.single;
+
+      expect(
+        FirstAidContentParser.reviewFingerprint(draft),
+        FirstAidContentParser.reviewFingerprint(published),
+      );
+      expect(
+        FirstAidContentParser.reviewFingerprint(draft),
+        FirstAidContentParser.reviewFingerprint(withOtherNotes),
+      );
+    });
+
+    test('any change after approval voids it', () {
+      final approvals = [approvalFor('a', fingerprintOf(verifiedTopic('a')))];
 
       final changes = <String, void Function(Map<String, Object?>)>{
-        'a step': (t) => t['steps'] = [
-          {'order': 1, 'text': 'שלב בדיקה א!'},
-          {'order': 2, 'text': 'שלב בדיקה ב', 'note': 'הערת בדיקה'},
+        'a step': (t) => t['variants'] = [
+          variant('first')
+            ..['steps'] = [
+              {'order': 1, 'text': 'שלב בדיקה א!'},
+              {'order': 2, 'text': 'שלב בדיקה ב', 'note': 'הערת בדיקה'},
+            ],
+          variant('second'),
         ],
+        'a step note': (t) => t['variants'] = [
+          variant('first')
+            ..['steps'] = [
+              {'order': 1, 'text': 'שלב בדיקה א'},
+              {'order': 2, 'text': 'שלב בדיקה ב'},
+            ],
+          variant('second'),
+        ],
+        'the variant order': (t) =>
+            t['variants'] = [variant('second'), variant('first')],
+        'a removed variant': (t) => t['variants'] = [variant('first')],
+        'a variant label': (t) => t['variants'] = [
+          variant('first')..['label'] = 'תווית אחרת',
+          variant('second'),
+        ],
+        'a do-not item': (t) => t['variants'] = [
+          variant('first')..['doNot'] = <String>[],
+          variant('second'),
+        ],
+        'the overview': (t) => t['overview'] = 'הסבר אחר',
+        'the call advice': (t) => t['callNow'] = ['הפניה אחרת'],
         'a warning': (t) => t['warnings'] = ['אזהרה אחרת'],
-        'the source link': (t) => t['source'] = {
-          'publisher': 'מקור בדיקה',
-          'title': 'מסמך בדיקה',
-          'url': 'https://example.org/other',
-        },
+        'the after-care': (t) => t['afterCare'] = ['המשך אחר'],
+        'the cited source': (t) => t['sourceIds'] = ['s2'],
         'the reviewer': (t) => t['verification'] = {
           'verifiedAt': '2026-10-01',
           'verifiedBy': 'מישהו אחר',
         },
+        'the verification date': (t) => t['verification'] = {
+          'verifiedAt': '2026-10-02',
+          'verifiedBy': 'סוקר/ת בדיקה',
+        },
         'the title': (t) => t['title'] = 'כותרת אחרת',
+        'the kind': (t) => t['kind'] = 'generalInfo',
       };
       changes.forEach((name, change) {
         final topic = verifiedTopic('a');
         change(topic);
         final result = parse(pack([topic]), approvals: approvals);
         expect(result.topicById('a')!.isVerified, isFalse, reason: name);
-        expect(result.topicById('a')!.steps, isEmpty, reason: name);
+        expect(result.topicById('a')!.hasInstructions, isFalse, reason: name);
+        expect(result.unapprovedFingerprints.keys, ['a'], reason: name);
       });
     });
 
+    test('a change to a cited source entry voids the approval', () {
+      final approvals = [approvalFor('a', fingerprintOf(verifiedTopic('a')))];
+      for (final change in <String, Object>{
+        'url': 'https://example.org/changed',
+        'title': 'כותרת אחרת',
+        'published': '2025-11',
+        'accessedOn': '2026-10-02',
+      }.entries) {
+        final changed = pack([verifiedTopic('a')])
+          ..['sources'] = [source('s1')..[change.key] = change.value];
+        final result = parse(changed, approvals: approvals);
+        expect(result.topicById('a')!.isVerified, isFalse, reason: change.key);
+      }
+    });
+
     test('an approval for another topic or language does not count', () {
-      final fingerprint = parse(
-        pack([verifiedTopic('a')]),
-      ).unapprovedFingerprints['a']!;
+      final fingerprint = fingerprintOf(verifiedTopic('a'));
 
       for (final approval in [
         approvalFor('b', fingerprint),
         approvalFor('a', fingerprint, locale: 'en'),
+        approvalFor('a', fingerprint.toUpperCase()),
+        approvalFor('a', fingerprint.substring(1)),
       ]) {
         final result = parse(pack([verifiedTopic('a')]), approvals: [approval]);
         expect(result.topicById('a')!.isVerified, isFalse);
       }
     });
 
+    test('an approval of the review fingerprint is not enough', () {
+      final draft = review(pack([draftTopic('a')])).topics.single;
+      final result = parse(
+        pack([verifiedTopic('a')]),
+        approvals: [
+          approvalFor('a', FirstAidContentParser.reviewFingerprint(draft)),
+        ],
+      );
+      expect(result.topicById('a')!.isVerified, isFalse);
+    });
+
+    test('approving one topic leaves the others pending', () {
+      final result = parse(
+        pack([verifiedTopic('a'), verifiedTopic('b')]),
+        approvals: [approvalFor('a', fingerprintOf(verifiedTopic('a')))],
+      );
+      expect(result.topicById('a')!.isVerified, isTrue);
+      expect(result.topicById('b')!.isVerified, isFalse);
+      expect(result.unapprovedFingerprints.keys, ['b']);
+    });
+
     test('a general-information topic does not need call advice', () {
       final topic = verifiedTopic('a')
         ..['kind'] = 'generalInfo'
-        ..remove('callAdvice');
-      final fingerprint = parse(pack([topic])).unapprovedFingerprints['a']!;
+        ..remove('callNow');
 
       final result = parse(
         pack([topic]),
-        approvals: [approvalFor('a', fingerprint)],
+        approvals: [approvalFor('a', fingerprintOf(topic))],
       );
       expect(result.topicById('a')!.isVerified, isTrue);
       expect(result.topicById('a')!.kind, FirstAidTopicKind.generalInfo);
@@ -431,6 +820,50 @@ void main() {
   });
 
   group('models', () {
+    FirstAidTopic topic(
+      ContentStatus status, {
+      List<GuideVariant>? variants,
+      List<ContentSource>? sources,
+      ContentVerification? verification,
+      List<String> reviewNotes = const [],
+      List<String> callNow = const ['הפניה'],
+    }) => FirstAidTopic(
+      id: 'a',
+      kind: FirstAidTopicKind.emergency,
+      title: 'נושא',
+      summary: 'תיאור',
+      status: status,
+      callNow: callNow,
+      variants:
+          variants ??
+          [
+            GuideVariant(
+              id: 'v',
+              label: 'מצב',
+              steps: [GuideStep(order: 1, text: 'שלב')],
+            ),
+          ],
+      sources:
+          sources ??
+          [
+            ContentSource(
+              id: 's',
+              publisher: 'מפרסם',
+              title: 'מסמך',
+              url: Uri.parse('https://example.org'),
+              published: '2025',
+              accessedOn: DateTime.utc(2026, 10, 1),
+            ),
+          ],
+      verification: verification,
+      reviewNotes: reviewNotes,
+    );
+
+    final verification = ContentVerification(
+      verifiedAt: DateTime.utc(2026, 10, 1),
+      verifiedBy: 'סוקר/ת',
+    );
+
     test('a pending topic can never hold instructions', () {
       expect(
         () => FirstAidTopic(
@@ -439,22 +872,89 @@ void main() {
           title: 'נושא',
           summary: 'תיאור',
           status: ContentStatus.pending,
-          steps: [GuideStep(order: 1, text: 'שלב')],
+          warnings: ['אזהרה'],
         ),
         throwsArgumentError,
       );
     });
 
-    test('a verified topic needs steps, a source and a verification', () {
+    test('a draft needs instructions and sources and never an approval', () {
+      expect(topic(ContentStatus.draft).isDraft, isTrue);
       expect(
-        () => FirstAidTopic(
-          id: 'a',
-          kind: FirstAidTopicKind.emergency,
-          title: 'נושא',
-          summary: 'תיאור',
-          status: ContentStatus.verified,
-          steps: [GuideStep(order: 1, text: 'שלב')],
+        () => topic(ContentStatus.draft, variants: []),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.draft, sources: []),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.draft, verification: verification),
+        throwsArgumentError,
+      );
+    });
+
+    test('a verified topic needs everything, and no review notes', () {
+      expect(
+        topic(ContentStatus.verified, verification: verification).isVerified,
+        isTrue,
+      );
+      expect(() => topic(ContentStatus.verified), throwsArgumentError);
+      expect(
+        () => topic(
+          ContentStatus.verified,
+          verification: verification,
+          reviewNotes: ['שאלה'],
         ),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(
+          ContentStatus.verified,
+          verification: verification,
+          callNow: [],
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('a sourced topic needs everything, and no approval or notes', () {
+      expect(topic(ContentStatus.sourced).isPublished, isTrue);
+      expect(topic(ContentStatus.sourced).isVerified, isFalse);
+      expect(
+        () => topic(ContentStatus.sourced, variants: []),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.sourced, sources: []),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.sourced, callNow: []),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.sourced, verification: verification),
+        throwsArgumentError,
+      );
+      expect(
+        () => topic(ContentStatus.sourced, reviewNotes: ['שאלה']),
+        throwsArgumentError,
+      );
+    });
+
+    test('a variant needs steps and a unique id', () {
+      expect(
+        () => GuideVariant(id: 'v', label: 'מצב', steps: []),
+        throwsArgumentError,
+      );
+      final v = GuideVariant(
+        id: 'v',
+        label: 'מצב',
+        steps: [GuideStep(order: 1, text: 'שלב')],
+      );
+      expect(
+        () => topic(ContentStatus.draft, variants: [v, v]),
         throwsArgumentError,
       );
     });
@@ -462,23 +962,30 @@ void main() {
     test('a source must be an https link', () {
       expect(
         () => ContentSource(
+          id: 's',
           publisher: 'מקור',
           title: 'מסמך',
           url: Uri.parse('http://example.org'),
+          published: '2025',
+          accessedOn: DateTime.utc(2026, 10, 1),
         ),
         throwsArgumentError,
       );
     });
 
     test('lists are unmodifiable', () {
-      final result = parse(pack([pendingTopic('a')]));
+      final result = review(pack([draftTopic('a')]));
+      final t = result.topics.single;
       expect(() => result.topics.clear(), throwsUnsupportedError);
-      expect(() => result.topics.first.steps.clear(), throwsUnsupportedError);
+      expect(() => t.variants.clear(), throwsUnsupportedError);
+      expect(() => t.variants.first.steps.clear(), throwsUnsupportedError);
+      expect(() => t.sources.clear(), throwsUnsupportedError);
+      expect(() => t.reviewNotes.clear(), throwsUnsupportedError);
     });
 
     test('toString never includes content', () {
-      final topic = parse(pack([pendingTopic('a')])).topics.single;
-      expect(topic.toString(), 'FirstAidTopic(a, pending)');
+      final t = review(pack([draftTopic('a')])).topics.single;
+      expect(t.toString(), 'FirstAidTopic(a, draft)');
     });
   });
 }

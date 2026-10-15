@@ -3,6 +3,7 @@ import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/app_card.dart';
 import 'package:mydr/core/widgets/section_header.dart';
 import 'package:mydr/data/emergency/emergency_numbers.dart';
+import 'package:mydr/features/emergency/first_aid_review_screen.dart';
 import 'package:mydr/features/emergency/widgets/emergency_dial_action.dart';
 import 'package:mydr/features/emergency/widgets/first_aid_library_section.dart';
 import 'package:mydr/features/emergency/widgets/medical_call_button.dart';
@@ -14,7 +15,14 @@ import 'package:mydr/features/emergency/widgets/medical_call_button.dart';
 /// are always there, whatever the state of the library below them. No
 /// demo-data notice: the numbers are real.
 class EmergencyScreen extends StatelessWidget {
-  const EmergencyScreen({super.key});
+  const EmergencyScreen({
+    super.key,
+    this.showReviewEntry = FirstAidReview.enabled,
+  });
+
+  /// Whether to link to the developer review preview of first-aid drafts.
+  /// Off in every regular build (see [FirstAidReview.enabled]).
+  final bool showReviewEntry;
 
   static const double _maxContentWidth = 600;
 
@@ -57,6 +65,10 @@ class EmergencyScreen extends StatelessWidget {
               const SizedBox(height: 24),
               const SectionHeader(title: AppStrings.firstAidSectionTitle),
               const FirstAidLibrarySection(),
+              if (showReviewEntry) ...[
+                const SizedBox(height: 12),
+                const _ReviewEntry(),
+              ],
               const SizedBox(height: 24),
               Text(AppStrings.emergencyDisclaimer, style: secondary),
             ],
@@ -81,6 +93,7 @@ class _NumberTile extends StatelessWidget {
       number: number,
       builder: (context, onPressed) => Semantics(
         button: true,
+        onTap: onPressed,
         label: AppStrings.callServiceLabel(name, number.number),
         excludeSemantics: true,
         child: AppCard(
@@ -124,6 +137,31 @@ class _NumberTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ReviewEntry extends StatelessWidget {
+  const _ReviewEntry();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppCard(
+      color: colorScheme.tertiaryContainer,
+      padding: EdgeInsets.zero,
+      child: ListTile(
+        key: const ValueKey('first-aid-review-entry'),
+        leading: Icon(
+          Icons.rate_review_outlined,
+          color: colorScheme.onTertiaryContainer,
+        ),
+        title: const Text(AppStrings.firstAidReviewEntryTitle),
+        subtitle: const Text(AppStrings.firstAidReviewEntrySubtitle),
+        textColor: colorScheme.onTertiaryContainer,
+        onTap: () => Navigator.of(context).push(FirstAidReviewScreen.route()),
       ),
     );
   }

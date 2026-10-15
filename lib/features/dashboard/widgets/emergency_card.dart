@@ -53,7 +53,7 @@ class EmergencyCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  AppStrings.emergencyNoInstructions,
+                  AppStrings.emergencyGuidanceNotice,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

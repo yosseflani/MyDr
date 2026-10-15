@@ -10,6 +10,8 @@ String firstAidKindLabel(FirstAidTopicKind kind) => switch (kind) {
 
 String contentStatusLabel(ContentStatus status) => switch (status) {
   ContentStatus.pending => AppStrings.contentStatusPending,
+  ContentStatus.draft => AppStrings.contentStatusDraft,
+  ContentStatus.sourced => AppStrings.contentStatusSourced,
   ContentStatus.verified => AppStrings.contentStatusVerified,
 };
 
@@ -72,13 +74,24 @@ class FirstAidTopicLabels extends StatelessWidget {
         ),
         _Label(
           text: contentStatusLabel(topic.status),
-          icon: topic.isVerified ? Icons.verified_outlined : Icons.schedule,
-          background: topic.isVerified
-              ? colorScheme.primaryContainer
-              : colorScheme.surfaceContainerHigh,
-          foreground: topic.isVerified
-              ? colorScheme.onPrimaryContainer
-              : colorScheme.onSurfaceVariant,
+          icon: switch (topic.status) {
+            ContentStatus.verified => Icons.verified_outlined,
+            ContentStatus.draft => Icons.edit_note,
+            ContentStatus.sourced => Icons.menu_book_outlined,
+            ContentStatus.pending => Icons.schedule,
+          },
+          background: switch (topic.status) {
+            ContentStatus.verified => colorScheme.primaryContainer,
+            ContentStatus.draft => colorScheme.tertiaryContainer,
+            ContentStatus.sourced => colorScheme.secondaryContainer,
+            ContentStatus.pending => colorScheme.surfaceContainerHigh,
+          },
+          foreground: switch (topic.status) {
+            ContentStatus.verified => colorScheme.onPrimaryContainer,
+            ContentStatus.draft => colorScheme.onTertiaryContainer,
+            ContentStatus.sourced => colorScheme.onSecondaryContainer,
+            ContentStatus.pending => colorScheme.onSurfaceVariant,
+          },
         ),
       ],
     );
@@ -146,6 +159,7 @@ class FirstAidTopicTile extends StatelessWidget {
 
     return Semantics(
       button: true,
+      onTap: onTap,
       label: AppStrings.firstAidTopicLabel(
         topic.title,
         firstAidKindLabel(topic.kind),

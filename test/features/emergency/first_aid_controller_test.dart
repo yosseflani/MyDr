@@ -22,7 +22,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   FirstAidContentPack packWith(List<String> ids) => FirstAidContentPack(
-    schemaVersion: 1,
+    schemaVersion: 2,
     contentVersion: 1,
     locale: 'he',
     publishedAt: DateTime.utc(2026, 10, 15),
@@ -44,6 +44,50 @@ void main() {
 
       expect(pack.topics, hasLength(7));
       expect(pack.topics.every((t) => !t.isVerified), isTrue);
+      expect(pack.topics.every((t) => !t.isDraft), isTrue);
+    });
+
+    test('the review repository loads the bundled drafts, never as '
+        'verified', () async {
+      final pack = await const AssetFirstAidRepository.review().load();
+
+      expect(pack.topics, hasLength(7));
+      expect(pack.topics.every((t) => t.isDraft), isTrue);
+      expect(pack.topics.every((t) => !t.isVerified), isTrue);
+    });
+
+    test('the regular repository refuses the draft file', () async {
+      const repository = AssetFirstAidRepository(
+        assetPath: AssetFirstAidRepository.hebrewDraftPath,
+      );
+
+      await expectLater(
+        repository.load(),
+        throwsA(
+          isA<FirstAidContentException>().having(
+            (e) => e.error,
+            'error',
+            FirstAidContentError.wrongContentMode,
+          ),
+        ),
+      );
+    });
+
+    test('a missing draft file is reported as unavailable', () async {
+      final repository = AssetFirstAidRepository.review(
+        bundle: FakeAssetBundle(null),
+      );
+
+      await expectLater(
+        repository.load(),
+        throwsA(
+          isA<FirstAidContentException>().having(
+            (e) => e.error,
+            'error',
+            FirstAidContentError.unavailable,
+          ),
+        ),
+      );
     });
 
     test('a missing file is reported as unavailable', () async {
@@ -105,7 +149,7 @@ void main() {
     test('reports why a load failed', () async {
       repository.error = const FirstAidContentException(
         FirstAidContentError.unsupportedSchema,
-        'schemaVersion 2',
+        'schemaVersion 3',
       );
       await controller.load();
 

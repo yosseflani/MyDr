@@ -31,7 +31,7 @@ void main() {
     await tester.pumpApp(const DashboardScreen());
 
     expect(find.text(AppStrings.emergencyCallLine), findsOneWidget);
-    expect(find.text(AppStrings.emergencyNoInstructions), findsOneWidget);
+    expect(find.text(AppStrings.emergencyGuidanceNotice), findsOneWidget);
   });
 
   group('quick actions', () {

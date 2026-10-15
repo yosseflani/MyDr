@@ -30,7 +30,14 @@ class FakeFirstAidRepository implements FirstAidRepository {
 /// The bundled Hebrew content, read from disk and checked by the real parser.
 FirstAidContentPack bundledHebrewContent() => FirstAidContentParser(
   clock: () => DateTime(2026, 10, 15),
-).parse(File('assets/first_aid/he.json').readAsStringSync());
+).parse(File(AssetFirstAidRepository.hebrewContentPath).readAsStringSync());
+
+/// The bundled Hebrew drafts, read from disk by the real parser in review
+/// mode.
+FirstAidContentPack bundledHebrewDrafts() => FirstAidContentParser(
+  clock: () => DateTime(2026, 10, 15),
+  mode: FirstAidContentMode.review,
+).parse(File(AssetFirstAidRepository.hebrewDraftPath).readAsStringSync());
 
 /// Serves [content] as every asset, or fails to load if it is null.
 class FakeAssetBundle extends CachingAssetBundle {

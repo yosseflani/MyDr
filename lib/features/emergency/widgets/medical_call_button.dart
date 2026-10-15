@@ -24,6 +24,8 @@ class MedicalCallButton extends StatelessWidget {
       number: number,
       builder: (context, onPressed) => Semantics(
         button: true,
+        // The child's own semantics, with its tap action, are excluded.
+        onTap: onPressed,
         label: AppStrings.callServiceLabel(
           AppStrings.serviceMedical,
           number.number,

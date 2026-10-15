@@ -73,6 +73,7 @@ flutter:
   # First-aid content, kept apart from the code that shows it.
   assets:
     - assets/first_aid/
+    - assets/first_aid/review/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

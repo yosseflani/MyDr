@@ -121,8 +121,11 @@ void main() {
 
     await tapAndSettle(find.text('תגובה אלרגית חמורה'));
     expect(find.byType(FirstAidTopicScreen), findsOneWidget);
-    expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
-    expect(find.text(AppStrings.firstAidStepsTitle), findsNothing);
+    // Sourced guidance, under the notice that it is not approved.
+    expect(find.text(AppStrings.firstAidSourcedNoticeTitle), findsOneWidget);
+    expect(find.text(AppStrings.firstAidPendingTitle), findsNothing);
+    expect(find.text(AppStrings.firstAidCallNowTitle), findsOneWidget);
+    expect(find.text(AppStrings.contentStatusVerified), findsNothing);
 
     // The call bar on the topic dials 101 at once.
     await tapAndSettle(
@@ -140,8 +143,9 @@ void main() {
   });
 
   for (final (name, content) in [
-    ('a broken content file', '{"schemaVersion": 1, "topics": ['),
-    ('an unsupported schema', '{"schemaVersion": 2, "topics": []}'),
+    ('a broken content file', '{"schemaVersion": 2, "topics": ['),
+    ('an unsupported schema', '{"schemaVersion": 3, "topics": []}'),
+    ('a content file of the old schema', '{"schemaVersion": 1, "topics": []}'),
     ('a missing content file', null),
   ]) {
     testWidgets('$name does not disturb the emergency center', (tester) async {

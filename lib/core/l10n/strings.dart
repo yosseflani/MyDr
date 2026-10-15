@@ -49,9 +49,9 @@ abstract final class AppStrings {
   // Emergency card
   static const String emergencyTitle = 'עזרה ראשונה וחירום';
   static const String emergencyCallLine = 'במצב חירום חייגו 101 (מד״א)';
-  static const String emergencyNoInstructions =
-      'האפליקציה אינה כוללת עדיין הנחיות רפואיות. מידע לעזרה ראשונה יתווסף '
-      'בהמשך ממקורות מאומתים בלבד.';
+  static const String emergencyGuidanceNotice =
+      'הנחיות העזרה הראשונה מבוססות על מקורות רפואיים, וטרם אושרו מקצועית '
+      'עבור MyDr. הן אינן תחליף לחיוג 101.';
   static const String callMedicalEmergency = 'חיוג ל־101';
   static const String openEmergencyCenter = 'מרכז החירום';
 
@@ -81,21 +81,57 @@ abstract final class AppStrings {
   static const String topicKindGeneralInfo = 'מידע כללי';
   static const String contentStatusPending = 'בהכנה';
   static const String contentStatusVerified = 'מאומת';
+  static const String contentStatusDraft = 'טיוטה, לא מאושרת';
+  static const String contentStatusSourced = 'מבוסס מקורות, לא אושר מקצועית';
+  static const String firstAidSourcedNoticeTitle =
+      'מבוסס על מקורות רפואיים, טרם אושר מקצועית';
+  static const String firstAidSourcedNoticeMessage =
+      'ההנחיות מבוססות על מקורות רפואיים מוסמכים, המפורטים בסוף העמוד, '
+      'אך טרם עברו אישור מקצועי פרטני עבור MyDr. '
+      'במצב חירום חייגו 101 מיד ופעלו לפי ההנחיות של המוקד.';
   static String firstAidTopicLabel(String title, String kind, String status) =>
       '$title, $kind, $status';
   static const String firstAidPendingTitle = 'ההנחיות בהכנה';
   static const String firstAidPendingMessage =
       'ההנחיות לנושא זה יוצגו רק לאחר אימות ממקור רפואי מוסמך. '
       'במצב חירום חייגו 101 מיד.';
-  static const String firstAidCallAdviceTitle = 'מתי לחייג למוקד חירום';
+  static const String firstAidCallNowTitle = 'מתי לחייג 101 מיד';
+  static const String firstAidRecognizeTitle = 'איך מזהים';
+  static const String firstAidChooseVariantTitle = 'בחרו את המצב המתאים';
+  static const String firstAidChooseVariantHint =
+      'אם אינכם בטוחים מה מתאים, חייגו 101 ופעלו לפי ההנחיות של המוקד.';
+  static String firstAidVariantLabel(String label, String? appliesTo) =>
+      appliesTo == null ? label : '$label, $appliesTo';
   static const String firstAidStepsTitle = 'שלבים';
   static String firstAidStepLabel(int order, int total, String text) =>
       'שלב $order מתוך $total: $text';
+  static const String firstAidDoNotTitle = 'מה לא לעשות';
+  static String firstAidDoNotLabel(String text) => 'לא לעשות: $text';
   static const String firstAidWarningsTitle = 'אזהרות';
-  static const String firstAidSourceTitle = 'מקור ואימות';
-  static const String firstAidSourceLabel = 'מקור';
+  static const String firstAidAfterCareTitle = 'גם אחרי שיפור';
+  static const String firstAidSourcesTitle = 'מקורות ואימות';
+  static String firstAidSourcePublished(String date) => 'פורסם או עודכן: $date';
+  static String firstAidSourceAccessed(String date) => 'נבדק: $date';
+  static const String firstAidLastCheckedLabel = 'נבדק לאחרונה מול המקורות';
   static const String firstAidVerifiedOnLabel = 'תאריך אימות';
   static const String firstAidVerifiedByLabel = 'אומת על ידי';
+  static const String firstAidNotVerifiedLabel =
+      'טרם אושר על ידי איש מקצוע רפואי עבור MyDr';
+
+  // First-aid review preview (developer builds only)
+  static const String firstAidReviewEntryTitle = 'תצוגה מקדימה לסקירה מקצועית';
+  static const String firstAidReviewEntrySubtitle =
+      'למפתחים ולסוקרים בלבד. טיוטות שלא אושרו.';
+  static const String firstAidReviewTitle = 'טיוטות לסקירה';
+  static const String firstAidDraftBanner = 'טיוטה לסקירה בלבד, לא מאושרת';
+  static const String firstAidDraftNotice =
+      'התוכן כאן לא נבדק ולא אושר על ידי איש מקצוע רפואי, ואין להסתמך עליו. '
+      'במצב חירום חייגו 101.';
+  static const String firstAidReviewNotesTitle = 'הערות לסוקר';
+  static const String firstAidReviewFingerprintLabel =
+      'טביעת התוכן לאישור (SHA-256)';
+  static const String firstAidReviewLoadErrorTitle =
+      'לא הצלחנו לטעון את קובץ הטיוטות';
   static const String firstAidTopicNotFoundTitle = 'הנושא לא נמצא';
   static const String firstAidTopicNotFoundMessage =
       'ייתכן שהתוכן עודכן. אפשר לחזור למרכז החירום.';

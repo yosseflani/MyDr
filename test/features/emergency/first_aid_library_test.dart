@@ -25,26 +25,37 @@ import '../../helpers/pump_app.dart';
 void main() {
   final today = DateTime(2026, 10, 15);
 
+  Map<String, Object?> variant(String id, String label) => {
+    'id': id,
+    'label': label,
+    'appliesTo': 'קבוצת בדיקה $id',
+    'steps': [
+      {'order': 1, 'text': 'שלב בדיקה ראשון $id'},
+      {'order': 2, 'text': 'שלב בדיקה שני $id', 'note': 'הערת בדיקה $id'},
+    ],
+    'doNot': ['איסור בדיקה $id'],
+  };
+
+  /// One variant ("only") unless [twoVariants].
   Map<String, Object?> verifiedTopic(
     String id, {
     String kind = 'emergency',
+    bool twoVariants = false,
   }) => {
     'id': id,
     'kind': kind,
     'status': 'verified',
     'title': 'נושא בדיקה $id',
     'summary': 'תיאור בדיקה $id',
-    if (kind == 'emergency') 'callAdvice': 'טקסט הפניה לבדיקה',
-    'steps': [
-      {'order': 1, 'text': 'שלב בדיקה ראשון'},
-      {'order': 2, 'text': 'שלב בדיקה שני', 'note': 'הערת בדיקה'},
-    ],
+    'overview': 'הסבר בדיקה',
+    'recognize': ['סימן בדיקה'],
+    if (kind == 'emergency') 'callNow': ['טקסט הפניה לבדיקה'],
+    'variants': twoVariants
+        ? [variant('older', 'מצב בדיקה א'), variant('younger', 'מצב בדיקה ב')]
+        : [variant('only', 'מצב בדיקה')],
     'warnings': ['אזהרת בדיקה'],
-    'source': {
-      'publisher': 'מקור בדיקה',
-      'title': 'מסמך בדיקה',
-      'url': 'https://example.org/test',
-    },
+    'afterCare': ['המשך בדיקה'],
+    'sourceIds': ['s1'],
     'verification': {'verifiedAt': '2026-10-01', 'verifiedBy': 'בודק/ת בדיקה'},
   };
 
@@ -57,10 +68,20 @@ void main() {
   };
 
   String packJson(List<Map<String, Object?>> topics) => jsonEncode({
-    'schemaVersion': 1,
+    'schemaVersion': 2,
     'contentVersion': 1,
     'locale': 'he',
     'publishedAt': '2026-10-15',
+    'sources': [
+      {
+        'id': 's1',
+        'publisher': 'מקור בדיקה',
+        'title': 'מסמך בדיקה',
+        'url': 'https://example.org/test',
+        'published': '2025-10',
+        'accessedOn': '2026-10-01',
+      },
+    ],
     'topics': topics,
   });
 
@@ -147,7 +168,7 @@ void main() {
 
   group('library in the emergency center', () {
     testWidgets('lists the seven bundled topics, each with its kind and '
-        '"in preparation"', (tester) async {
+        '"based on sources, not approved"', (tester) async {
       await setUpWith(bundledHebrewContent());
       await pump(tester, const EmergencyScreen());
 
@@ -161,7 +182,7 @@ void main() {
         'severe_allergic_reaction',
       ]);
       for (final title in [
-        'החייאה',
+        'החייאה ושימוש בדפיברילטור',
         'חנק',
         'דימום',
         'כוויות',
@@ -172,7 +193,8 @@ void main() {
         expect(find.text(title), findsOneWidget);
       }
       expect(find.text(AppStrings.topicKindEmergency), findsNWidgets(7));
-      expect(find.text(AppStrings.contentStatusPending), findsNWidgets(7));
+      expect(find.text(AppStrings.contentStatusSourced), findsNWidgets(7));
+      expect(find.text(AppStrings.contentStatusPending), findsNothing);
       expect(find.text(AppStrings.contentStatusVerified), findsNothing);
     });
 
@@ -203,7 +225,7 @@ void main() {
           AppStrings.firstAidTopicLabel(
             'חנק',
             AppStrings.topicKindEmergency,
-            AppStrings.contentStatusPending,
+            AppStrings.contentStatusSourced,
           ),
         ),
         findsOneWidget,
@@ -288,7 +310,7 @@ void main() {
     testWidgets('no topics: says so', (tester) async {
       await setUpWith(
         FirstAidContentPack(
-          schemaVersion: 1,
+          schemaVersion: 2,
           contentVersion: 1,
           locale: 'he',
           publishedAt: DateTime.utc(2026, 10, 15),
@@ -305,18 +327,23 @@ void main() {
   group('topic screen', () {
     testWidgets('a pending topic says its instructions are coming, and '
         'shows none', (tester) async {
-      await setUpWith(bundledHebrewContent());
-      await pumpTopic(tester, 'choking');
+      await setUpWith(approvedPack([pendingTopic('p')]));
+      await pumpTopic(tester, 'p');
 
-      expect(find.text('חנק'), findsWidgets);
+      expect(find.text('נושא בדיקה p'), findsWidgets);
       expect(find.text(AppStrings.contentStatusPending), findsOneWidget);
+      expect(find.text(AppStrings.firstAidSourcedNoticeTitle), findsNothing);
       expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
       expect(find.text(AppStrings.firstAidPendingMessage), findsOneWidget);
       for (final heading in [
-        AppStrings.firstAidCallAdviceTitle,
+        AppStrings.firstAidCallNowTitle,
+        AppStrings.firstAidRecognizeTitle,
+        AppStrings.firstAidChooseVariantTitle,
         AppStrings.firstAidStepsTitle,
+        AppStrings.firstAidDoNotTitle,
         AppStrings.firstAidWarningsTitle,
-        AppStrings.firstAidSourceTitle,
+        AppStrings.firstAidAfterCareTitle,
+        AppStrings.firstAidSourcesTitle,
         AppStrings.firstAidVerifiedOnLabel,
       ]) {
         expect(find.text(heading), findsNothing, reason: heading);
@@ -331,7 +358,8 @@ void main() {
       await pumpTopic(tester, 'claimed');
 
       expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
-      expect(find.text('שלב בדיקה ראשון'), findsNothing);
+      expect(find.text('שלב בדיקה ראשון only'), findsNothing);
+      expect(find.text('טקסט הפניה לבדיקה'), findsNothing);
       expect(find.text(AppStrings.contentStatusVerified), findsNothing);
     });
 
@@ -348,40 +376,284 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
     });
 
-    testWidgets('approved content shows when to call, numbered steps, '
-        'warnings, its source and verification', (tester) async {
+    testWidgets('approved content shows when to call, how to recognize, '
+        'numbered steps, what not to do, warnings, after-care, its sources '
+        'and verification', (tester) async {
       await setUpWith(approvedPack([verifiedTopic('approved')]));
       await pumpTopic(tester, 'approved');
 
       expect(find.text(AppStrings.contentStatusVerified), findsOneWidget);
       expect(find.text(AppStrings.firstAidPendingTitle), findsNothing);
-      expect(find.text(AppStrings.firstAidCallAdviceTitle), findsOneWidget);
+      expect(find.text(AppStrings.firstAidCallNowTitle), findsOneWidget);
       expect(find.text('טקסט הפניה לבדיקה'), findsOneWidget);
+      expect(find.text('הסבר בדיקה'), findsOneWidget);
+      expect(find.text('סימן בדיקה'), findsOneWidget);
+      // A single variant needs no choice.
+      expect(find.text(AppStrings.firstAidChooseVariantTitle), findsNothing);
       expect(
         find.bySemanticsLabel(
-          AppStrings.firstAidStepLabel(1, 2, 'שלב בדיקה ראשון'),
+          AppStrings.firstAidStepLabel(1, 2, 'שלב בדיקה ראשון only'),
         ),
         findsOneWidget,
       );
       expect(
         find.bySemanticsLabel(
-          AppStrings.firstAidStepLabel(2, 2, 'שלב בדיקה שני'),
+          AppStrings.firstAidStepLabel(
+            2,
+            2,
+            'שלב בדיקה שני only הערת בדיקה only',
+          ),
         ),
         findsOneWidget,
       );
       expect(
-        tester.getTopLeft(find.text('שלב בדיקה ראשון')).dy,
-        lessThan(tester.getTopLeft(find.text('שלב בדיקה שני')).dy),
+        tester.getTopLeft(find.text('שלב בדיקה ראשון only')).dy,
+        lessThan(tester.getTopLeft(find.text('שלב בדיקה שני only')).dy),
       );
-      expect(find.text('הערת בדיקה'), findsOneWidget);
+      // When to call comes before the steps.
+      expect(
+        tester.getTopLeft(find.text('טקסט הפניה לבדיקה')).dy,
+        lessThan(tester.getTopLeft(find.text('שלב בדיקה ראשון only')).dy),
+      );
+      expect(find.text('הערת בדיקה only'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          AppStrings.firstAidDoNotLabel('איסור בדיקה only'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('אזהרת בדיקה'), findsOneWidget);
-      expect(find.text('מקור בדיקה – מסמך בדיקה'), findsOneWidget);
+      expect(find.text('המשך בדיקה'), findsOneWidget);
+      expect(find.text('מקור בדיקה: מסמך בדיקה'), findsOneWidget);
+      expect(
+        find.text(AppStrings.firstAidSourcePublished('2025-10')),
+        findsOneWidget,
+      );
       expect(find.text('https://example.org/test'), findsOneWidget);
-      final date = MaterialLocalizations.of(
+      final localizations = MaterialLocalizations.of(
         tester.element(find.byType(FirstAidTopicScreen)),
-      ).formatFullDate(DateTime.utc(2026, 10, 1));
-      expect(find.text(date), findsOneWidget);
+      );
+      expect(
+        find.text(AppStrings.firstAidSourceAccessed('2026-10-01')),
+        findsOneWidget,
+      );
+      // The last check and the verification are both on 2026-10-01.
+      expect(
+        find.text(localizations.formatFullDate(DateTime.utc(2026, 10, 1))),
+        findsNWidgets(2),
+      );
       expect(find.text('בודק/ת בדיקה'), findsOneWidget);
+      expect(find.text(AppStrings.firstAidNotVerifiedLabel), findsNothing);
+      expect(callBar(), findsOneWidget);
+
+      // Each part is read on its own, not the whole guide as one block.
+      final handle = tester.ensureSemantics();
+      await tester.pump();
+      for (final text in [
+        'טקסט הפניה לבדיקה',
+        'הסבר בדיקה',
+        'סימן בדיקה',
+        'אזהרת בדיקה',
+        'המשך בדיקה',
+      ]) {
+        expect(tester.getSemantics(find.text(text)).label, text);
+      }
+      expect(
+        tester.getSemantics(find.text(AppStrings.firstAidCallNowTitle)),
+        containsSemantics(
+          label: AppStrings.firstAidCallNowTitle,
+          isHeader: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('with several variants, no steps until one is chosen; '
+        'unsure means 101', (tester) async {
+      final handle = tester.ensureSemantics();
+      await setUpWith(
+        approvedPack([verifiedTopic('approved', twoVariants: true)]),
+      );
+      await pumpTopic(tester, 'approved');
+
+      expect(find.text(AppStrings.firstAidChooseVariantTitle), findsOneWidget);
+      expect(find.text(AppStrings.firstAidChooseVariantHint), findsOneWidget);
+      expect(find.textContaining('שלב בדיקה'), findsNothing);
+      expect(find.textContaining('איסור בדיקה'), findsNothing);
+      // The parts that apply to everyone are already there.
+      expect(find.text('טקסט הפניה לבדיקה'), findsOneWidget);
+      expect(find.text('אזהרת בדיקה'), findsOneWidget);
+
+      final older = find.byKey(const ValueKey('variant-older'));
+      final younger = find.byKey(const ValueKey('variant-younger'));
+      expect(
+        tester.getSemantics(older),
+        containsSemantics(
+          label: AppStrings.firstAidVariantLabel(
+            'מצב בדיקה א',
+            'קבוצת בדיקה older',
+          ),
+          isButton: true,
+          hasCheckedState: true,
+          isChecked: false,
+          isInMutuallyExclusiveGroup: true,
+          hasTapAction: true,
+        ),
+      );
+
+      await tapAndSettle(tester, younger);
+      expect(find.text('שלב בדיקה ראשון younger'), findsOneWidget);
+      expect(find.text('שלב בדיקה ראשון older'), findsNothing);
+      expect(find.text('איסור בדיקה younger'), findsOneWidget);
+      expect(
+        tester.getSemantics(younger),
+        containsSemantics(isChecked: true, hasCheckedState: true),
+      );
+      // The hint stays: the choice can still be wrong.
+      expect(find.text(AppStrings.firstAidChooseVariantHint), findsOneWidget);
+
+      await tapAndSettle(tester, older);
+      expect(find.text('שלב בדיקה ראשון older'), findsOneWidget);
+      expect(find.text('שלב בדיקה ראשון younger'), findsNothing);
+      handle.dispose();
+    });
+
+    testWidgets('sourced content is shown in full, under a notice that it '
+        'is not professionally approved, and never as verified', (
+      tester,
+    ) async {
+      final sourced = verifiedTopic('sourced', twoVariants: true)
+        ..['status'] = 'sourced'
+        ..remove('verification');
+      await setUpWith(approvedPack([sourced]));
+      await pumpTopic(tester, 'sourced');
+
+      expect(find.text(AppStrings.contentStatusSourced), findsOneWidget);
+      expect(find.text(AppStrings.contentStatusVerified), findsNothing);
+      expect(find.text(AppStrings.firstAidPendingTitle), findsNothing);
+      expect(find.text(AppStrings.firstAidSourcedNoticeTitle), findsOneWidget);
+      expect(
+        find.text(AppStrings.firstAidSourcedNoticeMessage),
+        findsOneWidget,
+      );
+      // The notice comes before any instruction.
+      expect(
+        tester.getTopLeft(find.text(AppStrings.firstAidSourcedNoticeTitle)).dy,
+        lessThan(tester.getTopLeft(find.text('טקסט הפניה לבדיקה')).dy),
+      );
+      expect(find.text(AppStrings.firstAidCallNowTitle), findsOneWidget);
+      // No default choice: no steps until a situation is chosen.
+      expect(find.text(AppStrings.firstAidChooseVariantHint), findsOneWidget);
+      expect(find.textContaining('שלב בדיקה'), findsNothing);
+      await tapAndSettle(tester, find.byKey(const ValueKey('variant-older')));
+      expect(find.text('שלב בדיקה ראשון older'), findsOneWidget);
+
+      expect(find.text('מקור בדיקה: מסמך בדיקה'), findsOneWidget);
+      expect(find.text(AppStrings.firstAidNotVerifiedLabel), findsOneWidget);
+      expect(find.text(AppStrings.firstAidVerifiedByLabel), findsNothing);
+      expect(find.text(AppStrings.firstAidVerifiedOnLabel), findsNothing);
+      expect(callBar(), findsOneWidget);
+    });
+
+    testWidgets('every bundled topic shows its sourced guidance; where the '
+        'steps differ by age or situation, none until one is chosen', (
+      tester,
+    ) async {
+      final pack = bundledHebrewContent();
+      await setUpWith(pack);
+      for (final topic in pack.topics) {
+        // A fresh screen each time, scrolled to the top.
+        await tester.pumpWidget(const SizedBox());
+        await pumpTopic(tester, topic.id);
+
+        expect(
+          find.text(AppStrings.firstAidSourcedNoticeTitle),
+          findsOneWidget,
+          reason: topic.id,
+        );
+        expect(find.text(AppStrings.contentStatusVerified), findsNothing);
+        expect(callBar(), findsOneWidget, reason: topic.id);
+        for (final callNow in topic.callNow) {
+          expect(find.text(callNow), findsOneWidget, reason: topic.id);
+        }
+        if (topic.variants.length > 1) {
+          for (final variant in topic.variants) {
+            expect(
+              find.text(variant.steps.first.text),
+              findsNothing,
+              reason: '${topic.id}/${variant.id} shown before a choice',
+            );
+          }
+          final first = topic.variants.first;
+          await tapAndSettle(
+            tester,
+            find.byKey(ValueKey('variant-${first.id}')),
+          );
+          expect(find.text(first.steps.first.text), findsOneWidget);
+        } else {
+          expect(
+            find.text(topic.variants.single.steps.first.text),
+            findsOneWidget,
+            reason: topic.id,
+          );
+        }
+        await tester.scrollUntilVisible(
+          find.text(AppStrings.firstAidNotVerifiedLabel),
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        for (final source in topic.sources) {
+          expect(
+            find.text(source.url.toString()),
+            findsOneWidget,
+            reason: '${topic.id}/${source.id}',
+          );
+        }
+        expect(tester.takeException(), isNull, reason: topic.id);
+      }
+    });
+
+    testWidgets('a draft that reached the app controller is still not '
+        'shown', (tester) async {
+      final draft = FirstAidTopic(
+        id: 'draft',
+        kind: FirstAidTopicKind.emergency,
+        title: 'נושא בדיקה',
+        summary: 'תיאור בדיקה',
+        status: ContentStatus.draft,
+        callNow: ['טקסט הפניה לבדיקה'],
+        variants: [
+          GuideVariant(
+            id: 'v',
+            label: 'מצב',
+            steps: [GuideStep(order: 1, text: 'שלב טיוטה')],
+          ),
+        ],
+        sources: [
+          ContentSource(
+            id: 's',
+            publisher: 'מקור בדיקה',
+            title: 'מסמך בדיקה',
+            url: Uri.parse('https://example.org/test'),
+            published: '2025',
+            accessedOn: DateTime.utc(2026, 10, 1),
+          ),
+        ],
+      );
+      await setUpWith(
+        FirstAidContentPack(
+          schemaVersion: 2,
+          contentVersion: 1,
+          locale: 'he',
+          publishedAt: DateTime.utc(2026, 10, 15),
+          topics: [draft],
+        ),
+      );
+      await pumpTopic(tester, 'draft');
+
+      expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
+      expect(find.text('שלב טיוטה'), findsNothing);
+      expect(find.text('טקסט הפניה לבדיקה'), findsNothing);
       expect(callBar(), findsOneWidget);
     });
 
@@ -393,7 +665,7 @@ void main() {
       await pumpTopic(tester, 'info');
 
       expect(find.text(AppStrings.topicKindGeneralInfo), findsOneWidget);
-      expect(find.text(AppStrings.firstAidCallAdviceTitle), findsNothing);
+      expect(find.text(AppStrings.firstAidCallNowTitle), findsNothing);
       expect(callBar(), findsNothing);
     });
 
@@ -427,7 +699,7 @@ void main() {
         ..error = null
         ..pack = bundledHebrewContent();
       await tapAndSettle(tester, find.text(AppStrings.retry));
-      expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
+      expect(find.text(AppStrings.firstAidSourcedNoticeTitle), findsOneWidget);
     });
 
     testWidgets('while loading: a static notice and the call bar', (
@@ -443,7 +715,7 @@ void main() {
       expect(callBar(), findsOneWidget);
       repository.gate!.complete();
       await tester.pumpAndSettle();
-      expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
+      expect(find.text(AppStrings.firstAidSourcedNoticeTitle), findsOneWidget);
     });
 
     testWidgets('follows reloads: approved, no longer approved, removed', (
@@ -455,7 +727,7 @@ void main() {
 
       repository.pack = approvedPack([verifiedTopic('t')]);
       await reload(tester);
-      expect(find.text('שלב בדיקה ראשון'), findsOneWidget);
+      expect(find.text('שלב בדיקה ראשון only'), findsOneWidget);
       expect(find.text(AppStrings.firstAidPendingTitle), findsNothing);
 
       repository.pack = approvedPack(
@@ -463,7 +735,7 @@ void main() {
         leaveUnapproved: {'t'},
       );
       await reload(tester);
-      expect(find.text('שלב בדיקה ראשון'), findsNothing);
+      expect(find.text('שלב בדיקה ראשון only'), findsNothing);
       expect(find.text(AppStrings.firstAidPendingTitle), findsOneWidget);
 
       repository.pack = approvedPack([pendingTopic('other')]);
@@ -474,6 +746,53 @@ void main() {
   });
 
   group('accessibility and layout', () {
+    testWidgets('screen readers can activate the 101 button and the topics', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await setUpWith(bundledHebrewContent());
+      await pump(tester, const EmergencyScreen());
+
+      final call = find.bySemanticsLabel(
+        AppStrings.callServiceLabel(AppStrings.serviceMedical, '101'),
+      );
+      expect(
+        tester.getSemantics(call),
+        containsSemantics(isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(
+        find.semantics.byLabel(
+          AppStrings.callServiceLabel(AppStrings.serviceMedical, '101'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(dialer.dialed, ['101']);
+
+      final choking = find.bySemanticsLabel(
+        AppStrings.firstAidTopicLabel(
+          'חנק',
+          AppStrings.topicKindEmergency,
+          AppStrings.contentStatusSourced,
+        ),
+      );
+      expect(
+        tester.getSemantics(choking),
+        containsSemantics(isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(
+        find.semantics.byLabel(
+          AppStrings.firstAidTopicLabel(
+            'חנק',
+            AppStrings.topicKindEmergency,
+            AppStrings.contentStatusSourced,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(FirstAidTopicScreen), findsOneWidget);
+      handle.dispose();
+    });
+
     testWidgets('the center with topics meets the guidelines', (tester) async {
       final handle = tester.ensureSemantics();
       await setUpWith(bundledHebrewContent());
@@ -497,6 +816,51 @@ void main() {
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
         await expectLater(tester, meetsGuideline(textContrastGuideline));
         handle.dispose();
+      });
+    }
+
+    testWidgets('a bundled sourced topic, with its notice, meets the '
+        'guidelines', (tester) async {
+      final handle = tester.ensureSemantics();
+      await setUpWith(bundledHebrewContent());
+      await pumpTopic(tester, 'choking');
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      expect(
+        tester.getSemantics(find.text(AppStrings.firstAidSourcedNoticeTitle)),
+        containsSemantics(
+          label:
+              '${AppStrings.firstAidSourcedNoticeTitle}\n'
+              '${AppStrings.firstAidSourcedNoticeMessage}',
+        ),
+      );
+      handle.dispose();
+    });
+
+    for (final scale in [1.5, 2.0]) {
+      testWidgets('a bundled sourced topic fits a narrow screen at text '
+          'scale $scale', (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        await setUpWith(bundledHebrewContent());
+        await pumpTopic(tester, 'cpr', size: const Size(320, 568));
+
+        final infant = find.byKey(const ValueKey('variant-infant'));
+        await tester.scrollUntilVisible(
+          infant,
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tapAndSettle(tester, infant);
+        await tester.scrollUntilVisible(
+          find.text(AppStrings.firstAidNotVerifiedLabel),
+          1000,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(tester.takeException(), isNull);
+        expect(tester.getRect(callBar()).bottom, lessThanOrEqualTo(568));
       });
     }
 
