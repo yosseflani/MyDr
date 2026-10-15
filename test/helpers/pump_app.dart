@@ -6,6 +6,7 @@ import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
+import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
@@ -15,7 +16,8 @@ extension PumpApp on WidgetTester {
   /// [AppScope] as the app. Uses fresh empty repositories unless
   /// [dependencies] is given, and controllers built on them unless
   /// [familyController], [appointmentController],
-  /// [doctorQuestionController] or [symptomController] is given.
+  /// [doctorQuestionController], [symptomController] or
+  /// [firstAidController] is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
@@ -23,6 +25,7 @@ extension PumpApp on WidgetTester {
     AppointmentController? appointmentController,
     DoctorQuestionController? doctorQuestionController,
     SymptomController? symptomController,
+    FirstAidController? firstAidController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -58,6 +61,13 @@ extension PumpApp on WidgetTester {
       addTearDown(resolvedSymptomController.dispose);
     }
 
+    final resolvedFirstAidController =
+        firstAidController ??
+        FirstAidController(resolvedDependencies.firstAidRepository);
+    if (firstAidController == null) {
+      addTearDown(resolvedFirstAidController.dispose);
+    }
+
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
@@ -65,6 +75,7 @@ extension PumpApp on WidgetTester {
         appointmentController: resolvedAppointmentController,
         doctorQuestionController: resolvedQuestionController,
         symptomController: resolvedSymptomController,
+        firstAidController: resolvedFirstAidController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

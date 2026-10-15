@@ -36,6 +36,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.2
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +60,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # First-aid content, kept apart from the code that shows it.
+  assets:
+    - assets/first_aid/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

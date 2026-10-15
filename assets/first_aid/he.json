@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": 1,
+  "locale": "he",
+  "publishedAt": "2026-10-15",
+  "topics": [
+    {
+      "id": "cpr",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "החייאה",
+      "summary": "הנחיות להחייאה."
+    },
+    {
+      "id": "choking",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "חנק",
+      "summary": "הנחיות למקרה של חנק."
+    },
+    {
+      "id": "bleeding",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "דימום",
+      "summary": "הנחיות למקרה של דימום."
+    },
+    {
+      "id": "burns",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "כוויות",
+      "summary": "הנחיות למקרה של כוויות."
+    },
+    {
+      "id": "unconsciousness",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "איבוד הכרה",
+      "summary": "הנחיות למקרה של איבוד הכרה."
+    },
+    {
+      "id": "seizures",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "פרכוסים",
+      "summary": "הנחיות למקרה של פרכוסים."
+    },
+    {
+      "id": "severe_allergic_reaction",
+      "kind": "emergency",
+      "status": "pending",
+      "title": "תגובה אלרגית חמורה",
+      "summary": "הנחיות למקרה של תגובה אלרגית חמורה."
+    }
+  ]
+}

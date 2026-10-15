@@ -52,6 +52,57 @@ abstract final class AppStrings {
   static const String emergencyNoInstructions =
       'האפליקציה אינה כוללת עדיין הנחיות רפואיות. מידע לעזרה ראשונה יתווסף '
       'בהמשך ממקורות מאומתים בלבד.';
+  static const String callMedicalEmergency = 'חיוג ל־101';
+  static const String openEmergencyCenter = 'מרכז החירום';
+
+  // Emergency center
+  static const String emergencyCenterTitle = 'מרכז חירום';
+  static const String callMedicalEmergencyTitle = 'חיוג למד״א';
+  static const String dialerHint =
+      'ייפתח החייגן עם המספר. השיחה מתבצעת רק לאחר לחיצה על "חיוג" בטלפון.';
+  static const String otherEmergencyNumbers = 'מספרי חירום נוספים';
+  static const String serviceMedical = 'מגן דוד אדום';
+  static const String servicePolice = 'משטרת ישראל';
+  static const String serviceFire = 'כבאות והצלה';
+  static String callServiceLabel(String service, String number) =>
+      'חיוג אל $service, $number';
+  static const String dialerUnavailableTitle = 'לא ניתן לפתוח את החייגן';
+  static String dialerUnavailableMessage(String number) =>
+      'השיחה לא בוצעה. חייגו בעצמכם מהטלפון למספר $number.';
+  static const String close = 'סגירה';
+  static const String firstAidSectionTitle = 'הנחיות עזרה ראשונה';
+  static const String firstAidLoadErrorTitle =
+      'לא הצלחנו לטעון את נושאי העזרה הראשונה';
+  static const String firstAidLoadErrorMessage =
+      'כפתורי החיוג ממשיכים לעבוד כרגיל. אפשר לנסות שוב.';
+  static const String firstAidLoading = 'טוען את נושאי העזרה הראשונה…';
+  static const String firstAidEmpty = 'אין כרגע נושאי עזרה ראשונה זמינים.';
+  static const String topicKindEmergency = 'מצב חירום';
+  static const String topicKindGeneralInfo = 'מידע כללי';
+  static const String contentStatusPending = 'בהכנה';
+  static const String contentStatusVerified = 'מאומת';
+  static String firstAidTopicLabel(String title, String kind, String status) =>
+      '$title, $kind, $status';
+  static const String firstAidPendingTitle = 'ההנחיות בהכנה';
+  static const String firstAidPendingMessage =
+      'ההנחיות לנושא זה יוצגו רק לאחר אימות ממקור רפואי מוסמך. '
+      'במצב חירום חייגו 101 מיד.';
+  static const String firstAidCallAdviceTitle = 'מתי לחייג למוקד חירום';
+  static const String firstAidStepsTitle = 'שלבים';
+  static String firstAidStepLabel(int order, int total, String text) =>
+      'שלב $order מתוך $total: $text';
+  static const String firstAidWarningsTitle = 'אזהרות';
+  static const String firstAidSourceTitle = 'מקור ואימות';
+  static const String firstAidSourceLabel = 'מקור';
+  static const String firstAidVerifiedOnLabel = 'תאריך אימות';
+  static const String firstAidVerifiedByLabel = 'אומת על ידי';
+  static const String firstAidTopicNotFoundTitle = 'הנושא לא נמצא';
+  static const String firstAidTopicNotFoundMessage =
+      'ייתכן שהתוכן עודכן. אפשר לחזור למרכז החירום.';
+  static const String backToEmergencyCenter = 'חזרה למרכז החירום';
+  static const String emergencyDisclaimer =
+      'המידע באפליקציה אינו תחליף לפנייה למוקד חירום או לאיש מקצוע רפואי. '
+      'במצב חירום חייגו 101 מיד.';
 
   // Demo data
   static const String demoDataBanner =

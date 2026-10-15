@@ -5,6 +5,7 @@ import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
+import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
@@ -46,8 +47,14 @@ class _MyDrAppState extends State<MyDrApp> {
     familyController: _familyController,
   )..load();
 
+  /// Independent of the others: emergency calling never waits for it.
+  late final FirstAidController _firstAidController = FirstAidController(
+    widget.dependencies.firstAidRepository,
+  )..load();
+
   @override
   void dispose() {
+    _firstAidController.dispose();
     // Disposed in reverse order of creation, since each listens to the
     // ones created before it.
     _symptomController.dispose();
@@ -65,6 +72,7 @@ class _MyDrAppState extends State<MyDrApp> {
       appointmentController: _appointmentController,
       doctorQuestionController: _doctorQuestionController,
       symptomController: _symptomController,
+      firstAidController: _firstAidController,
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

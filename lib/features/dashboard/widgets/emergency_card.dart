@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/app_card.dart';
+import 'package:mydr/data/emergency/emergency_numbers.dart';
+import 'package:mydr/features/emergency/emergency_screen.dart';
+import 'package:mydr/features/emergency/widgets/emergency_dial_action.dart';
 
-/// Compact, clearly marked entry point for first aid and emergencies.
+/// Compact, clearly marked entry point for first aid and emergencies, with a
+/// button that opens the dialer with 101 and one into the emergency center.
 ///
 /// Intentionally shows no medical instructions: only the national emergency
 /// number and a note that verified first-aid content will be added later.
@@ -53,6 +57,43 @@ class EmergencyCard extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    EmergencyDialAction(
+                      number: EmergencyNumbers.medical,
+                      builder: (context, onPressed) => Semantics(
+                        button: true,
+                        label: AppStrings.callServiceLabel(
+                          AppStrings.serviceMedical,
+                          EmergencyNumbers.medical.number,
+                        ),
+                        excludeSemantics: true,
+                        child: FilledButton.icon(
+                          onPressed: onPressed,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: colorScheme.error,
+                            foregroundColor: colorScheme.onError,
+                            minimumSize: const Size(0, 48),
+                          ),
+                          icon: const Icon(Icons.call),
+                          label: const Text(AppStrings.callMedicalEmergency),
+                        ),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          Navigator.of(context).push(EmergencyScreen.route()),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                      ),
+                      icon: const Icon(Icons.emergency_outlined),
+                      label: const Text(AppStrings.openEmergencyCenter),
+                    ),
+                  ],
                 ),
               ],
             ),
