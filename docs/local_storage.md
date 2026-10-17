@@ -1,6 +1,6 @@
 # שמירת נתונים מקומית ומוצפנת ב־MyDr
 
-המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא, תיעוד תסמינים, ותמונות וסרטונים להכנה לביקור (סעיף 9). הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
+המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא, תיעוד תסמינים, תמונות וסרטונים להכנה לביקור (סעיף 9), ותרופות ורישומי מנות (סעיף 10). הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
 
 > **חשוב:** המנגנון נבנה בזהירות ונבדק, אבל הוא לא עבר בדיקת אבטחה חיצונית. אין להציג את האפליקציה כמאובטחת לשימוש רפואי אמיתי לפני ביקורת מקצועית מתאימה.
 
@@ -25,7 +25,7 @@
 ```
 lib/app_bootstrap.dart              Startup: opens the database, loading and error screens
 lib/data/local/
-  schema.drift                      The schema (SQL), version 2
+  schema.drift                      The schema (SQL), version 3
   local_database.dart (+ .g.dart)   Drift database; migration policy
   local_database_opener.dart        Opening: key, encryption, foreign keys, schema checks
   local_database_exception.dart     Opening errors, safe to log
@@ -33,21 +33,23 @@ lib/data/local/
   storage_codecs.dart               Conversions between models and stored values
   local_ids.dart                    Random UUID v4 ids
   local_transaction_runner.dart     Atomic transactions
-  repositories/                     The five Repositories over the database
+  repositories/                     The seven Repositories over the database
 lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non-atomic)
 lib/data/media/                     Visit photos and videos: validation, private file store, picker
+lib/data/reminders/                 Dose reminders: planner and local notifications (nothing stored)
 ```
 
 - **Controllers ו־UI:** לא תלויים במימוש. הם עובדים מול ממשקי ה־Repositories ומול `TransactionRunner`.
 - **פעולות מרובות שלבים** רצות ב־Transaction אחת, ולכן באחסון המקומי הן אטומיות. אלה הפעולות:
-  - מחיקת בן משפחה עם כל הרשומות שלו.
+  - מחיקת בן משפחה עם כל הרשומות שלו, כולל תרופות ורישומי מנות.
+  - מחיקת תרופה עם רישומי המנות שלה.
   - מחיקת תור (ניתוק השאלות שלו, מחיקת רשומות התמונות והסרטונים שלו, ואז מחיקה).
   - העברת תור לבן משפחה אחר (ניתוק השאלות, ואז עדכון).
 - **אם שלב נכשל:** שום שינוי לא נשמר, ואין מחיקה חלקית.
 
-## 3. מבנה מסד הנתונים (Schema גרסה 2)
+## 3. מבנה מסד הנתונים (Schema גרסה 3)
 
-חמש טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions`, `symptom_entries` ו־`visit_media` (נוספה בגרסה 2). ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
+שבע טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions`, `symptom_entries`, `visit_media` (נוספה בגרסה 2), ו־`medications` ו־`dose_records` (נוספו בגרסה 3). ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
 
 - **מפתחות:**
   - כל רשומה מזוהה ב־`id` טקסטואלי (UUID).
@@ -56,6 +58,9 @@ lib/data/media/                     Visit photos and videos: validation, private
   - **אין רשומות יתומות:** אי אפשר למחוק בן משפחה או תור שעדיין מפנים אליהם.
   - **שאלה מקושרת רק לתור של אותו בן משפחה:** מפתח זר מורכב `(appointment_id, member_id)`.
   - **תמונה או סרטון מקושרים רק לתור של אותו בן משפחה:** אותו מפתח זר מורכב ב־`visit_media`. כך תיעוד של בן משפחה אחד לא יכול להופיע אצל בן משפחה אחר.
+  - **רישום מנה מקושר רק לתרופה של אותו בן משפחה:** מפתח זר מורכב `(medication_id, member_id)` ב־`dose_records`.
+  - **רישום אחד לכל מנה מתוכננת:** `UNIQUE (medication_id, scheduled_at)`. סימון חוזר מעדכן את הרישום הקיים (upsert), ולא מוסיף רישום שני.
+  - **תאריך סיום לא לפני תאריך ההתחלה, ולפחות שעת תזכורת אחת:** CHECK ב־`medications`.
   - **פרופיל "אני" אחד בלבד:** אינדקס ייחודי חלקי.
   - **ערכים תקינים:** CHECK על שמות לא ריקים, קרבה ממערך סגור, חומרה 1–5, סטטוס תסמין, משך שאינו שלילי, פורמט תאריכים ו־JSON תקין.
 - **Foreign Keys:** מופעלים בכל פתיחה (`PRAGMA foreign_keys = ON`), ונבדקים.
@@ -107,12 +112,14 @@ lib/data/media/                     Visit photos and videos: validation, private
 
 ## 6. מדיניות Migrations
 
-- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 2`, ונשמרת ב־`PRAGMA user_version`.
+- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 3`, ונשמרת ב־`PRAGMA user_version`.
 - **1 ← 2:** יוצרת את הטבלה `visit_media` ואת שני האינדקסים שלה. שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. נבדק ב־`test/data/local/visit_media_storage_test.dart`, מול קובץ מוצפן בגרסה 1.
+- **2 ← 3:** יוצרת את הטבלאות `medications` ו־`dose_records` ואת האינדקס של כל אחת. שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. נבדק ב־`test/data/local/medication_storage_test.dart`, מול קובץ מוצפן בגרסה 2.
+- **אחרי השדרוג אין חזרה:** גרסה ישנה של האפליקציה תסרב לפתוח קובץ בגרסה 3 ותציג את הודעת "גרסה חדשה יותר". שום מידע לא נמחק.
 - **שינוי Schema:** מעלים את הגרסה, ומוסיפים שלב ב־`onUpgrade` של `LocalDatabase` לכל מעבר גרסה.
 - **שלב Migration לעולם לא מוחק נתונים:** אפשר להוסיף, להעביר או להמיר. כל Migration צריכה בדיקה עם קובץ מהגרסה הקודמת.
 - **גרסה חדשה יותר מהאפליקציה:** קובץ כזה לא נפתח, ומוצגת הודעה. אין downgrade.
-- **עדיין לא ממומש:** שמירת עותק מוצפן של הקובץ לפני שדרוג. ה־Migration מ־1 ל־2 רק מוסיפה טבלה ואינדקסים.
+- **עדיין לא ממומש:** שמירת עותק מוצפן של הקובץ לפני שדרוג. ה־Migrations מ־1 ל־2 ומ־2 ל־3 רק מוסיפות טבלאות ואינדקסים.
 
 ## 7. מגבלות וסיכונים ידועים
 
@@ -173,3 +180,10 @@ flutter test integration_test -d <device-id>
 - **העברת תור לבן משפחה אחר:** חסומה כל עוד יש לתור תמונות או סרטונים, כדי שהתיעוד לא יעבור לפרופיל אחר.
 - **לוגים:** שגיאות (`MediaFileException`, `MediaPickException`) מכילות רק את סוג השגיאה, בלי שם קובץ ובלי נתיב. `toString()` של `VisitMedia` מחזיר מזהה בלבד.
 - **מצב Demo:** הקבצים נשמרים בתיקייה הזמנית ונמחקים בהפעלה הבאה.
+
+## 10. תרופות ורישומי מנות
+
+- **מה נשמר:** התרופות (שם, מינון, הוראות, שעות תזכורת יומיות, תאריכי התחלה וסיום) בטבלה `medications`, והסימונים "נלקחה" / "דולגה" בטבלה `dose_records`, שתיהן במסד **המוצפן**.
+- **התזכורות לא נשמרות במסד.** הן מחושבות מחדש מהתרופות בכל שינוי, בכל הפעלה ובכל חזרה לאפליקציה. מערכת ההפעלה שומרת רק את רשימת ההתראות המתוזמנות, עם טקסט כללי, בלי מטען (payload) ובלי פרטים רפואיים. הפירוט ב[מסמך התרופות והתזכורות](medication_reminders.md).
+- **מחיקה:** מחיקת תרופה מוחקת את רישומי המנות שלה באותה טרנזקציה. מחיקת בן משפחה מוחקת גם את התרופות והרישומים שלו.
+- **לוגים:** `toString()` של `Medication` ושל `DoseRecord` מחזיר מזהה בלבד.

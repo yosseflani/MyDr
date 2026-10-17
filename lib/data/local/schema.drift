@@ -1,4 +1,5 @@
--- MyDr local database, schema version 2 (v2 added visit_media).
+-- MyDr local database, schema version 3 (v2 added visit_media; v3 added
+-- medications and dose_records).
 --
 -- Mirrors the models in lib/data/models exactly. Formats:
 --   * local date and time: 'YYYY-MM-DDTHH:MM:SS.ffffff' (wall-clock time,
@@ -113,3 +114,51 @@ CREATE TABLE visit_media (
 CREATE INDEX visit_media_by_appointment
   ON visit_media (appointment_id, created_at);
 CREATE INDEX visit_media_by_member ON visit_media (member_id);
+
+-- Medications a family member takes, as the user entered them. Reminders
+-- are not stored: they are planned from these rows (see
+-- reminder_planner.dart).
+CREATE TABLE medications (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  dose TEXT NOT NULL CHECK (length(trim(dose)) > 0),
+  instructions TEXT,
+  -- Daily reminder times: a JSON array of 'HH:MM' strings, at least one.
+  reminder_times TEXT NOT NULL CHECK (json_valid(reminder_times)
+    AND json_type(reminder_times) = 'array'
+    AND json_array_length(reminder_times) > 0),
+  start_date TEXT NOT NULL CHECK (length(start_date) = 10
+    AND start_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+  -- Inclusive; null when the treatment has no planned end.
+  end_date TEXT CHECK (end_date IS NULL OR (length(end_date) = 10
+    AND end_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+    AND end_date >= start_date)),
+  -- Target of the composite key in dose_records.
+  UNIQUE (id, member_id)
+) STRICT AS MedicationRow;
+
+CREATE INDEX medications_by_member ON medications (member_id);
+
+-- Scheduled doses the user marked as taken or skipped.
+CREATE TABLE dose_records (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  medication_id TEXT NOT NULL,
+  -- The scheduled dose's local date and time, to the minute.
+  scheduled_at TEXT NOT NULL CHECK (length(scheduled_at) = 26 AND scheduled_at GLOB
+    '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:00.000000'),
+  status TEXT NOT NULL CHECK (status IN ('taken', 'skipped')),
+  recorded_at INTEGER NOT NULL,
+  -- One record per scheduled dose.
+  UNIQUE (medication_id, scheduled_at),
+  -- The medication must belong to the same family member, so one member's
+  -- history can never show up under another member.
+  FOREIGN KEY (medication_id, member_id)
+    REFERENCES medications (id, member_id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT
+) STRICT AS DoseRecordRow;
+
+CREATE INDEX dose_records_by_member ON dose_records (member_id, scheduled_at);

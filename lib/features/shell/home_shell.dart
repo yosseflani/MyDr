@@ -3,6 +3,7 @@ import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/features/appointments/appointments_screen.dart';
 import 'package:mydr/features/dashboard/dashboard_screen.dart';
 import 'package:mydr/features/family/family_screen.dart';
+import 'package:mydr/features/medications/medications_screen.dart';
 import 'package:mydr/features/symptoms/symptoms_screen.dart';
 
 /// Main navigation shell with a bottom [NavigationBar].
@@ -45,6 +46,12 @@ class _HomeShellState extends State<HomeShell> {
       icon: Icons.monitor_heart_outlined,
       selectedIcon: Icons.monitor_heart,
       screen: SymptomsScreen(),
+    ),
+    const _ShellTab(
+      label: AppStrings.tabMedications,
+      icon: Icons.medication_outlined,
+      selectedIcon: Icons.medication,
+      screen: MedicationsScreen(),
     ),
   ];
 

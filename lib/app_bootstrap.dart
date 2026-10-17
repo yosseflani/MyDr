@@ -6,6 +6,7 @@ import 'package:mydr/data/emergency/emergency_dialer.dart';
 import 'package:mydr/data/local/local_database.dart';
 import 'package:mydr/data/local/local_database_exception.dart';
 import 'package:mydr/data/local/local_database_opener.dart';
+import 'package:mydr/data/reminders/reminder_scheduler.dart';
 import 'package:mydr/data/repositories/first_aid_repository.dart';
 import 'package:mydr/features/emergency/emergency_screen.dart';
 import 'package:mydr/features/emergency/widgets/medical_call_button.dart';
@@ -22,12 +23,17 @@ class MyDrBootstrap extends StatefulWidget {
     this.openDatabase = _openDefault,
     this.emergencyDialer = const UrlLauncherEmergencyDialer(),
     this.firstAidRepository = const AssetFirstAidRepository(),
+    this.reminderScheduler = AppDependencies.platformReminderScheduler,
   });
 
   /// Opens the database; replaceable in tests.
   final Future<LocalDatabase> Function() openDatabase;
   final EmergencyDialer emergencyDialer;
   final FirstAidRepository firstAidRepository;
+
+  /// Creates the dose reminder scheduler once the database is open;
+  /// replaceable in tests.
+  final ReminderScheduler Function() reminderScheduler;
 
   static Future<LocalDatabase> _openDefault() =>
       const LocalDatabaseOpener().open();
@@ -92,6 +98,7 @@ class _MyDrBootstrapState extends State<MyDrBootstrap> {
           database,
           emergencyDialer: widget.emergencyDialer,
           firstAidRepository: widget.firstAidRepository,
+          reminderScheduler: widget.reminderScheduler(),
         );
       }
     });

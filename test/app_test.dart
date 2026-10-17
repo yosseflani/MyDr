@@ -17,15 +17,16 @@ void main() {
     expect(Directionality.of(context), TextDirection.rtl);
   });
 
-  testWidgets('navigation bar shows the four tabs', (tester) async {
+  testWidgets('navigation bar shows the five tabs', (tester) async {
     await tester.pumpWidget(MyDrApp(dependencies: AppDependencies.empty()));
 
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
     for (final label in [
       AppStrings.tabHome,
       AppStrings.tabFamily,
       AppStrings.tabAppointments,
       AppStrings.tabSymptoms,
+      AppStrings.tabMedications,
     ]) {
       expect(find.text(label), findsOneWidget);
     }
@@ -45,6 +46,7 @@ void main() {
       AppStrings.tabFamily: AppStrings.familyTitle,
       AppStrings.tabAppointments: AppStrings.appointmentsTitle,
       AppStrings.tabSymptoms: AppStrings.symptomsTitle,
+      AppStrings.tabMedications: AppStrings.medicationsTitle,
     };
 
     for (final MapEntry(key: tab, value: title) in tabsToTitles.entries) {

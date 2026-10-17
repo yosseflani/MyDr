@@ -8,6 +8,7 @@ import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
+import 'package:mydr/features/medications/medication_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
 import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
@@ -17,8 +18,8 @@ extension PumpApp on WidgetTester {
   /// [AppScope] as the app. Uses fresh empty repositories unless
   /// [dependencies] is given, and controllers built on them unless
   /// [familyController], [appointmentController],
-  /// [doctorQuestionController], [symptomController], [firstAidController]
-  /// or [visitMediaController] is given.
+  /// [doctorQuestionController], [symptomController], [firstAidController],
+  /// [visitMediaController] or [medicationController] is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
@@ -28,6 +29,7 @@ extension PumpApp on WidgetTester {
     SymptomController? symptomController,
     FirstAidController? firstAidController,
     VisitMediaController? visitMediaController,
+    MedicationController? medicationController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -81,6 +83,16 @@ extension PumpApp on WidgetTester {
       addTearDown(resolvedVisitMediaController.dispose);
     }
 
+    final resolvedMedicationController =
+        medicationController ??
+        MedicationController(
+          dependencies: resolvedDependencies,
+          familyController: resolvedController,
+        );
+    if (medicationController == null) {
+      addTearDown(resolvedMedicationController.dispose);
+    }
+
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
@@ -90,6 +102,7 @@ extension PumpApp on WidgetTester {
         symptomController: resolvedSymptomController,
         firstAidController: resolvedFirstAidController,
         visitMediaController: resolvedVisitMediaController,
+        medicationController: resolvedMedicationController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

@@ -15,7 +15,8 @@ class LocalDatabase extends _$LocalDatabase {
 
   /// 1: family members, appointments, questions and symptoms.
   /// 2: adds visit_media (photos and videos prepared for a doctor visit).
-  static const int currentSchemaVersion = 2;
+  /// 3: adds medications and dose_records (medication reminders).
+  static const int currentSchemaVersion = 3;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -35,6 +36,12 @@ class LocalDatabase extends _$LocalDatabase {
         await migrator.createTable(visitMedia);
         await migrator.createIndex(visitMediaByAppointment);
         await migrator.createIndex(visitMediaByMember);
+      }
+      if (from < 3) {
+        await migrator.createTable(medications);
+        await migrator.createIndex(medicationsByMember);
+        await migrator.createTable(doseRecords);
+        await migrator.createIndex(doseRecordsByMember);
       }
     },
   );

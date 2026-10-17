@@ -4,7 +4,9 @@ import 'package:mydr/data/repositories/transaction_runner.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
+import 'package:mydr/data/repositories/dose_record_repository.dart';
 import 'package:mydr/data/repositories/family_repository.dart';
+import 'package:mydr/data/repositories/medication_repository.dart';
 import 'package:mydr/data/repositories/symptom_repository.dart';
 import 'package:mydr/data/media/visit_media_file_store.dart';
 import 'package:mydr/data/repositories/visit_media_repository.dart';
@@ -20,6 +22,8 @@ enum MemberDeletionStep {
   symptoms,
   doctorQuestions,
   visitMedia,
+  doseRecords,
+  medications,
   appointments,
   profile,
 }
@@ -43,6 +47,8 @@ class RelatedDataSummary {
     required this.doctorQuestions,
     required this.symptoms,
     this.visitMedia = 0,
+    this.medications = 0,
+    this.doseRecords = 0,
   });
 
   final int appointments;
@@ -52,11 +58,18 @@ class RelatedDataSummary {
   /// Photos and videos attached to the member's appointments.
   final int visitMedia;
 
+  final int medications;
+
+  /// Scheduled doses recorded as taken or skipped.
+  final int doseRecords;
+
   bool get isEmpty =>
       appointments == 0 &&
       doctorQuestions == 0 &&
       symptoms == 0 &&
-      visitMedia == 0;
+      visitMedia == 0 &&
+      medications == 0 &&
+      doseRecords == 0;
 }
 
 /// State and actions for the family members feature.
@@ -72,6 +85,8 @@ class FamilyController extends ChangeNotifier {
       _symptomRepository = dependencies.symptomRepository,
       _visitMediaRepository = dependencies.visitMediaRepository,
       _visitMediaFiles = dependencies.visitMediaFiles,
+      _medicationRepository = dependencies.medicationRepository,
+      _doseRecordRepository = dependencies.doseRecordRepository,
       _transactions = dependencies.transactions;
 
   final FamilyRepository _familyRepository;
@@ -80,6 +95,8 @@ class FamilyController extends ChangeNotifier {
   final SymptomRepository _symptomRepository;
   final VisitMediaRepository _visitMediaRepository;
   final VisitMediaFileStore _visitMediaFiles;
+  final MedicationRepository _medicationRepository;
+  final DoseRecordRepository _doseRecordRepository;
   final TransactionRunner _transactions;
 
   List<FamilyMember> _members = const [];
@@ -90,8 +107,8 @@ class FamilyController extends ChangeNotifier {
   int _relatedDataRevision = 0;
 
   /// Increases after every member deletion attempt, successful or not,
-  /// since either may have removed appointments, questions, symptoms or
-  /// visit photos and videos.
+  /// since either may have removed appointments, questions, symptoms,
+  /// visit photos and videos, or medications and their dose records.
   /// Other controllers watch it to know when to reload their data.
   int get relatedDataRevision => _relatedDataRevision;
 
@@ -146,17 +163,28 @@ class FamilyController extends ChangeNotifier {
   /// be read.
   Future<RelatedDataSummary?> relatedDataSummary(String memberId) async {
     try {
-      final (appointments, questions, symptoms, media) = await (
+      final (
+        appointments,
+        questions,
+        symptoms,
+        media,
+        medications,
+        doses,
+      ) = await (
         _appointmentRepository.getAll(memberId: memberId),
         _doctorQuestionRepository.getAll(memberId: memberId),
         _symptomRepository.getAll(memberId: memberId),
         _visitMediaRepository.getAll(memberId: memberId),
+        _medicationRepository.getAll(memberId: memberId),
+        _doseRecordRepository.getAll(memberId: memberId),
       ).wait;
       return RelatedDataSummary(
         appointments: appointments.length,
         doctorQuestions: questions.length,
         symptoms: symptoms.length,
         visitMedia: media.length,
+        medications: medications.length,
+        doseRecords: doses.length,
       );
     } catch (_) {
       return null;
@@ -164,8 +192,10 @@ class FamilyController extends ChangeNotifier {
   }
 
   /// Deletes a member together with their symptoms, questions, visit photos
-  /// and videos, and appointments. Media files are removed from private
-  /// storage once their records are gone for good.
+  /// and videos, medications with their dose records, and appointments.
+  /// Media files are removed from private storage once their records are
+  /// gone for good. The member's reminders go when [MedicationController]
+  /// plans reminders again, on [relatedDataRevision].
   ///
   /// Must only be called after the user explicitly confirmed the deletion in
   /// the UI; [userConfirmed] makes that requirement visible at every call
@@ -206,6 +236,14 @@ class FamilyController extends ChangeNotifier {
           await _visitMediaRepository.deleteByMember(memberId);
           mediaRecordsDeleted = true;
         },
+      ),
+      (
+        MemberDeletionStep.doseRecords,
+        () => _doseRecordRepository.deleteByMember(memberId),
+      ),
+      (
+        MemberDeletionStep.medications,
+        () => _medicationRepository.deleteByMember(memberId),
       ),
       (
         MemberDeletionStep.appointments,

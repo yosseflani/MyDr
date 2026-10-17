@@ -8,6 +8,7 @@ abstract final class AppStrings {
   static const String tabFamily = 'משפחה';
   static const String tabAppointments = 'תורים';
   static const String tabSymptoms = 'תסמינים';
+  static const String tabMedications = 'תרופות';
 
   // Screen titles
   static const String familyTitle = 'בני המשפחה';
@@ -239,6 +240,8 @@ abstract final class AppStrings {
   static const String deleteItemQuestions = 'שאלות לרופא';
   static const String deleteItemSymptoms = 'רישומי תסמינים';
   static const String deleteItemVisitMedia = 'תמונות וסרטונים לביקורים';
+  static const String deleteItemMedications = 'תרופות ותזכורות';
+  static const String deleteItemDoseRecords = 'רישומי מנות';
   static const String deleteIrreversible = 'לא ניתן לבטל פעולה זו.';
   static const String deleteSummaryLoading =
       'בודקים אילו נתונים משויכים לפרופיל…';
@@ -622,6 +625,168 @@ abstract final class AppStrings {
       'אפשר למחוק את התיעוד.';
   static const String playVideo = 'הפעלה';
   static const String pauseVideo = 'השהיה';
+
+  // Medications and reminders
+  static const String medicationsTitle = 'תרופות ותזכורות';
+  static const String actionAddMedication = 'הוספת תרופה';
+  static const String editMedicationTitle = 'עריכת תרופה';
+  static const String medicationsNoAdvice =
+      'MyDr שומרת את התרופות כפי שהזנתם, ואינה ממליצה על תרופות, מינונים או '
+      'שינויים בטיפול. בכל שאלה פנו לרופא או לרוקח.';
+  static const String remindersAreAnAid =
+      'התזכורות הן כלי עזר בלבד: מערכת ההפעלה עלולה לעכב אותן או לא להציג '
+      'אותן כלל. אל תסתמכו עליהן כעל המקור היחיד.';
+  static const String noFamilyForMedicationsTitle = 'עדיין אין בני משפחה';
+  static const String noFamilyForMedicationsMessage =
+      'כדי להוסיף תרופה, הוסיפו קודם את בן המשפחה שנוטל אותה.';
+  static const String medicationsLoadErrorTitle = 'לא הצלחנו לטעון את התרופות';
+  static const String medicationsLoadErrorMessage = 'שום דבר לא נמחק. נסו שוב.';
+  static const String medicationsRefreshError =
+      'לא הצלחנו לרענן את התרופות, וייתכן שהמידע המוצג אינו עדכני.';
+  static String medicationsEmptyForMember(String name) =>
+      'עדיין אין תרופות עבור $name';
+  static const String medicationsEmptyMessage =
+      'אפשר להוסיף תרופה עם שעות תזכורת יומיות ותאריכי טיפול.';
+  static const String todayDosesTitle = 'המנות של היום';
+  static const String todayDosesEmpty = 'אין מנות מתוכננות להיום.';
+  static const String upcomingDosesTitle = 'המנות הבאות';
+  static const String upcomingDosesEmpty = 'אין מנות מתוכננות בשבוע הקרוב.';
+  static const String activeMedicationsTitle = 'תרופות פעילות';
+  static const String futureMedicationsTitle = 'טיפולים שעוד לא התחילו';
+  static const String endedMedicationsTitle = 'טיפולים שהסתיימו';
+
+  // Dose records
+  static const String doseTaken = 'נלקחה';
+  static const String doseSkipped = 'דולגה';
+  static const String markDoseTaken = 'נלקחה';
+  static const String markDoseSkipped = 'דילוג';
+  static const String doseNotRecorded = 'לא תועד';
+  static const String doseScheduled = 'מתוכננת';
+  static const String doseActions = 'שינוי הרישום';
+  static const String changeToTaken = 'שינוי ל"נלקחה"';
+  static const String changeToSkipped = 'שינוי ל"דולגה"';
+  static const String clearDoseRecord = 'ביטול הסימון';
+  static const String doseRecordedTaken = 'נרשם שהמנה נלקחה';
+  static const String doseRecordedSkipped = 'נרשם שהמנה דולגה';
+  static const String doseRecordCleared = 'הסימון בוטל';
+  static const String doseRecordFailed = 'הרישום לא נשמר. נסו שוב.';
+  static const String doseNotScheduled =
+      'המנה הזו כבר לא מתוכננת. ייתכן שפרטי התרופה השתנו.';
+  static const String doseInFuture = 'אפשר לתעד מנה רק ביום שלה או אחריו.';
+  static const String doseMedicationMissing =
+      'התרופה כבר לא קיימת. ייתכן שנמחקה.';
+  static String doseRecordedAt(String when) => 'תועד ב־$when';
+  static String doseSemantics(String time, String status) => '$time, $status';
+
+  // Medication form
+  static const String medicationNameLabel = 'שם התרופה';
+  static const String medicationNameRequired = 'נא להזין את שם התרופה';
+  static const String doseLabel = 'מינון';
+  static const String doseHint = 'כפי שנקבע לכם, למשל: טבליה אחת';
+  static const String doseRequired = 'נא להזין מינון';
+  static const String instructionsLabel = 'הוראות (אופציונלי)';
+  static const String instructionsHint = 'למשל: אחרי האוכל';
+  static const String reminderTimesLabel = 'שעות תזכורת יומיות';
+  static const String addReminderTime = 'הוספת שעה';
+  static String removeReminderTime(String time) => 'הסרת השעה $time';
+  static const String reminderTimeRequired = 'נא להוסיף לפחות שעת תזכורת אחת';
+  static const String reminderTimeDuplicate = 'השעה הזו כבר ברשימה';
+  static String tooManyReminderTimes(int max) =>
+      'אפשר להוסיף עד $max שעות ביום';
+  static const String reminderTimePickerHelp = 'בחירת שעת תזכורת';
+  static const String startDateLabel = 'תאריך התחלה';
+  static const String endDateLabel = 'תאריך סיום (אופציונלי)';
+  static const String startDatePickerHelp = 'בחירת תאריך התחלת הטיפול';
+  static const String endDatePickerHelp = 'בחירת תאריך סיום הטיפול';
+  static const String clearEndDate = 'הסרת תאריך הסיום';
+  static const String noEndDate = 'ללא תאריך סיום';
+  static const String endBeforeStart =
+      'תאריך הסיום לא יכול להיות לפני תאריך ההתחלה';
+  static const String medicationFormNotice =
+      'הזינו את הפרטים כפי שקיבלתם מהרופא או מהרוקח. MyDr לא בודקת אותם '
+      'ולא משנה אותם.';
+  static const String medicationMemberFixed =
+      'תרופה שייכת לבן משפחה אחד ואי אפשר להעביר אותה לאחר.';
+  static const String medicationMemberDeletedWhileEditing =
+      'בן המשפחה שנבחר נמחק. נא לבחור בן משפחה אחר.';
+  static const String medicationDeletedWhileEditing =
+      'התרופה נמחקה בזמן העריכה, ולכן אי אפשר לשמור את השינויים.';
+  static const String medicationMissingOnSave =
+      'התרופה כבר לא קיימת, ולכן השינויים לא נשמרו.';
+  static const String medicationNotFoundTitle = 'התרופה לא נמצאה';
+  static const String medicationNotFoundMessage =
+      'ייתכן שהתרופה נמחקה, או שבן המשפחה נמחק יחד עם התרופות שלו.';
+  static const String backToMedications = 'חזרה לתרופות';
+  static const String remindersPermissionAfterSave =
+      'כדי לקבל תזכורות, אפשרו ל־MyDr להציג התראות.';
+
+  // Medication details
+  static const String medicationDetailsSection = 'פרטי התרופה';
+  static const String reminderTimesSection = 'שעות תזכורת';
+  static const String treatmentDatesSection = 'תאריכי הטיפול';
+  static String treatmentFrom(String date) => 'מ־$date, ללא תאריך סיום';
+  static String treatmentRange(String start, String end) =>
+      'מ־$start עד $end (כולל)';
+  static const String medicationActive = 'פעילה';
+  static const String medicationEnded = 'הסתיימה';
+  static String medicationStartsOn(String date) => 'תתחיל ב־$date';
+  static const String recentDosesTitle = 'המנות בשבוע האחרון';
+  static const String recentDosesEmpty = 'לא היו מנות מתוכננות בשבוע האחרון.';
+  static const String doseHistoryTitle = 'היסטוריית רישומים';
+  static const String doseHistoryEmpty = 'עדיין לא תועדו מנות.';
+  static String doseCountSummary(int taken, int skipped) =>
+      'נלקחו: $taken · דולגו: $skipped';
+
+  // Deleting a medication
+  static const String deleteMedication = 'מחיקת התרופה';
+  static const String deleteMedicationTitle = 'למחוק את התרופה?';
+  static String deleteMedicationRecords(int count) => switch (count) {
+    0 => 'אין לתרופה רישומי מנות.',
+    1 => 'יימחק גם רישום מנה אחד.',
+    _ => 'יימחקו גם $count רישומי מנות.',
+  };
+  static const String deleteMedicationRemovesReminders =
+      'התזכורות של התרופה יבוטלו. התרופות והרישומים של שאר בני המשפחה לא '
+      'ישתנו.';
+  static const String deleteMedicationFailed =
+      'המחיקה נכשלה, והתרופה לא נמחקה. אפשר לנסות שוב.';
+  static const String medicationDeleted = 'התרופה נמחקה';
+
+  // Reminder status
+  static const String remindersDisabled =
+      'ההתראות של MyDr כבויות, ולכן התזכורות לא יוצגו. כל השאר ממשיך '
+      'לעבוד: אפשר להוסיף תרופות ולתעד מנות.';
+  static const String enableReminders = 'הפעלת התראות';
+  static const String openNotificationSettingsHint =
+      'אם לא הופיעה בקשה, אפשר להפעיל התראות בהגדרות המכשיר, בהגדרות של '
+      'MyDr.';
+  static const String remindersUnsupported =
+      'במכשיר הזה לא מוצגות תזכורות. התרופות והרישומים נשמרים כרגיל.';
+  static const String remindersFailed =
+      'לא הצלחנו לתזמן את התזכורות. התרופות והרישומים נשמרו.';
+  static String remindersScheduledUntil(String when) =>
+      'התזכורות מתוזמנות עד $when. הן מתחדשות בכל פתיחה של האפליקציה.';
+  static const String remindersTruncated =
+      'יש יותר מנות ממה שאפשר לתזמן מראש. פתחו את MyDr מדי פעם כדי '
+      'שהתזכורות יתחדשו.';
+  static const String remindersNoneScheduled = 'אין כרגע תזכורות מתוזמנות.';
+  static const String remindersPrivacy =
+      'בהתראה מופיע רק "תזכורת מ־MyDr", בלי שם התרופה או בן המשפחה.';
+
+  // Reminder notification: generic on purpose, shown on the lock screen.
+  static const String reminderNotificationTitle = 'תזכורת מ־MyDr';
+  static const String reminderNotificationBody =
+      'יש תזכורת שקבעתם. לפרטים, פתחו את האפליקציה.';
+  static const String reminderChannelName = 'תזכורות';
+  static const String reminderChannelDescription =
+      'תזכורות ששמרתם ב־MyDr, ללא פרטים אישיים.';
+
+  // Medications on a member's profile
+  static const String memberMedicationsTitle = 'תרופות';
+  static const String memberMedicationsEmpty = 'לא נוספו תרופות פעילות.';
+  static String activeMedicationCount(int count) =>
+      count == 1 ? 'תרופה פעילה אחת' : '$count תרופות פעילות';
+  static const String allMemberMedications = 'כל התרופות והמנות';
 
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';

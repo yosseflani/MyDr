@@ -15,6 +15,7 @@ class DatePickerField extends FormField<DateTime> {
     required String helpText,
     required ValueChanged<DateTime> onChanged,
     FormFieldValidator<DateTime>? validator,
+    String label = AppStrings.dateLabel,
     super.enabled,
   }) : super(
          validator: (value) =>
@@ -48,13 +49,87 @@ class DatePickerField extends FormField<DateTime> {
            }
 
            return _PickerFieldLayout(
-             label: AppStrings.dateLabel,
+             label: label,
              icon: Icons.calendar_today_outlined,
              text: value == null
                  ? null
                  : MaterialLocalizations.of(context).formatFullDate(value),
              errorText: field.errorText,
              onTap: field.widget.enabled ? pick : null,
+           );
+         },
+       );
+}
+
+/// Date field that may stay empty, with a button to clear a chosen date.
+/// Opens a date picker limited to [firstDate]–[lastDate].
+///
+/// [validator] checks a chosen date; an empty field is always valid.
+class OptionalDatePickerField extends FormField<DateTime> {
+  OptionalDatePickerField({
+    super.key,
+    super.initialValue,
+    required DateTime firstDate,
+    required DateTime lastDate,
+    required DateTime today,
+    required String label,
+    required String helpText,
+    required String clearTooltip,
+    required ValueChanged<DateTime?> onChanged,
+    FormFieldValidator<DateTime>? validator,
+    super.enabled,
+  }) : super(
+         validator: (value) => value == null ? null : validator?.call(value),
+         builder: (field) {
+           final context = field.context;
+           final value = field.value;
+           final enabled = field.widget.enabled;
+
+           Future<void> pick() async {
+             final first = value != null && value.isBefore(firstDate)
+                 ? value
+                 : firstDate;
+             final last = value != null && value.isAfter(lastDate)
+                 ? value
+                 : lastDate;
+             final day = DateUtils.dateOnly(today);
+             final fallback = day.isBefore(first)
+                 ? first
+                 : day.isAfter(last)
+                 ? last
+                 : day;
+             final picked = await showDatePicker(
+               context: context,
+               firstDate: first,
+               lastDate: last,
+               initialDate: value ?? fallback,
+               helpText: helpText,
+             );
+             if (picked == null) return;
+             field.didChange(picked);
+             onChanged(picked);
+           }
+
+           void clear() {
+             field.didChange(null);
+             onChanged(null);
+           }
+
+           return _PickerFieldLayout(
+             label: label,
+             icon: Icons.event_outlined,
+             text: value == null
+                 ? null
+                 : MaterialLocalizations.of(context).formatFullDate(value),
+             errorText: field.errorText,
+             onTap: enabled ? pick : null,
+             suffix: value == null
+                 ? null
+                 : IconButton(
+                     tooltip: clearTooltip,
+                     icon: const Icon(Icons.clear),
+                     onPressed: enabled ? clear : null,
+                   ),
            );
          },
        );
@@ -118,6 +193,7 @@ class _PickerFieldLayout extends StatelessWidget {
     required this.text,
     required this.errorText,
     required this.onTap,
+    this.suffix,
   });
 
   final String label;
@@ -125,6 +201,7 @@ class _PickerFieldLayout extends StatelessWidget {
   final String? text;
   final String? errorText;
   final VoidCallback? onTap;
+  final Widget? suffix;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +219,7 @@ class _PickerFieldLayout extends StatelessWidget {
             errorText: errorText,
             border: const OutlineInputBorder(),
             prefixIcon: Icon(icon),
+            suffixIcon: suffix,
           ),
           child: Text(text ?? ''),
         ),

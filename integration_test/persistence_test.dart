@@ -11,10 +11,13 @@ import 'package:mydr/data/local/database_key_store.dart';
 import 'package:mydr/data/local/local_database_opener.dart';
 import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/models/doctor_question.dart';
+import 'package:mydr/data/models/dose_record.dart';
 import 'package:mydr/data/models/family_member.dart';
+import 'package:mydr/data/models/medication.dart';
 import 'package:mydr/data/models/symptom_entry.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
+import 'package:mydr/features/medications/medication_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/shell/home_shell.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
@@ -136,11 +139,37 @@ void main() {
       ),
     );
     expect(symptomResult, SymptomSaveResult.success);
+
+    // Today's 08:00 dose is always recordable, whatever the time now.
+    final medications = scope.medicationController;
+    final today = DateTime.now();
+    final medicationResult = await medications.add(
+      Medication(
+        id: medications.createId(),
+        memberId: memberId,
+        name: 'תרופת בדיקה',
+        dose: '1 tablet',
+        reminderTimes: [DoseTime(8, 0)],
+        startDate: today,
+        endDate: today.add(const Duration(days: 7)),
+      ),
+    );
+    expect(medicationResult, MedicationSaveResult.success);
+    final dose = DateTime(today.year, today.month, today.day, 8);
+    expect(
+      await medications.recordDose(
+        medications.medications.single.id,
+        dose,
+        DoseStatus.taken,
+      ),
+      DoseRecordResult.success,
+    );
     await tester.pumpAndSettle();
 
     expect(appointments.appointments, hasLength(1));
     expect(questions.questions, hasLength(1));
     expect(symptoms.entries, hasLength(1));
+    expect(medications.records(), hasLength(1));
     await stopApp(tester);
   });
 
@@ -162,6 +191,22 @@ void main() {
     );
     final symptom = scope.symptomController.entries.single;
     expect(symptom.severity, 2);
+
+    // The dose record survived the restart; marking it again adds nothing.
+    final medications = scope.medicationController;
+    final medication = medications.medications.single;
+    expect(medication.name, 'תרופת בדיקה');
+    final record = medications.records().single;
+    expect(record.status, DoseStatus.taken);
+    expect(
+      await medications.recordDose(
+        medication.id,
+        record.scheduledAt,
+        DoseStatus.taken,
+      ),
+      DoseRecordResult.success,
+    );
+    expect(medications.records(), hasLength(1));
 
     // Shown on screen too.
     await tester.tap(
@@ -207,6 +252,7 @@ void main() {
     expect(symptom.severity, 4);
     expect(symptom.notes, 'עודכן');
     expect(scope.doctorQuestionController.questions.single.isResolved, isTrue);
+    expect(scope.medicationController.records(), hasLength(1));
 
     final result = await scope.familyController.delete(
       member.id,
@@ -225,6 +271,8 @@ void main() {
     expect(scope.appointmentController.appointments, isEmpty);
     expect(scope.doctorQuestionController.questions, isEmpty);
     expect(scope.symptomController.entries, isEmpty);
+    expect(scope.medicationController.medications, isEmpty);
+    expect(scope.medicationController.records(), isEmpty);
 
     // The file on the device is encrypted.
     final header = String.fromCharCodes(file.readAsBytesSync().sublist(0, 16));

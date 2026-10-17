@@ -1,6 +1,8 @@
 import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/models/doctor_question.dart';
+import 'package:mydr/data/models/dose_record.dart';
 import 'package:mydr/data/models/family_member.dart';
+import 'package:mydr/data/models/medication.dart';
 import 'package:mydr/data/models/symptom_entry.dart';
 
 /// Fictional sample data for development and demos.
@@ -166,4 +168,85 @@ abstract final class MockData {
       duration: const Duration(days: 2),
     ),
   ];
+
+  static const String vitaminId = 'medication-1';
+  static const String syrupId = 'medication-2';
+  static const String dailyTabletId = 'medication-3';
+
+  /// Placeholder names and doses, not suggestions of any treatment.
+  static List<Medication> medications(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day);
+    return [
+      Medication(
+        id: vitaminId,
+        memberId: selfId,
+        name: 'ויטמין לדוגמה',
+        dose: 'כמוסה אחת',
+        reminderTimes: [DoseTime(8, 0)],
+        startDate: today.subtract(const Duration(days: 30)),
+      ),
+      Medication(
+        id: syrupId,
+        memberId: sonId,
+        name: 'סירופ לדוגמה',
+        dose: '5 מ״ל',
+        instructions: 'אחרי האוכל',
+        reminderTimes: [DoseTime(8, 0), DoseTime(20, 0)],
+        startDate: today.subtract(const Duration(days: 2)),
+        endDate: today.add(const Duration(days: 4)),
+      ),
+      Medication(
+        id: dailyTabletId,
+        memberId: grandmotherId,
+        name: 'טבליה לדוגמה',
+        dose: 'טבליה אחת',
+        reminderTimes: [DoseTime(9, 0), DoseTime(21, 0)],
+        startDate: today.subtract(const Duration(days: 365)),
+      ),
+    ];
+  }
+
+  static List<DoseRecord> doseRecords(DateTime now) {
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    return [
+      DoseRecord(
+        id: 'dose-1',
+        memberId: sonId,
+        medicationId: syrupId,
+        scheduledAt: DateTime(
+          yesterday.year,
+          yesterday.month,
+          yesterday.day,
+          8,
+        ),
+        status: DoseStatus.taken,
+        recordedAt: DateTime(
+          yesterday.year,
+          yesterday.month,
+          yesterday.day,
+          8,
+          5,
+        ),
+      ),
+      DoseRecord(
+        id: 'dose-2',
+        memberId: sonId,
+        medicationId: syrupId,
+        scheduledAt: DateTime(
+          yesterday.year,
+          yesterday.month,
+          yesterday.day,
+          20,
+        ),
+        status: DoseStatus.skipped,
+        recordedAt: DateTime(
+          yesterday.year,
+          yesterday.month,
+          yesterday.day,
+          20,
+          30,
+        ),
+      ),
+    ];
+  }
 }

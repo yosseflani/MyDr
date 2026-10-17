@@ -298,12 +298,15 @@ void main() {
     test(
       'upgrading a version 1 database keeps all data and adds the table',
       () async {
-        // Builds a genuine version 1 file: version 2 minus visit_media.
+        // Builds a genuine version 1 file: the current schema minus
+        // visit_media and the later (version 3) medication tables.
         var database = await open();
         await seeded(database);
         await database.close();
         final raw = sqlite3.open(file.path)
           ..execute("PRAGMA key = \"x'${keys.key}'\"")
+          ..execute('DROP TABLE dose_records')
+          ..execute('DROP TABLE medications')
           ..execute('DROP TABLE visit_media')
           ..execute('PRAGMA user_version = 1');
         expect(

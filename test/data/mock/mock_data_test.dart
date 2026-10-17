@@ -7,6 +7,8 @@ void main() {
   final appointments = MockData.appointments(now);
   final questions = MockData.questions(now);
   final symptoms = MockData.symptoms(now);
+  final medications = MockData.medications(now);
+  final doseRecords = MockData.doseRecords(now);
 
   test('ids are unique within each collection', () {
     for (final ids in [
@@ -14,6 +16,8 @@ void main() {
       appointments.map((a) => a.id),
       questions.map((q) => q.id),
       symptoms.map((s) => s.id),
+      medications.map((m) => m.id),
+      doseRecords.map((r) => r.id),
     ]) {
       expect(ids.toSet(), hasLength(ids.length));
     }
@@ -28,6 +32,16 @@ void main() {
     }
     for (final s in symptoms) {
       expect(memberIds, contains(s.memberId));
+    }
+    final medicationsById = {for (final m in medications) m.id: m};
+    for (final m in medications) {
+      expect(memberIds, contains(m.memberId));
+    }
+    for (final r in doseRecords) {
+      // A record belongs to its medication's member, at a scheduled dose.
+      final medication = medicationsById[r.medicationId]!;
+      expect(r.memberId, medication.memberId);
+      expect(medication.isScheduledAt(r.scheduledAt), isTrue);
     }
     for (final q in questions) {
       expect(memberIds, contains(q.memberId));
