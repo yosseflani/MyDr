@@ -238,6 +238,7 @@ abstract final class AppStrings {
   static const String deleteItemAppointments = 'תורים';
   static const String deleteItemQuestions = 'שאלות לרופא';
   static const String deleteItemSymptoms = 'רישומי תסמינים';
+  static const String deleteItemVisitMedia = 'תמונות וסרטונים לביקורים';
   static const String deleteIrreversible = 'לא ניתן לבטל פעולה זו.';
   static const String deleteSummaryLoading =
       'בודקים אילו נתונים משויכים לפרופיל…';
@@ -323,6 +324,12 @@ abstract final class AppStrings {
       'בן המשפחה שנבחר כבר לא קיים. בחרו בן משפחה אחר.';
   static const String appointmentMissingOnSave =
       'התור כבר לא קיים, ייתכן שנמחק. השינויים לא נשמרו.';
+  static String moveAppointmentHasMedia(String originalName) =>
+      'לתור מצורפים תמונות או סרטונים של $originalName, ולכן אי אפשר להעביר '
+      'אותו לבן משפחה אחר. כדי להעביר אותו, מחקו קודם את התיעודים.';
+  static const String linkedMediaCheckFailed =
+      'לא הצלחנו לבדוק אם מצורפים לתור תמונות או סרטונים, ולכן התור לא נשמר. '
+      'נסו שוב.';
   static String saveFailedAfterDetaching(String originalName) =>
       'השמירה נכשלה. השאלות שהיו משויכות לתור כבר הוסרו ממנו ונשארו אצל '
       '$originalName כשאלות כלליות. נסו לשמור שוב.';
@@ -349,6 +356,9 @@ abstract final class AppStrings {
       'כבר הוסרו ממנו ונשארו אצל $memberName כשאלות כלליות. הן לא נמחקו. '
       'אפשר לנסות שוב.';
   static const String appointmentDeleted = 'התור נמחק';
+  static String deleteAppointmentMedia(int count) => count == 1
+      ? 'גם תיעוד אחד (תמונה או סרטון) שצורף לתור יימחק מהמכשיר.'
+      : 'גם $count תיעודים (תמונות וסרטונים) שצורפו לתור יימחקו מהמכשיר.';
 
   // Questions to the doctor
   static const String doctorQuestionsTitle = 'שאלות לרופא';
@@ -540,6 +550,78 @@ abstract final class AppStrings {
   static const String deleteSymptomFailed =
       'מחיקת התיעוד נכשלה, והתיעוד לא נמחק. אפשר לנסות שוב.';
   static const String symptomDeleted = 'התיעוד נמחק';
+
+  // Doctor visit preparation
+  static const String visitPreparationTitle = 'הכנה לביקור אצל הרופא';
+  static const String visitPreparationIntro =
+      'השאלות, התמונות והסרטונים שתרצו להראות לרופא, במקום אחד.';
+  static const String visitMediaTitle = 'תמונות וסרטונים';
+  static const String visitMediaPrivacyNote =
+      'נשמרים רק במכשיר, באחסון הפרטי של האפליקציה, ולא בגלריה. '
+      'לא מועלים לשום שרת.';
+  static const String visitMediaEmpty =
+      'עדיין לא צורפו תמונות או סרטונים לתור. אפשר לתעד תסמין שעלול להשתנות '
+      'או להיעלם עד הביקור.';
+  static const String visitMediaLoadError =
+      'לא הצלחנו לטעון את התמונות והסרטונים של התור.';
+  static const String takePhoto = 'צילום תמונה';
+  static const String recordVideo = 'צילום סרטון';
+  static const String chooseFromGallery = 'בחירה מהגלריה';
+  static const String visitMediaAdding = 'שומרים במכשיר…';
+  static const String visitMediaPhoto = 'תמונה';
+  static const String visitMediaVideo = 'סרטון';
+  static const String visitMediaNoDescription = 'ללא תיאור';
+  static String visitMediaAddedAt(String when) => 'נוסף: $when';
+  static String visitMediaAdded(int count) =>
+      count == 1 ? 'התיעוד נשמר' : 'נשמרו $count תיעודים';
+  static const String visitMediaMoreActions = 'פעולות נוספות';
+
+  static const String cameraPermissionDenied =
+      'אין הרשאה לגשת למצלמה או לגלריה. אפשר לאשר גישה בהגדרות המכשיר, '
+      'ובינתיים להמשיך להשתמש בשאר האפשרויות.';
+  static const String cameraUnavailable = 'לא נמצאה מצלמה זמינה במכשיר.';
+  static const String mediaPickFailed =
+      'לא הצלחנו לפתוח את המצלמה או את הגלריה. נסו שוב.';
+  static const String mediaAppointmentMissing =
+      'התור כבר לא קיים, ולכן התיעוד לא נשמר.';
+  static String mediaRejectedUnsupported(int count) =>
+      '${count == 1 ? 'קובץ אחד לא נשמר' : '$count קבצים לא נשמרו'}: '
+      'סוג הקובץ אינו נתמך. אפשר לצרף תמונות (JPG, PNG, WEBP, HEIC) '
+      'וסרטונים (MP4, MOV, 3GP).';
+  static String mediaRejectedTooLarge(int count) =>
+      '${count == 1 ? 'קובץ אחד לא נשמר' : '$count קבצים לא נשמרו'}: '
+      'הקובץ גדול מדי (עד 25MB לתמונה ועד 150MB לסרטון).';
+  static String mediaSaveFailed(int count) =>
+      '${count == 1 ? 'קובץ אחד לא נשמר' : '$count קבצים לא נשמרו'}: '
+      'לא הצלחנו לקרוא או לשמור את הקובץ. נסו שוב.';
+
+  static const String visitMediaDescriptionTitle = 'תיאור התיעוד';
+  static const String visitMediaDescriptionLabel = 'תיאור (אופציונלי)';
+  static const String visitMediaDescriptionHint =
+      'למשל: הפריחה הופיעה אתמול בערב';
+  static const String editVisitMediaDescription = 'עריכת תיאור';
+  static const String descriptionSaveFailed = 'התיאור לא נשמר. נסו שוב.';
+  static const String visitMediaMissingDuringEdit =
+      'התיעוד כבר לא קיים, ייתכן שנמחק.';
+
+  static const String deleteVisitMedia = 'מחיקת תיעוד';
+  static const String deleteVisitMediaTitle = 'למחוק את התיעוד?';
+  static const String deleteVisitMediaMessage =
+      'הקובץ והתיאור שלו יימחקו מהמכשיר. העותק המקורי בגלריה, אם יש כזה, '
+      'לא יימחק.';
+  static const String deleteVisitMediaFailed =
+      'מחיקת התיעוד נכשלה, והוא לא נמחק. אפשר לנסות שוב.';
+  static const String visitMediaDeleted = 'התיעוד נמחק';
+
+  static const String visitMediaNotFoundTitle = 'התיעוד לא נמצא';
+  static const String visitMediaNotFoundMessage =
+      'ייתכן שהתיעוד נמחק, יחד עם התור או עם בן המשפחה.';
+  static const String backToAppointment = 'חזרה לתור';
+  static const String mediaFileMissing =
+      'הקובץ לא נמצא במכשיר או שאינו תקין, ולכן אי אפשר להציג אותו. '
+      'אפשר למחוק את התיעוד.';
+  static const String playVideo = 'הפעלה';
+  static const String pauseVideo = 'השהיה';
 
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';

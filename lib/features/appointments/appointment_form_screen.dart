@@ -277,6 +277,8 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
           AppStrings.selectedMemberMissing,
         AppointmentSaveResult.appointmentNotFound =>
           AppStrings.appointmentMissingOnSave,
+        AppointmentSaveResult.hasVisitMedia =>
+          AppStrings.moveAppointmentHasMedia(_memberName(original!.memberId)),
         AppointmentSaveResult.failedAfterDetachingQuestions =>
           AppStrings.saveFailedAfterDetaching(_memberName(original!.memberId)),
         AppointmentSaveResult.failed ||
@@ -285,9 +287,11 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
     });
   }
 
-  /// Before moving an appointment to another family member, checks for
-  /// linked questions and, if there are any, asks the user to confirm that
-  /// they will be unlinked (and stay with the original member).
+  /// Before moving an appointment to another family member, makes sure no
+  /// photos or videos are attached (they document the original member, so
+  /// the move is refused), then checks for linked questions and, if there
+  /// are any, asks the user to confirm that they will be unlinked (and stay
+  /// with the original member).
   ///
   /// Returns whether saving should go ahead.
   Future<bool> _confirmMemberChange(Appointment original) async {
@@ -295,10 +299,25 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
       _isSaving = true;
       _saveError = null;
     });
-    final count = await _appointments.linkedQuestionCount(original.id);
+    final (mediaCount, count) = await (
+      _appointments.linkedVisitMediaCount(original.id),
+      _appointments.linkedQuestionCount(original.id),
+    ).wait;
     if (!mounted) return false;
     setState(() => _isSaving = false);
 
+    if (mediaCount == null) {
+      setState(() => _saveError = AppStrings.linkedMediaCheckFailed);
+      return false;
+    }
+    if (mediaCount > 0) {
+      setState(
+        () => _saveError = AppStrings.moveAppointmentHasMedia(
+          _memberName(original.memberId),
+        ),
+      );
+      return false;
+    }
     if (count == null) {
       setState(() => _saveError = AppStrings.linkedQuestionsCheckFailed);
       return false;

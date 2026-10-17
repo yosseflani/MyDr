@@ -1,6 +1,6 @@
 # שמירת נתונים מקומית ומוצפנת ב־MyDr
 
-המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא ותיעוד תסמינים. הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
+המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא, תיעוד תסמינים, ותמונות וסרטונים להכנה לביקור (סעיף 9). הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
 
 > **חשוב:** המנגנון נבנה בזהירות ונבדק, אבל הוא לא עבר בדיקת אבטחה חיצונית. אין להציג את האפליקציה כמאובטחת לשימוש רפואי אמיתי לפני ביקורת מקצועית מתאימה.
 
@@ -25,7 +25,7 @@
 ```
 lib/app_bootstrap.dart              Startup: opens the database, loading and error screens
 lib/data/local/
-  schema.drift                      The schema (SQL), version 1
+  schema.drift                      The schema (SQL), version 2
   local_database.dart (+ .g.dart)   Drift database; migration policy
   local_database_opener.dart        Opening: key, encryption, foreign keys, schema checks
   local_database_exception.dart     Opening errors, safe to log
@@ -33,20 +33,21 @@ lib/data/local/
   storage_codecs.dart               Conversions between models and stored values
   local_ids.dart                    Random UUID v4 ids
   local_transaction_runner.dart     Atomic transactions
-  repositories/                     The four Repositories over the database
+  repositories/                     The five Repositories over the database
 lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non-atomic)
+lib/data/media/                     Visit photos and videos: validation, private file store, picker
 ```
 
 - **Controllers ו־UI:** לא תלויים במימוש. הם עובדים מול ממשקי ה־Repositories ומול `TransactionRunner`.
 - **פעולות מרובות שלבים** רצות ב־Transaction אחת, ולכן באחסון המקומי הן אטומיות. אלה הפעולות:
   - מחיקת בן משפחה עם כל הרשומות שלו.
-  - מחיקת תור (ניתוק השאלות שלו, ואז מחיקה).
+  - מחיקת תור (ניתוק השאלות שלו, מחיקת רשומות התמונות והסרטונים שלו, ואז מחיקה).
   - העברת תור לבן משפחה אחר (ניתוק השאלות, ואז עדכון).
 - **אם שלב נכשל:** שום שינוי לא נשמר, ואין מחיקה חלקית.
 
-## 3. מבנה מסד הנתונים (Schema גרסה 1)
+## 3. מבנה מסד הנתונים (Schema גרסה 2)
 
-ארבע טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions` ו־`symptom_entries`. ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
+חמש טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions`, `symptom_entries` ו־`visit_media` (נוספה בגרסה 2). ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
 
 - **מפתחות:**
   - כל רשומה מזוהה ב־`id` טקסטואלי (UUID).
@@ -54,6 +55,7 @@ lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non
 - **שלמות נתונים ברמת המסד:**
   - **אין רשומות יתומות:** אי אפשר למחוק בן משפחה או תור שעדיין מפנים אליהם.
   - **שאלה מקושרת רק לתור של אותו בן משפחה:** מפתח זר מורכב `(appointment_id, member_id)`.
+  - **תמונה או סרטון מקושרים רק לתור של אותו בן משפחה:** אותו מפתח זר מורכב ב־`visit_media`. כך תיעוד של בן משפחה אחד לא יכול להופיע אצל בן משפחה אחר.
   - **פרופיל "אני" אחד בלבד:** אינדקס ייחודי חלקי.
   - **ערכים תקינים:** CHECK על שמות לא ריקים, קרבה ממערך סגור, חומרה 1–5, סטטוס תסמין, משך שאינו שלילי, פורמט תאריכים ו־JSON תקין.
 - **Foreign Keys:** מופעלים בכל פתיחה (`PRAGMA foreign_keys = ON`), ונבדקים.
@@ -105,11 +107,12 @@ lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non
 
 ## 6. מדיניות Migrations
 
-- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 1`, ונשמרת ב־`PRAGMA user_version`.
+- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 2`, ונשמרת ב־`PRAGMA user_version`.
+- **1 ← 2:** יוצרת את הטבלה `visit_media` ואת שני האינדקסים שלה. שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. נבדק ב־`test/data/local/visit_media_storage_test.dart`, מול קובץ מוצפן בגרסה 1.
 - **שינוי Schema:** מעלים את הגרסה, ומוסיפים שלב ב־`onUpgrade` של `LocalDatabase` לכל מעבר גרסה.
 - **שלב Migration לעולם לא מוחק נתונים:** אפשר להוסיף, להעביר או להמיר. כל Migration צריכה בדיקה עם קובץ מהגרסה הקודמת.
 - **גרסה חדשה יותר מהאפליקציה:** קובץ כזה לא נפתח, ומוצגת הודעה. אין downgrade.
-- **מומלץ לפני Migration הראשונה:** לשמור עותק מוצפן של הקובץ לפני השדרוג. זה עדיין לא ממומש, כי אין עדיין גרסה 2.
+- **עדיין לא ממומש:** שמירת עותק מוצפן של הקובץ לפני שדרוג. ה־Migration מ־1 ל־2 רק מוסיפה טבלה ואינדקסים.
 
 ## 7. מגבלות וסיכונים ידועים
 
@@ -149,3 +152,24 @@ flutter test integration_test -d <device-id>
 - **`test/features/atomic_operations_test.dart`:** אטומיות של מחיקות ועדכונים.
 - **`test/app_bootstrap_test.dart`:** אתחול, שמירה בין הפעלות, מסכי שגיאה, חירום בזמן כשל ומצב Demo.
 - **`integration_test/`:** הצפנה, Keystore ושמירה בין הפעלות, על מכשיר אמיתי.
+
+## 9. תמונות וסרטונים להכנה לביקור
+
+- **מה נשמר איפה:**
+  - **הרשומה** (שיוך לתור ולבן משפחה, סוג, גודל, זמן ותיאור) נשמרת בטבלה `visit_media` במסד **המוצפן**.
+  - **הקובץ עצמו** מועתק לתיקייה `visit_media/` בתיקייה הפרטית של האפליקציה, ליד מסד הנתונים, בשם אקראי (UUID) שלא מסגיר דבר.
+  - הוא **לא** נשמר בגלריה, ולא נכלל בגיבוי (`allowBackup="false"` ב־Android).
+- **הקבצים עצמם אינם מוצפנים.** רק המטא־דאטה והתיאורים מוצפנים. באנדרואיד, האחסון הפנימי של האפליקציה נגיש רק לה (ולמכשיר פרוץ). הצפנת הקבצים נדחתה לשלב עתידי.
+- **צילום ובחירה:** דרך `image_picker`.
+  - צילום מהמצלמה לא נשמר בגלריה.
+  - הבחירה מהגלריה יוצרת עותק, והמקור של המשתמש לא נמחק לעולם.
+  - העותק הזמני שהספרייה יוצרת ב־cache נמחק מיד אחרי השמירה (או הדחייה).
+  - אורך סרטון ממצלמה: עד 60 שניות.
+- **בדיקה לפני שמירה (`MediaFileValidator`):** סיומת מרשימה סגורה (תמונות JPG/PNG/WEBP/HEIC, סרטונים MP4/MOV/M4V/3GP), חתימת תוכן (magic bytes) מאותו סוג, וגודל של עד 25MB לתמונה ועד 150MB לסרטון.
+- **מחיקה:**
+  - **תיעוד בודד:** אחרי אישור, נמחקת הרשומה ואז הקובץ.
+  - **תור או בן משפחה:** הרשומות נמחקות באותה טרנזקציה. הקבצים נמחקים רק אחרי שהטרנזקציה הצליחה, כך שכישלון לא משאיר רשומה בלי קובץ.
+  - **ניקוי:** קובץ שלא נמחק (למשל בגלל שגיאת דיסק) נמחק בהפעלה הבאה. בכל הפעלה נמחקים קבצים שאין להם רשומה.
+- **העברת תור לבן משפחה אחר:** חסומה כל עוד יש לתור תמונות או סרטונים, כדי שהתיעוד לא יעבור לפרופיל אחר.
+- **לוגים:** שגיאות (`MediaFileException`, `MediaPickException`) מכילות רק את סוג השגיאה, בלי שם קובץ ובלי נתיב. `toString()` של `VisitMedia` מחזיר מזהה בלבד.
+- **מצב Demo:** הקבצים נשמרים בתיקייה הזמנית ונמחקים בהפעלה הבאה.

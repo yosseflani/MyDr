@@ -43,6 +43,8 @@ dependencies:
   path_provider: ^2.1.6
   path: ^1.9.1
   sqlite3: 3.5.2
+  image_picker: ^1.2.3
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:

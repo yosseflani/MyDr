@@ -5,6 +5,7 @@ import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
+import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
 
 /// Makes the shared [AppDependencies] and feature controllers available to
 /// every widget below it.
@@ -20,6 +21,7 @@ class AppScope extends InheritedWidget {
     required this.doctorQuestionController,
     required this.symptomController,
     required this.firstAidController,
+    required this.visitMediaController,
     required super.child,
   });
 
@@ -29,6 +31,7 @@ class AppScope extends InheritedWidget {
   final DoctorQuestionController doctorQuestionController;
   final SymptomController symptomController;
   final FirstAidController firstAidController;
+  final VisitMediaController visitMediaController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -46,5 +49,6 @@ class AppScope extends InheritedWidget {
         oldWidget.doctorQuestionController,
       ) ||
       !identical(symptomController, oldWidget.symptomController) ||
-      !identical(firstAidController, oldWidget.firstAidController);
+      !identical(firstAidController, oldWidget.firstAidController) ||
+      !identical(visitMediaController, oldWidget.visitMediaController);
 }

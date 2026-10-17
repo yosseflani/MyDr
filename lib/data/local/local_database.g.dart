@@ -2030,6 +2030,539 @@ class SymptomEntriesCompanion extends UpdateCompanion<SymptomEntryRow> {
   }
 }
 
+class VisitMedia extends Table with TableInfo<VisitMedia, VisitMediaRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  VisitMedia(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (length(id) > 0)',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL REFERENCES family_members(id)ON UPDATE RESTRICT ON DELETE RESTRICT',
+  );
+  static const VerificationMeta _appointmentIdMeta = const VerificationMeta(
+    'appointmentId',
+  );
+  late final GeneratedColumn<String> appointmentId = GeneratedColumn<String>(
+    'appointment_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (kind IN (\'photo\', \'video\'))',
+  );
+  static const VerificationMeta _fileNameMeta = const VerificationMeta(
+    'fileName',
+  );
+  late final GeneratedColumn<String> fileName = GeneratedColumn<String>(
+    'file_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL UNIQUE CHECK (length(file_name) > 0 AND file_name NOT GLOB \'*[/\\]*\' AND file_name NOT GLOB \'.*\')',
+  );
+  static const VerificationMeta _byteSizeMeta = const VerificationMeta(
+    'byteSize',
+  );
+  late final GeneratedColumn<int> byteSize = GeneratedColumn<int>(
+    'byte_size',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (byte_size > 0)',
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    memberId,
+    appointmentId,
+    kind,
+    fileName,
+    byteSize,
+    description,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'visit_media';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VisitMediaRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('appointment_id')) {
+      context.handle(
+        _appointmentIdMeta,
+        appointmentId.isAcceptableOrUnknown(
+          data['appointment_id']!,
+          _appointmentIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_appointmentIdMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('file_name')) {
+      context.handle(
+        _fileNameMeta,
+        fileName.isAcceptableOrUnknown(data['file_name']!, _fileNameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fileNameMeta);
+    }
+    if (data.containsKey('byte_size')) {
+      context.handle(
+        _byteSizeMeta,
+        byteSize.isAcceptableOrUnknown(data['byte_size']!, _byteSizeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_byteSizeMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VisitMediaRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VisitMediaRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      appointmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}appointment_id'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      fileName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}file_name'],
+      )!,
+      byteSize: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}byte_size'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  VisitMedia createAlias(String alias) {
+    return VisitMedia(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  List<String> get customConstraints => const [
+    'FOREIGN KEY(appointment_id, member_id)REFERENCES appointments(id, member_id)ON UPDATE RESTRICT ON DELETE RESTRICT',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class VisitMediaRow extends DataClass implements Insertable<VisitMediaRow> {
+  final String id;
+  final String memberId;
+  final String appointmentId;
+  final String kind;
+
+  /// A bare file name inside the private media directory, never a path.
+  final String fileName;
+  final int byteSize;
+  final String? description;
+  final int createdAt;
+  const VisitMediaRow({
+    required this.id,
+    required this.memberId,
+    required this.appointmentId,
+    required this.kind,
+    required this.fileName,
+    required this.byteSize,
+    this.description,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['member_id'] = Variable<String>(memberId);
+    map['appointment_id'] = Variable<String>(appointmentId);
+    map['kind'] = Variable<String>(kind);
+    map['file_name'] = Variable<String>(fileName);
+    map['byte_size'] = Variable<int>(byteSize);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    map['created_at'] = Variable<int>(createdAt);
+    return map;
+  }
+
+  VisitMediaCompanion toCompanion(bool nullToAbsent) {
+    return VisitMediaCompanion(
+      id: Value(id),
+      memberId: Value(memberId),
+      appointmentId: Value(appointmentId),
+      kind: Value(kind),
+      fileName: Value(fileName),
+      byteSize: Value(byteSize),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory VisitMediaRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VisitMediaRow(
+      id: serializer.fromJson<String>(json['id']),
+      memberId: serializer.fromJson<String>(json['member_id']),
+      appointmentId: serializer.fromJson<String>(json['appointment_id']),
+      kind: serializer.fromJson<String>(json['kind']),
+      fileName: serializer.fromJson<String>(json['file_name']),
+      byteSize: serializer.fromJson<int>(json['byte_size']),
+      description: serializer.fromJson<String?>(json['description']),
+      createdAt: serializer.fromJson<int>(json['created_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'member_id': serializer.toJson<String>(memberId),
+      'appointment_id': serializer.toJson<String>(appointmentId),
+      'kind': serializer.toJson<String>(kind),
+      'file_name': serializer.toJson<String>(fileName),
+      'byte_size': serializer.toJson<int>(byteSize),
+      'description': serializer.toJson<String?>(description),
+      'created_at': serializer.toJson<int>(createdAt),
+    };
+  }
+
+  VisitMediaRow copyWith({
+    String? id,
+    String? memberId,
+    String? appointmentId,
+    String? kind,
+    String? fileName,
+    int? byteSize,
+    Value<String?> description = const Value.absent(),
+    int? createdAt,
+  }) => VisitMediaRow(
+    id: id ?? this.id,
+    memberId: memberId ?? this.memberId,
+    appointmentId: appointmentId ?? this.appointmentId,
+    kind: kind ?? this.kind,
+    fileName: fileName ?? this.fileName,
+    byteSize: byteSize ?? this.byteSize,
+    description: description.present ? description.value : this.description,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  VisitMediaRow copyWithCompanion(VisitMediaCompanion data) {
+    return VisitMediaRow(
+      id: data.id.present ? data.id.value : this.id,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      appointmentId: data.appointmentId.present
+          ? data.appointmentId.value
+          : this.appointmentId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      fileName: data.fileName.present ? data.fileName.value : this.fileName,
+      byteSize: data.byteSize.present ? data.byteSize.value : this.byteSize,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VisitMediaRow(')
+          ..write('id: $id, ')
+          ..write('memberId: $memberId, ')
+          ..write('appointmentId: $appointmentId, ')
+          ..write('kind: $kind, ')
+          ..write('fileName: $fileName, ')
+          ..write('byteSize: $byteSize, ')
+          ..write('description: $description, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    memberId,
+    appointmentId,
+    kind,
+    fileName,
+    byteSize,
+    description,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VisitMediaRow &&
+          other.id == this.id &&
+          other.memberId == this.memberId &&
+          other.appointmentId == this.appointmentId &&
+          other.kind == this.kind &&
+          other.fileName == this.fileName &&
+          other.byteSize == this.byteSize &&
+          other.description == this.description &&
+          other.createdAt == this.createdAt);
+}
+
+class VisitMediaCompanion extends UpdateCompanion<VisitMediaRow> {
+  final Value<String> id;
+  final Value<String> memberId;
+  final Value<String> appointmentId;
+  final Value<String> kind;
+  final Value<String> fileName;
+  final Value<int> byteSize;
+  final Value<String?> description;
+  final Value<int> createdAt;
+  final Value<int> rowid;
+  const VisitMediaCompanion({
+    this.id = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.appointmentId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.fileName = const Value.absent(),
+    this.byteSize = const Value.absent(),
+    this.description = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VisitMediaCompanion.insert({
+    required String id,
+    required String memberId,
+    required String appointmentId,
+    required String kind,
+    required String fileName,
+    required int byteSize,
+    this.description = const Value.absent(),
+    required int createdAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       memberId = Value(memberId),
+       appointmentId = Value(appointmentId),
+       kind = Value(kind),
+       fileName = Value(fileName),
+       byteSize = Value(byteSize),
+       createdAt = Value(createdAt);
+  static Insertable<VisitMediaRow> custom({
+    Expression<String>? id,
+    Expression<String>? memberId,
+    Expression<String>? appointmentId,
+    Expression<String>? kind,
+    Expression<String>? fileName,
+    Expression<int>? byteSize,
+    Expression<String>? description,
+    Expression<int>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (memberId != null) 'member_id': memberId,
+      if (appointmentId != null) 'appointment_id': appointmentId,
+      if (kind != null) 'kind': kind,
+      if (fileName != null) 'file_name': fileName,
+      if (byteSize != null) 'byte_size': byteSize,
+      if (description != null) 'description': description,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VisitMediaCompanion copyWith({
+    Value<String>? id,
+    Value<String>? memberId,
+    Value<String>? appointmentId,
+    Value<String>? kind,
+    Value<String>? fileName,
+    Value<int>? byteSize,
+    Value<String?>? description,
+    Value<int>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return VisitMediaCompanion(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      appointmentId: appointmentId ?? this.appointmentId,
+      kind: kind ?? this.kind,
+      fileName: fileName ?? this.fileName,
+      byteSize: byteSize ?? this.byteSize,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (appointmentId.present) {
+      map['appointment_id'] = Variable<String>(appointmentId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (fileName.present) {
+      map['file_name'] = Variable<String>(fileName.value);
+    }
+    if (byteSize.present) {
+      map['byte_size'] = Variable<int>(byteSize.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VisitMediaCompanion(')
+          ..write('id: $id, ')
+          ..write('memberId: $memberId, ')
+          ..write('appointmentId: $appointmentId, ')
+          ..write('kind: $kind, ')
+          ..write('fileName: $fileName, ')
+          ..write('byteSize: $byteSize, ')
+          ..write('description: $description, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LocalDatabase extends GeneratedDatabase {
   _$LocalDatabase(QueryExecutor e) : super(e);
   $LocalDatabaseManager get managers => $LocalDatabaseManager(this);
@@ -2057,6 +2590,15 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     'symptom_entries_by_group',
     'CREATE INDEX symptom_entries_by_group ON symptom_entries (member_id, name_key, started_at)',
   );
+  late final VisitMedia visitMedia = VisitMedia(this);
+  late final Index visitMediaByAppointment = Index(
+    'visit_media_by_appointment',
+    'CREATE INDEX visit_media_by_appointment ON visit_media (appointment_id, created_at)',
+  );
+  late final Index visitMediaByMember = Index(
+    'visit_media_by_member',
+    'CREATE INDEX visit_media_by_member ON visit_media (member_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2071,6 +2613,9 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     doctorQuestionsByAppointment,
     symptomEntries,
     symptomEntriesByGroup,
+    visitMedia,
+    visitMediaByAppointment,
+    visitMediaByMember,
   ];
 }
 
@@ -2153,6 +2698,24 @@ final class $FamilyMembersReferences
     ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_symptomEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<VisitMedia, List<VisitMediaRow>>
+  _visitMediaRefsTable(_$LocalDatabase db) => MultiTypedResultKey.fromTable(
+    db.visitMedia,
+    aliasName: 'family_members__id__visit_media__member_id',
+  );
+
+  $VisitMediaProcessedTableManager get visitMediaRefs {
+    final manager = $VisitMediaTableManager(
+      $_db,
+      $_db.visitMedia,
+    ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_visitMediaRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2269,6 +2832,31 @@ class $FamilyMembersFilterComposer
           }) => $SymptomEntriesFilterComposer(
             $db: $db,
             $table: $db.symptomEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> visitMediaRefs(
+    Expression<bool> Function($VisitMediaFilterComposer f) f,
+  ) {
+    final $VisitMediaFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.visitMedia,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $VisitMediaFilterComposer(
+            $db: $db,
+            $table: $db.visitMedia,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2430,6 +3018,31 @@ class $FamilyMembersAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> visitMediaRefs<T extends Object>(
+    Expression<T> Function($VisitMediaAnnotationComposer a) f,
+  ) {
+    final $VisitMediaAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.visitMedia,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $VisitMediaAnnotationComposer(
+            $db: $db,
+            $table: $db.visitMedia,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $FamilyMembersTableManager
@@ -2449,6 +3062,7 @@ class $FamilyMembersTableManager
             bool appointmentsRefs,
             bool doctorQuestionsRefs,
             bool symptomEntriesRefs,
+            bool visitMediaRefs,
           })
         > {
   $FamilyMembersTableManager(_$LocalDatabase db, FamilyMembers table)
@@ -2515,6 +3129,7 @@ class $FamilyMembersTableManager
                 appointmentsRefs = false,
                 doctorQuestionsRefs = false,
                 symptomEntriesRefs = false,
+                visitMediaRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -2522,6 +3137,7 @@ class $FamilyMembersTableManager
                     if (appointmentsRefs) db.appointments,
                     if (doctorQuestionsRefs) db.doctorQuestions,
                     if (symptomEntriesRefs) db.symptomEntries,
+                    if (visitMediaRefs) db.visitMedia,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -2589,6 +3205,27 @@ class $FamilyMembersTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (visitMediaRefs)
+                        await $_getPrefetchedData<
+                          FamilyMemberRow,
+                          FamilyMembers,
+                          VisitMediaRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $FamilyMembersReferences
+                              ._visitMediaRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $FamilyMembersReferences(
+                                db,
+                                table,
+                                p0,
+                              ).visitMediaRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -2613,6 +3250,7 @@ typedef $FamilyMembersProcessedTableManager =
         bool appointmentsRefs,
         bool doctorQuestionsRefs,
         bool symptomEntriesRefs,
+        bool visitMediaRefs,
       })
     >;
 typedef $AppointmentsCreateCompanionBuilder =
@@ -3731,6 +4369,381 @@ typedef $SymptomEntriesProcessedTableManager =
       SymptomEntryRow,
       PrefetchHooks Function({bool memberId})
     >;
+typedef $VisitMediaCreateCompanionBuilder =
+    VisitMediaCompanion Function({
+      required String id,
+      required String memberId,
+      required String appointmentId,
+      required String kind,
+      required String fileName,
+      required int byteSize,
+      Value<String?> description,
+      required int createdAt,
+      Value<int> rowid,
+    });
+typedef $VisitMediaUpdateCompanionBuilder =
+    VisitMediaCompanion Function({
+      Value<String> id,
+      Value<String> memberId,
+      Value<String> appointmentId,
+      Value<String> kind,
+      Value<String> fileName,
+      Value<int> byteSize,
+      Value<String?> description,
+      Value<int> createdAt,
+      Value<int> rowid,
+    });
+
+final class $VisitMediaReferences
+    extends BaseReferences<_$LocalDatabase, VisitMedia, VisitMediaRow> {
+  $VisitMediaReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static FamilyMembers _memberIdTable(_$LocalDatabase db) => db.familyMembers
+      .createAlias('visit_media__member_id__family_members__id');
+
+  $FamilyMembersProcessedTableManager get memberId {
+    final $_column = $_itemColumn<String>('member_id')!;
+
+    final manager = $FamilyMembersTableManager(
+      $_db,
+      $_db.familyMembers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $VisitMediaFilterComposer extends Composer<_$LocalDatabase, VisitMedia> {
+  $VisitMediaFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get appointmentId => $composableBuilder(
+    column: $table.appointmentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get byteSize => $composableBuilder(
+    column: $table.byteSize,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $FamilyMembersFilterComposer get memberId {
+    final $FamilyMembersFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersFilterComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $VisitMediaOrderingComposer
+    extends Composer<_$LocalDatabase, VisitMedia> {
+  $VisitMediaOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get appointmentId => $composableBuilder(
+    column: $table.appointmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fileName => $composableBuilder(
+    column: $table.fileName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get byteSize => $composableBuilder(
+    column: $table.byteSize,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $FamilyMembersOrderingComposer get memberId {
+    final $FamilyMembersOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersOrderingComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $VisitMediaAnnotationComposer
+    extends Composer<_$LocalDatabase, VisitMedia> {
+  $VisitMediaAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get appointmentId => $composableBuilder(
+    column: $table.appointmentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get fileName =>
+      $composableBuilder(column: $table.fileName, builder: (column) => column);
+
+  GeneratedColumn<int> get byteSize =>
+      $composableBuilder(column: $table.byteSize, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $FamilyMembersAnnotationComposer get memberId {
+    final $FamilyMembersAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersAnnotationComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $VisitMediaTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          VisitMedia,
+          VisitMediaRow,
+          $VisitMediaFilterComposer,
+          $VisitMediaOrderingComposer,
+          $VisitMediaAnnotationComposer,
+          $VisitMediaCreateCompanionBuilder,
+          $VisitMediaUpdateCompanionBuilder,
+          (VisitMediaRow, $VisitMediaReferences),
+          VisitMediaRow,
+          PrefetchHooks Function({bool memberId})
+        > {
+  $VisitMediaTableManager(_$LocalDatabase db, VisitMedia table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $VisitMediaFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $VisitMediaOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $VisitMediaAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> appointmentId = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> fileName = const Value.absent(),
+                Value<int> byteSize = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VisitMediaCompanion(
+                id: id,
+                memberId: memberId,
+                appointmentId: appointmentId,
+                kind: kind,
+                fileName: fileName,
+                byteSize: byteSize,
+                description: description,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String memberId,
+                required String appointmentId,
+                required String kind,
+                required String fileName,
+                required int byteSize,
+                Value<String?> description = const Value.absent(),
+                required int createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => VisitMediaCompanion.insert(
+                id: id,
+                memberId: memberId,
+                appointmentId: appointmentId,
+                kind: kind,
+                fileName: fileName,
+                byteSize: byteSize,
+                description: description,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable(table), $VisitMediaReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback: ({memberId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (memberId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.memberId,
+                                referencedTable: $VisitMediaReferences
+                                    ._memberIdTable(db),
+                                referencedColumn: $VisitMediaReferences
+                                    ._memberIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $VisitMediaProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      VisitMedia,
+      VisitMediaRow,
+      $VisitMediaFilterComposer,
+      $VisitMediaOrderingComposer,
+      $VisitMediaAnnotationComposer,
+      $VisitMediaCreateCompanionBuilder,
+      $VisitMediaUpdateCompanionBuilder,
+      (VisitMediaRow, $VisitMediaReferences),
+      VisitMediaRow,
+      PrefetchHooks Function({bool memberId})
+    >;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
@@ -3743,4 +4756,6 @@ class $LocalDatabaseManager {
       $DoctorQuestionsTableManager(_db, _db.doctorQuestions);
   $SymptomEntriesTableManager get symptomEntries =>
       $SymptomEntriesTableManager(_db, _db.symptomEntries);
+  $VisitMediaTableManager get visitMedia =>
+      $VisitMediaTableManager(_db, _db.visitMedia);
 }

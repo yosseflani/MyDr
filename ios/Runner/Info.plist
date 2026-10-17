@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>MyDr משתמשת במצלמה כדי לצלם תסמינים להצגה לרופא. התמונות נשמרות רק באפליקציה.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>MyDr משתמשת במיקרופון כשמצלמים סרטון של תסמין, למשל שיעול.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MyDr ניגשת לגלריה רק כדי לצרף תמונות וסרטונים שבחרתם לתור.</string>
 </dict>
 </plist>

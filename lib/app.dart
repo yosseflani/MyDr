@@ -10,6 +10,7 @@ import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
 import 'package:mydr/features/shell/home_shell.dart';
+import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
 
 /// Root widget. Hebrew is the only supported locale, so the whole
 /// widget tree is laid out right-to-left.
@@ -54,6 +55,13 @@ class _MyDrAppState extends State<MyDrApp> {
     familyController: _familyController,
   )..load();
 
+  /// Also clears leftover media files once, at start-up.
+  late final VisitMediaController _visitMediaController = VisitMediaController(
+    dependencies: widget.dependencies,
+    familyController: _familyController,
+    appointmentController: _appointmentController,
+  )..load(cleanUpFiles: true);
+
   /// Independent of the others: emergency calling never waits for it.
   late final FirstAidController _firstAidController = FirstAidController(
     widget.dependencies.firstAidRepository,
@@ -64,6 +72,7 @@ class _MyDrAppState extends State<MyDrApp> {
     _firstAidController.dispose();
     // Disposed in reverse order of creation, since each listens to the
     // ones created before it.
+    _visitMediaController.dispose();
     _symptomController.dispose();
     _doctorQuestionController.dispose();
     _appointmentController.dispose();
@@ -80,6 +89,7 @@ class _MyDrAppState extends State<MyDrApp> {
       doctorQuestionController: _doctorQuestionController,
       symptomController: _symptomController,
       firstAidController: _firstAidController,
+      visitMediaController: _visitMediaController,
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

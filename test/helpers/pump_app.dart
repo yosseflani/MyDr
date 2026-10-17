@@ -10,14 +10,15 @@ import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
+import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
 
 extension PumpApp on WidgetTester {
   /// Pumps [child] with the same theme, Hebrew locale, RTL setup and
   /// [AppScope] as the app. Uses fresh empty repositories unless
   /// [dependencies] is given, and controllers built on them unless
   /// [familyController], [appointmentController],
-  /// [doctorQuestionController], [symptomController] or
-  /// [firstAidController] is given.
+  /// [doctorQuestionController], [symptomController], [firstAidController]
+  /// or [visitMediaController] is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
@@ -26,6 +27,7 @@ extension PumpApp on WidgetTester {
     DoctorQuestionController? doctorQuestionController,
     SymptomController? symptomController,
     FirstAidController? firstAidController,
+    VisitMediaController? visitMediaController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -68,6 +70,17 @@ extension PumpApp on WidgetTester {
       addTearDown(resolvedFirstAidController.dispose);
     }
 
+    final resolvedVisitMediaController =
+        visitMediaController ??
+        VisitMediaController(
+          dependencies: resolvedDependencies,
+          familyController: resolvedController,
+          appointmentController: resolvedAppointmentController,
+        );
+    if (visitMediaController == null) {
+      addTearDown(resolvedVisitMediaController.dispose);
+    }
+
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
@@ -76,6 +89,7 @@ extension PumpApp on WidgetTester {
         doctorQuestionController: resolvedQuestionController,
         symptomController: resolvedSymptomController,
         firstAidController: resolvedFirstAidController,
+        visitMediaController: resolvedVisitMediaController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

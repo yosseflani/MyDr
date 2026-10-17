@@ -195,6 +195,10 @@ class _DeleteMemberDialogState extends State<DeleteMemberDialog> {
             label: AppStrings.deleteItemSymptoms,
             count: summary.symptoms,
           ),
+          _CountRow(
+            label: AppStrings.deleteItemVisitMedia,
+            count: summary.visitMedia,
+          ),
           const SizedBox(height: 12),
           Text(
             AppStrings.deleteIrreversible,

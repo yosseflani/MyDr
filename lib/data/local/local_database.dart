@@ -13,7 +13,9 @@ part 'local_database.g.dart';
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase(super.executor);
 
-  static const int currentSchemaVersion = 1;
+  /// 1: family members, appointments, questions and symptoms.
+  /// 2: adds visit_media (photos and videos prepared for a doctor visit).
+  static const int currentSchemaVersion = 2;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -21,10 +23,19 @@ class LocalDatabase extends _$LocalDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
-    // There is no older version to upgrade from yet. Future versions add
-    // their steps here; a step never deletes data.
-    onUpgrade: (migrator, from, to) async => throw const LocalDatabaseException(
-      LocalDatabaseError.unsupportedSchema,
-    ),
+    // One step per version, run in order. A step only adds; it never
+    // deletes or rewrites existing data.
+    onUpgrade: (migrator, from, to) async {
+      if (from < 1 || to > currentSchemaVersion) {
+        throw const LocalDatabaseException(
+          LocalDatabaseError.unsupportedSchema,
+        );
+      }
+      if (from < 2) {
+        await migrator.createTable(visitMedia);
+        await migrator.createIndex(visitMediaByAppointment);
+        await migrator.createIndex(visitMediaByMember);
+      }
+    },
   );
 }

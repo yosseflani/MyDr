@@ -5,6 +5,8 @@ import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
 import 'package:mydr/data/repositories/family_repository.dart';
+import 'package:mydr/data/media/visit_media_file_store.dart';
+import 'package:mydr/data/repositories/visit_media_repository.dart';
 import 'package:mydr/features/family/family_controller.dart';
 
 /// Outcome of adding or updating an appointment.
@@ -24,13 +26,19 @@ enum AppointmentSaveResult {
   /// unlinked (and kept as general questions of the original member), but
   /// saving the appointment itself failed. Saving again is safe.
   failedAfterDetachingQuestions,
+
+  /// The member was being changed, but photos or videos of the original
+  /// member are attached to the appointment. Nothing was changed: they
+  /// document that member, so they must never move to another one.
+  hasVisitMedia,
 }
 
 /// The steps of deleting an appointment, in the order they run.
 ///
-/// Questions are unlinked first, so a failure never leaves questions
-/// pointing to an appointment that no longer exists.
-enum AppointmentDeletionStep { detachQuestions, appointment }
+/// Questions are unlinked and visit photos and videos removed first, so a
+/// failure never leaves records pointing to an appointment that no longer
+/// exists.
+enum AppointmentDeletionStep { detachQuestions, visitMedia, appointment }
 
 class AppointmentDeletionResult {
   const AppointmentDeletionResult.success() : failedStep = null;
@@ -60,6 +68,8 @@ class AppointmentController extends ChangeNotifier {
   }) : _appointmentRepository = dependencies.appointmentRepository,
        _doctorQuestionRepository = dependencies.doctorQuestionRepository,
        _familyRepository = dependencies.familyRepository,
+       _visitMediaRepository = dependencies.visitMediaRepository,
+       _visitMediaFiles = dependencies.visitMediaFiles,
        _transactions = dependencies.transactions,
        _familyController = familyController,
        _seenFamilyRevision = familyController.relatedDataRevision {
@@ -69,6 +79,8 @@ class AppointmentController extends ChangeNotifier {
   final AppointmentRepository _appointmentRepository;
   final DoctorQuestionRepository _doctorQuestionRepository;
   final FamilyRepository _familyRepository;
+  final VisitMediaRepository _visitMediaRepository;
+  final VisitMediaFileStore _visitMediaFiles;
   final TransactionRunner _transactions;
   final FamilyController _familyController;
   int _seenFamilyRevision;
@@ -85,6 +97,13 @@ class AppointmentController extends ChangeNotifier {
   /// the family member. Other controllers watch it to know when to reload
   /// questions. Plain edits, additions and loads leave it unchanged.
   int get questionLinksRevision => _questionLinksRevision;
+
+  int _visitMediaRevision = 0;
+
+  /// Increases after every deletion attempt, since it may have removed the
+  /// appointment's photos and videos. Other controllers watch it to know
+  /// when to reload them.
+  int get visitMediaRevision => _visitMediaRevision;
 
   /// Increases with every [load], so only the latest one applies its result.
   int _loadGeneration = 0;
@@ -160,6 +179,9 @@ class AppointmentController extends ChangeNotifier {
   /// first unlinked from it (keeping their original member) and only then is
   /// the appointment saved. A question never ends up linked to an
   /// appointment of a different member.
+  ///
+  /// The member cannot be changed while photos or videos are attached
+  /// ([AppointmentSaveResult.hasVisitMedia]).
   Future<AppointmentSaveResult> update(Appointment appointment) async {
     var detachAttempted = false;
     var questionsDetached = false;
@@ -168,6 +190,12 @@ class AppointmentController extends ChangeNotifier {
       if (stored == null) return AppointmentSaveResult.appointmentNotFound;
       if (!await _memberExists(appointment.memberId)) {
         return AppointmentSaveResult.memberNotFound;
+      }
+      if (stored.memberId != appointment.memberId) {
+        final media = await _visitMediaRepository.getAll(
+          appointmentId: appointment.id,
+        );
+        if (media.isNotEmpty) return AppointmentSaveResult.hasVisitMedia;
       }
 
       // Unlinking and saving together: with an atomic runner, a failed
@@ -209,8 +237,23 @@ class AppointmentController extends ChangeNotifier {
     }
   }
 
+  /// Number of photos and videos attached to [appointmentId], or null if
+  /// they could not be read.
+  Future<int?> linkedVisitMediaCount(String appointmentId) async {
+    try {
+      final media = await _visitMediaRepository.getAll(
+        appointmentId: appointmentId,
+      );
+      return media.length;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Deletes an appointment. Its linked questions are kept, unlinked, as
-  /// general questions of the same family member.
+  /// general questions of the same family member. Its photos and videos are
+  /// deleted: their records with the appointment, and their files from
+  /// private storage once the records are gone for good.
   ///
   /// Must only be called after the user explicitly confirmed the deletion in
   /// the UI; passing false for [userConfirmed] throws an [ArgumentError].
@@ -231,11 +274,20 @@ class AppointmentController extends ChangeNotifier {
 
     var result = const AppointmentDeletionResult.success();
     var step = AppointmentDeletionStep.detachQuestions;
+    var mediaFiles = const <String>[];
+    var mediaRecordsDeleted = false;
     try {
       // The questions are kept, only unlinked. With an atomic runner, a
-      // failed deletion also undoes the unlinking.
+      // failed deletion also undoes the unlinking and keeps the media.
       await _transactions.run(() async {
         await _doctorQuestionRepository.detachFromAppointment(appointmentId);
+        step = AppointmentDeletionStep.visitMedia;
+        final media = await _visitMediaRepository.getAll(
+          appointmentId: appointmentId,
+        );
+        mediaFiles = [for (final item in media) item.fileName];
+        await _visitMediaRepository.deleteByAppointment(appointmentId);
+        mediaRecordsDeleted = true;
         step = AppointmentDeletionStep.appointment;
         await _appointmentRepository.delete(appointmentId);
       });
@@ -243,9 +295,16 @@ class AppointmentController extends ChangeNotifier {
       result = AppointmentDeletionResult.failed(step);
     }
 
-    // Unlinking was attempted, so question links may have changed even if a
-    // step failed.
+    // Files go only once their records are gone for good: always after
+    // success, and after a failure only if nothing was rolled back.
+    if (result.isSuccess || (mediaRecordsDeleted && !_transactions.isAtomic)) {
+      await deleteVisitMediaFiles(_visitMediaFiles, mediaFiles);
+    }
+
+    // Unlinking was attempted, so question links (and media) may have
+    // changed even if a step failed.
     _questionLinksRevision++;
+    _visitMediaRevision++;
     await _refresh();
     return result;
   }

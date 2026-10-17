@@ -60,6 +60,9 @@ class _DeleteAppointmentDialogState extends State<DeleteAppointmentDialog> {
   _Phase _phase = _Phase.countingQuestions;
   int? _questionCount;
 
+  /// Photos and videos that will be deleted with the appointment.
+  int? _mediaCount;
+
   /// Explains the last failed attempt, or null.
   String? _failureMessage;
 
@@ -74,11 +77,17 @@ class _DeleteAppointmentDialogState extends State<DeleteAppointmentDialog> {
 
   /// Callers set [_Phase.countingQuestions] first if needed.
   Future<void> _countQuestions() async {
-    final count = await _controller.linkedQuestionCount(widget.appointment.id);
+    final (count, mediaCount) = await (
+      _controller.linkedQuestionCount(widget.appointment.id),
+      _controller.linkedVisitMediaCount(widget.appointment.id),
+    ).wait;
     if (!mounted) return;
     setState(() {
       _questionCount = count;
-      _phase = count == null ? _Phase.countFailed : _Phase.ready;
+      _mediaCount = mediaCount;
+      _phase = count == null || mediaCount == null
+          ? _Phase.countFailed
+          : _Phase.ready;
     });
   }
 
@@ -111,6 +120,7 @@ class _DeleteAppointmentDialogState extends State<DeleteAppointmentDialog> {
       _failureMessage = switch (result.failedStep!) {
         AppointmentDeletionStep.detachQuestions =>
           AppStrings.deleteAppointmentFailed,
+        AppointmentDeletionStep.visitMedia ||
         AppointmentDeletionStep.appointment =>
           AppStrings.deleteAppointmentPartiallyFailed(widget.memberName),
       };
@@ -225,6 +235,7 @@ class _DeleteAppointmentDialogState extends State<DeleteAppointmentDialog> {
       case _Phase.ready:
       case _Phase.deleting:
         final count = _questionCount!;
+        final mediaCount = _mediaCount!;
         return [
           _InfoLine(
             icon: Icons.question_answer_outlined,
@@ -235,6 +246,13 @@ class _DeleteAppointmentDialogState extends State<DeleteAppointmentDialog> {
                     widget.memberName,
                   ),
           ),
+          if (mediaCount > 0) ...[
+            const SizedBox(height: 8),
+            _InfoLine(
+              icon: Icons.photo_library_outlined,
+              text: AppStrings.deleteAppointmentMedia(mediaCount),
+            ),
+          ],
         ];
     }
   }

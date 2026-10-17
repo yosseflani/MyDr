@@ -9,7 +9,7 @@ import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
 import 'package:mydr/features/appointments/appointment_formatting.dart';
 import 'package:mydr/features/appointments/widgets/delete_appointment_dialog.dart';
-import 'package:mydr/features/questions/widgets/appointment_questions_section.dart';
+import 'package:mydr/features/visit_preparation/widgets/doctor_visit_preparation_section.dart';
 
 /// Details of one appointment.
 ///
@@ -230,7 +230,7 @@ class _AppointmentDetails extends StatelessWidget {
           child: notes == null ? const NotSpecifiedText() : Text(notes),
         ),
         const SizedBox(height: 24),
-        AppointmentQuestionsSection(appointment: appointment, clock: clock),
+        DoctorVisitPreparationSection(appointment: appointment, clock: clock),
         // Destructive action, kept apart from the regular actions.
         const SizedBox(height: 32),
         OutlinedButton.icon(

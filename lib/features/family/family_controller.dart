@@ -6,6 +6,8 @@ import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
 import 'package:mydr/data/repositories/family_repository.dart';
 import 'package:mydr/data/repositories/symptom_repository.dart';
+import 'package:mydr/data/media/visit_media_file_store.dart';
+import 'package:mydr/data/repositories/visit_media_repository.dart';
 
 /// Outcome of adding or updating a family member.
 enum FamilySaveResult { success, selfAlreadyExists, failed }
@@ -14,7 +16,13 @@ enum FamilySaveResult { success, selfAlreadyExists, failed }
 ///
 /// Related data is removed before the profile, so a failure part-way never
 /// leaves data that belongs to a profile that no longer exists.
-enum MemberDeletionStep { symptoms, doctorQuestions, appointments, profile }
+enum MemberDeletionStep {
+  symptoms,
+  doctorQuestions,
+  visitMedia,
+  appointments,
+  profile,
+}
 
 class MemberDeletionResult {
   const MemberDeletionResult.success() : failedStep = null;
@@ -34,14 +42,21 @@ class RelatedDataSummary {
     required this.appointments,
     required this.doctorQuestions,
     required this.symptoms,
+    this.visitMedia = 0,
   });
 
   final int appointments;
   final int doctorQuestions;
   final int symptoms;
 
+  /// Photos and videos attached to the member's appointments.
+  final int visitMedia;
+
   bool get isEmpty =>
-      appointments == 0 && doctorQuestions == 0 && symptoms == 0;
+      appointments == 0 &&
+      doctorQuestions == 0 &&
+      symptoms == 0 &&
+      visitMedia == 0;
 }
 
 /// State and actions for the family members feature.
@@ -55,12 +70,16 @@ class FamilyController extends ChangeNotifier {
       _appointmentRepository = dependencies.appointmentRepository,
       _doctorQuestionRepository = dependencies.doctorQuestionRepository,
       _symptomRepository = dependencies.symptomRepository,
+      _visitMediaRepository = dependencies.visitMediaRepository,
+      _visitMediaFiles = dependencies.visitMediaFiles,
       _transactions = dependencies.transactions;
 
   final FamilyRepository _familyRepository;
   final AppointmentRepository _appointmentRepository;
   final DoctorQuestionRepository _doctorQuestionRepository;
   final SymptomRepository _symptomRepository;
+  final VisitMediaRepository _visitMediaRepository;
+  final VisitMediaFileStore _visitMediaFiles;
   final TransactionRunner _transactions;
 
   List<FamilyMember> _members = const [];
@@ -71,7 +90,8 @@ class FamilyController extends ChangeNotifier {
   int _relatedDataRevision = 0;
 
   /// Increases after every member deletion attempt, successful or not,
-  /// since either may have removed appointments, questions or symptoms.
+  /// since either may have removed appointments, questions, symptoms or
+  /// visit photos and videos.
   /// Other controllers watch it to know when to reload their data.
   int get relatedDataRevision => _relatedDataRevision;
 
@@ -126,23 +146,26 @@ class FamilyController extends ChangeNotifier {
   /// be read.
   Future<RelatedDataSummary?> relatedDataSummary(String memberId) async {
     try {
-      final (appointments, questions, symptoms) = await (
+      final (appointments, questions, symptoms, media) = await (
         _appointmentRepository.getAll(memberId: memberId),
         _doctorQuestionRepository.getAll(memberId: memberId),
         _symptomRepository.getAll(memberId: memberId),
+        _visitMediaRepository.getAll(memberId: memberId),
       ).wait;
       return RelatedDataSummary(
         appointments: appointments.length,
         doctorQuestions: questions.length,
         symptoms: symptoms.length,
+        visitMedia: media.length,
       );
     } catch (_) {
       return null;
     }
   }
 
-  /// Deletes a member together with their symptoms, questions and
-  /// appointments.
+  /// Deletes a member together with their symptoms, questions, visit photos
+  /// and videos, and appointments. Media files are removed from private
+  /// storage once their records are gone for good.
   ///
   /// Must only be called after the user explicitly confirmed the deletion in
   /// the UI; [userConfirmed] makes that requirement visible at every call
@@ -164,6 +187,8 @@ class FamilyController extends ChangeNotifier {
       );
     }
 
+    var mediaFiles = const <String>[];
+    var mediaRecordsDeleted = false;
     final steps = <(MemberDeletionStep, Future<void> Function())>[
       (
         MemberDeletionStep.symptoms,
@@ -172,6 +197,15 @@ class FamilyController extends ChangeNotifier {
       (
         MemberDeletionStep.doctorQuestions,
         () => _doctorQuestionRepository.deleteByMember(memberId),
+      ),
+      (
+        MemberDeletionStep.visitMedia,
+        () async {
+          final media = await _visitMediaRepository.getAll(memberId: memberId);
+          mediaFiles = [for (final item in media) item.fileName];
+          await _visitMediaRepository.deleteByMember(memberId);
+          mediaRecordsDeleted = true;
+        },
       ),
       (
         MemberDeletionStep.appointments,
@@ -196,6 +230,12 @@ class FamilyController extends ChangeNotifier {
       });
     } catch (_) {
       result = MemberDeletionResult.failed(currentStep);
+    }
+
+    // Only once the records are gone for good: a rolled-back deletion keeps
+    // its files.
+    if (result.isSuccess || (mediaRecordsDeleted && !_transactions.isAtomic)) {
+      await deleteVisitMediaFiles(_visitMediaFiles, mediaFiles);
     }
 
     if (result.isSuccess) {

@@ -1,4 +1,4 @@
--- MyDr local database, schema version 1.
+-- MyDr local database, schema version 2 (v2 added visit_media).
 --
 -- Mirrors the models in lib/data/models exactly. Formats:
 --   * local date and time: 'YYYY-MM-DDTHH:MM:SS.ffffff' (wall-clock time,
@@ -87,3 +87,29 @@ CREATE TABLE symptom_entries (
 
 CREATE INDEX symptom_entries_by_group
   ON symptom_entries (member_id, name_key, started_at);
+
+-- Photos and videos documenting symptoms for a doctor visit. Only the
+-- metadata is stored here; the media file itself lives in the app's private
+-- directory under file_name (see visit_media_file_store.dart).
+CREATE TABLE visit_media (
+  id TEXT NOT NULL PRIMARY KEY CHECK (length(id) > 0),
+  member_id TEXT NOT NULL
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  appointment_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('photo', 'video')),
+  -- A bare file name inside the private media directory, never a path.
+  file_name TEXT NOT NULL UNIQUE CHECK (length(file_name) > 0
+    AND file_name NOT GLOB '*[/\]*' AND file_name NOT GLOB '.*'),
+  byte_size INTEGER NOT NULL CHECK (byte_size > 0),
+  description TEXT,
+  created_at INTEGER NOT NULL,
+  -- The appointment must belong to the same family member, so a member's
+  -- documentation can never show up under another member.
+  FOREIGN KEY (appointment_id, member_id)
+    REFERENCES appointments (id, member_id)
+    ON DELETE RESTRICT ON UPDATE RESTRICT
+) STRICT AS VisitMediaRow;
+
+CREATE INDEX visit_media_by_appointment
+  ON visit_media (appointment_id, created_at);
+CREATE INDEX visit_media_by_member ON visit_media (member_id);

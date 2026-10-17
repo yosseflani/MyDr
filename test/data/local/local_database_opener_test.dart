@@ -212,9 +212,10 @@ void main() {
     test('a newer schema version is refused, untouched', () async {
       await open();
       await closeAll();
+      const newer = LocalDatabase.currentSchemaVersion + 1;
       final raw = sqlite3.open(file.path)
         ..execute("PRAGMA key = \"x'${keys.key}'\"")
-        ..execute('PRAGMA user_version = 2');
+        ..execute('PRAGMA user_version = $newer');
       raw.close();
       final before = file.readAsBytesSync();
 
@@ -227,7 +228,7 @@ void main() {
       final check = sqlite3.open(file.path)
         ..execute("PRAGMA key = \"x'${keys.key}'\"");
       addTearDown(check.close);
-      expect(check.select('PRAGMA user_version').first.values.first, 2);
+      expect(check.select('PRAGMA user_version').first.values.first, newer);
     });
 
     test('an invalid stored key is reported', () async {
