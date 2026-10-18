@@ -788,6 +788,147 @@ abstract final class AppStrings {
       count == 1 ? 'תרופה פעילה אחת' : '$count תרופות פעילות';
   static const String allMemberMedications = 'כל התרופות והמנות';
 
+  // Account and cloud backup
+  static const String backupTitle = 'גיבוי וחשבון';
+  static const String backupCardSubtitle = 'גיבוי מוצפן בענן ושחזור במכשיר אחר';
+  static const String backupPrivacy =
+      'הגיבוי מוצפן במכשיר לפני שהוא נשלח, במפתח שחזור שנמצא רק אצלכם. '
+      'השרת שומר רק מידע מוצפן ולא יכול לקרוא אותו. בלי מפתח השחזור אי '
+      'אפשר לשחזר את הגיבוי, גם לא בעזרתנו.';
+  static const String backupOfflineNote =
+      'האפליקציה ממשיכה לעבוד כרגיל גם בלי חיבור לאינטרנט. החיבור לענן נדרש '
+      'רק לגיבוי ולשחזור.';
+  static const String backupNotConfiguredTitle = 'גיבוי בענן לא זמין';
+  static const String backupNotConfiguredMessage =
+      'הגרסה הזו של האפליקציה לא הוגדרה לגיבוי בענן. כל המידע נשמר במכשיר '
+      'בלבד.';
+  static const String backupDemoMode =
+      'במצב הדגמה אין גיבוי ואין שחזור, כי שום מידע לא נשמר.';
+  static const String cloudConnecting = 'מתחברים לשירות הגיבוי…';
+  static const String cloudConnectFailed =
+      'לא הצלחנו להתחבר לשירות הגיבוי. בדקו את החיבור לאינטרנט ונסו שוב.';
+
+  // Signing in
+  static const String signInTitle = 'התחברות לחשבון';
+  static const String emailLabel = 'אימייל';
+  static const String passwordLabel = 'סיסמה';
+  static const String signIn = 'התחברות';
+  static const String createAccount = 'יצירת חשבון';
+  static const String forgotPassword = 'שכחתי סיסמה';
+  static const String signOut = 'התנתקות';
+  static String signedInAs(String email) => 'מחוברים בתור $email';
+  static const String emailRequired = 'נא להזין אימייל';
+  static const String passwordTooShort = 'הסיסמה צריכה לכלול לפחות 8 תווים';
+  static const String passwordResetSent =
+      'אם קיים חשבון עם האימייל הזה, נשלח אליו קישור לאיפוס הסיסמה.';
+  static const String accountInvalidEmail = 'כתובת האימייל אינה תקינה.';
+  static const String accountWrongCredentials = 'האימייל או הסיסמה שגויים.';
+  static const String accountEmailInUse = 'כבר קיים חשבון עם האימייל הזה.';
+  static const String accountWeakPassword =
+      'הסיסמה חלשה מדי. בחרו סיסמה ארוכה יותר.';
+  static const String accountNetwork =
+      'אין חיבור לאינטרנט. נסו שוב כשהחיבור יחזור.';
+  static const String accountTooManyAttempts =
+      'היו יותר מדי ניסיונות. נסו שוב מאוחר יותר.';
+  static const String accountUnknownError = 'הפעולה נכשלה. נסו שוב.';
+  static const String signOutConfirmTitle = 'להתנתק מהחשבון?';
+  static const String signOutConfirmMessage =
+      'הגיבויים נשארים בענן. מפתח השחזור יימחק מהמכשיר, ותצטרכו להזין אותו '
+      'שוב כדי לגבות או לשחזר.';
+
+  // Recovery key
+  static const String recoveryKeyTitle = 'מפתח שחזור';
+  static const String recoveryKeyNeeded =
+      'כדי לגבות, צריך מפתח שחזור. המפתח מצפין את הגיבוי ונשמר רק במכשיר '
+      'ואצלכם.';
+  static const String recoveryKeyNeededWithBackups =
+      'בחשבון כבר יש גיבויים. כדי לגבות או לשחזר, הזינו את מפתח השחזור '
+      'שקיבלתם כשיצרתם אותם.';
+  static const String createRecoveryKey = 'יצירת מפתח שחזור';
+  static const String enterRecoveryKey = 'יש לי מפתח שחזור';
+  static const String showRecoveryKey = 'הצגת מפתח השחזור';
+  static const String newRecoveryKeyTitle = 'מפתח השחזור שלכם';
+  static const String newRecoveryKeyMessage =
+      'רשמו את המפתח ושמרו אותו במקום בטוח, מחוץ לטלפון. הוא יידרש כדי לשחזר '
+      'את הגיבוי במכשיר אחר. אם הוא יאבד, אי אפשר יהיה לשחזר את הגיבוי.';
+  static const String newRecoveryKeyOldBackups =
+      'גיבויים קודמים בחשבון נשארים מוצפנים במפתח הקודם, ורק הוא יפתח אותם.';
+  static const String confirmLastGroupLabel =
+      'לאישור, הקלידו את 4 התווים האחרונים של המפתח';
+  static const String confirmLastGroupMismatch = 'התווים לא תואמים לסוף המפתח';
+  static const String recoveryKeySaved = 'שמרתי את המפתח';
+  static const String recoveryKeyFieldLabel = 'מפתח השחזור';
+  static const String recoveryKeyHint = 'XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX';
+  static const String recoveryKeyInvalid =
+      'זה לא מפתח שחזור תקין. בדקו שהקלדתם את כל 28 התווים.';
+  static const String recoveryKeyDoesNotMatch =
+      'המפתח תקין, אבל הגיבויים בחשבון הזה לא הוצפנו בו.';
+  static const String recoveryKeyStored = 'מפתח השחזור נשמר במכשיר';
+  static const String recoveryKeyUnavailable =
+      'לא הצלחנו לקרוא את מפתח השחזור מהמכשיר.';
+  static const String recoveryKeyRevealWarning =
+      'כל מי שמחזיק במפתח ובסיסמה לחשבון יכול לשחזר את המידע. אל תשתפו אותו.';
+  static const String continueLabel = 'המשך';
+
+  // Backing up
+  static const String backUpNow = 'גיבוי עכשיו';
+  static const String backingUp = 'מצפינים ומעלים…';
+  static const String backupSucceeded = 'הגיבוי הושלם';
+  static const String backupStatusTitle = 'מצב הגיבוי';
+  static const String noBackupsYet = 'עדיין אין גיבויים בחשבון.';
+  static String lastBackup(String when) => 'הגיבוי האחרון: $when';
+  static const String backupsListTitle = 'גיבויים בענן';
+  static String backupSize(String size) => 'גודל מוצפן: $size';
+  static const String backupsLoadFailed = 'לא הצלחנו לטעון את רשימת הגיבויים.';
+  static const String backupKeepsTwo =
+      'נשמרים שני הגיבויים האחרונים. גיבוי קודם נמחק רק אחרי שגיבוי חדש הושלם.';
+
+  // Restoring
+  static const String restore = 'שחזור';
+  static const String preparingRestore = 'מורידים ובודקים את הגיבוי…';
+  static const String restoring = 'משחזרים…';
+  static const String restoreConfirmTitle = 'לשחזר את הגיבוי?';
+  static String restoreFrom(String when) => 'גיבוי מ־$when';
+  static const String restoreBackupContains = 'הגיבוי כולל:';
+  static const String restoreDeviceHas = 'במכשיר כרגע:';
+  static const String restoreReplacesWarning =
+      'כל המידע שבמכשיר יוחלף במידע מהגיבוי. מידע שנוסף במכשיר אחרי הגיבוי '
+      'יימחק.';
+  static const String restoreDeviceEmpty = 'אין כרגע מידע במכשיר.';
+  static const String restoreUnderstand =
+      'הבנתי שהמידע במכשיר יוחלף ושאי אפשר לבטל את זה';
+  static const String restoreConfirm = 'החלפה ושחזור';
+  static const String restoreSucceeded = 'השחזור הושלם';
+  static String restoreMissingFiles(int count) => count == 1
+      ? 'קובץ אחד כבר היה חסר בזמן הגיבוי, והרשומה שלו שוחזרה בלעדיו.'
+      : '$count קבצים כבר היו חסרים בזמן הגיבוי, והרשומות שלהם שוחזרו בלעדיהם.';
+  static String countFamilyMembers(int n) => 'בני משפחה: $n';
+  static String countAppointments(int n) => 'תורים: $n';
+  static String countQuestions(int n) => 'שאלות לרופא: $n';
+  static String countSymptoms(int n) => 'רישומי תסמינים: $n';
+  static String countVisitMedia(int n) => 'תמונות וסרטונים: $n';
+  static String countMedications(int n) => 'תרופות: $n';
+  static String countDoseRecords(int n) => 'רישומי מנות: $n';
+
+  // Backup failures
+  static const String backupFailedNetwork =
+      'אין חיבור לשירות הגיבוי. שום מידע במכשיר לא השתנה. נסו שוב.';
+  static const String backupFailedUnauthorized =
+      'אין הרשאה לגשת לגיבוי. התחברו מחדש ונסו שוב.';
+  static const String backupFailedQuota = 'נגמר המקום בחשבון הגיבוי.';
+  static const String backupFailedWrongKey = 'מפתח השחזור לא מתאים לגיבוי הזה.';
+  static const String backupFailedDamaged =
+      'הגיבוי פגום או ששונה, ולכן לא שוחזר. המידע במכשיר לא השתנה.';
+  static const String backupFailedUnsupported =
+      'הגיבוי נוצר בגרסה חדשה יותר של האפליקציה. עדכנו את האפליקציה ונסו שוב.';
+  static const String backupFailedNotFound = 'הגיבוי לא נמצא. ייתכן שנמחק.';
+  static const String backupFailedLocalRead =
+      'לא הצלחנו לקרוא את המידע במכשיר, ולכן לא נוצר גיבוי.';
+  static const String backupFailedLocalWrite =
+      'לא הצלחנו לשמור את המידע מהגיבוי. המידע במכשיר לא השתנה.';
+  static const String backupFailedUnknown =
+      'הפעולה נכשלה. המידע במכשיר לא השתנה. נסו שוב.';
+
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';
 }

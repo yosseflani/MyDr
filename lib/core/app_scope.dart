@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
+import 'package:mydr/features/backup/backup_controller.dart';
 import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
@@ -24,6 +25,7 @@ class AppScope extends InheritedWidget {
     required this.firstAidController,
     required this.visitMediaController,
     required this.medicationController,
+    required this.backupController,
     required super.child,
   });
 
@@ -35,6 +37,7 @@ class AppScope extends InheritedWidget {
   final FirstAidController firstAidController;
   final VisitMediaController visitMediaController;
   final MedicationController medicationController;
+  final BackupController backupController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -54,5 +57,6 @@ class AppScope extends InheritedWidget {
       !identical(symptomController, oldWidget.symptomController) ||
       !identical(firstAidController, oldWidget.firstAidController) ||
       !identical(visitMediaController, oldWidget.visitMediaController) ||
-      !identical(medicationController, oldWidget.medicationController);
+      !identical(medicationController, oldWidget.medicationController) ||
+      !identical(backupController, oldWidget.backupController);
 }

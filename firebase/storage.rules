@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// MyDr cloud backup. Every object is already encrypted on the device with
+// the user's recovery key; these rules make sure each account can reach
+// only its own folder, and nothing else exists.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/backups/{path=**} {
+      // Read covers both downloading and listing.
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+      // New objects only: a backup is never changed after upload. The
+      // existing-object check also holds where an overwrite is evaluated
+      // as a create.
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && resource == null
+        && request.resource.size <= 200 * 1024 * 1024
+        && request.resource.contentType == 'application/octet-stream';
+      allow update: if false;
+    }
+
+    match /{other=**} {
+      allow read, write: if false;
+    }
+  }
+}

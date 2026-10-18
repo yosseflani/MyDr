@@ -46,3 +46,10 @@ app.*.map.json
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Cloud backup: the real Firebase project's settings stay out of git
+# (config/firebase.example.json shows the keys).
+/config/firebase.json
+# Firebase emulator logs
+firebase-debug.log
+firebase/*.log

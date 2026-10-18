@@ -1,0 +1,7 @@
+{
+  "MYDR_FIREBASE_PROJECT_ID": "your-project-id",
+  "MYDR_FIREBASE_API_KEY": "from the Firebase console: Project settings, Android app",
+  "MYDR_FIREBASE_APP_ID": "1:000000000000:android:0000000000000000",
+  "MYDR_FIREBASE_SENDER_ID": "000000000000",
+  "MYDR_FIREBASE_STORAGE_BUCKET": "your-project-id.firebasestorage.app"
+}

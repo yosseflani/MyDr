@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:mydr/core/l10n/strings.dart';
+import 'package:mydr/data/cloud/cloud_backend.dart';
+import 'package:mydr/data/cloud/firebase_cloud_backend.dart';
+import 'package:mydr/data/cloud/recovery_key_store.dart';
 import 'package:mydr/data/emergency/emergency_dialer.dart';
 import 'package:mydr/data/local/local_database.dart';
 import 'package:mydr/data/local/local_transaction_runner.dart';
@@ -53,6 +56,9 @@ class AppDependencies {
     MedicationRepository? medicationRepository,
     DoseRecordRepository? doseRecordRepository,
     this.reminderScheduler = const UnsupportedReminderScheduler(),
+    this.cloudBackend,
+    RecoveryKeyStore? recoveryKeyStore,
+    Future<Directory> Function()? backupWorkDirectory,
     this.emergencyDialer = const UrlLauncherEmergencyDialer(),
     this.firstAidRepository = const AssetFirstAidRepository(),
     this.transactions = const SequentialTransactionRunner(),
@@ -64,7 +70,21 @@ class AppDependencies {
        medicationRepository =
            medicationRepository ?? InMemoryMedicationRepository(),
        doseRecordRepository =
-           doseRecordRepository ?? InMemoryDoseRecordRepository();
+           doseRecordRepository ?? InMemoryDoseRecordRepository(),
+       recoveryKeyStore = recoveryKeyStore ?? InMemoryRecoveryKeyStore(),
+       backupWorkDirectory = backupWorkDirectory ?? _defaultBackupWorkDirectory;
+
+  /// The app's private temporary folder, never a shared one.
+  static Future<Directory> _defaultBackupWorkDirectory() async => Directory(
+    p.join((await getTemporaryDirectory()).path, 'mydr_backup_work'),
+  );
+
+  /// Firebase, when the build was configured for it (see [CloudConfig]);
+  /// otherwise null, and the app has no cloud backup.
+  static CloudBackend? platformCloudBackend() {
+    final config = CloudConfig.fromEnvironment();
+    return config == null ? null : FirebaseCloudBackend(config);
+  }
 
   /// Local notifications on Android and iOS; none elsewhere.
   static ReminderScheduler platformReminderScheduler() =>
@@ -94,6 +114,8 @@ class AppDependencies {
     VisitMediaFileStore? visitMediaFiles,
     MediaPicker? mediaPicker,
     ReminderScheduler reminderScheduler = const UnsupportedReminderScheduler(),
+    CloudBackend? cloudBackend,
+    RecoveryKeyStore recoveryKeyStore = const SecureRecoveryKeyStore(),
   }) {
     return AppDependencies(
       familyRepository: LocalFamilyRepository(database),
@@ -106,6 +128,8 @@ class AppDependencies {
       medicationRepository: LocalMedicationRepository(database),
       doseRecordRepository: LocalDoseRecordRepository(database),
       reminderScheduler: reminderScheduler,
+      cloudBackend: cloudBackend,
+      recoveryKeyStore: recoveryKeyStore,
       emergencyDialer: emergencyDialer,
       firstAidRepository: firstAidRepository,
       transactions: LocalTransactionRunner(database),
@@ -155,6 +179,9 @@ class AppDependencies {
     VisitMediaFileStore? visitMediaFiles,
     MediaPicker? mediaPicker,
     ReminderScheduler? reminderScheduler,
+    CloudBackend? cloudBackend,
+    RecoveryKeyStore? recoveryKeyStore,
+    Future<Directory> Function()? backupWorkDirectory,
   }) {
     return AppDependencies(
       familyRepository: InMemoryFamilyRepository(),
@@ -165,6 +192,9 @@ class AppDependencies {
       mediaPicker: mediaPicker,
       reminderScheduler:
           reminderScheduler ?? const UnsupportedReminderScheduler(),
+      cloudBackend: cloudBackend,
+      recoveryKeyStore: recoveryKeyStore,
+      backupWorkDirectory: backupWorkDirectory,
       emergencyDialer: emergencyDialer ?? const UrlLauncherEmergencyDialer(),
       firstAidRepository: firstAidRepository ?? const AssetFirstAidRepository(),
     );
@@ -192,6 +222,16 @@ class AppDependencies {
 
   /// Local notifications for scheduled doses.
   final ReminderScheduler reminderScheduler;
+
+  /// The cloud account and backup storage, or null when this build has no
+  /// cloud backup (demo mode, tests, or no configuration).
+  final CloudBackend? cloudBackend;
+
+  /// Each account's backup recovery key, kept on this device only.
+  final RecoveryKeyStore recoveryKeyStore;
+
+  /// Private scratch folder for encrypting and decrypting backups.
+  final Future<Directory> Function() backupWorkDirectory;
 
   /// Opens the phone's dialer for emergency numbers.
   final EmergencyDialer emergencyDialer;

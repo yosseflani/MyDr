@@ -291,6 +291,16 @@ class FamilyController extends ChangeNotifier {
     return result;
   }
 
+  /// After all data was replaced (a restore from backup): reloads the
+  /// members and tells the other controllers, through
+  /// [relatedDataRevision], to reload theirs.
+  Future<void> reloadAfterDataReplaced() async {
+    _incompleteDeletionIds.clear();
+    _relatedDataRevision++;
+    await _fetchMembers();
+    notifyListeners();
+  }
+
   Future<FamilySaveResult> _save(
     FamilyMember member, {
     required bool isNew,

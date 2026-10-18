@@ -6,6 +6,7 @@ import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
+import 'package:mydr/features/backup/backup_controller.dart';
 import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
@@ -19,7 +20,8 @@ extension PumpApp on WidgetTester {
   /// [dependencies] is given, and controllers built on them unless
   /// [familyController], [appointmentController],
   /// [doctorQuestionController], [symptomController], [firstAidController],
-  /// [visitMediaController] or [medicationController] is given.
+  /// [visitMediaController], [medicationController] or [backupController]
+  /// is given.
   Future<void> pumpApp(
     Widget child, {
     AppDependencies? dependencies,
@@ -30,6 +32,7 @@ extension PumpApp on WidgetTester {
     FirstAidController? firstAidController,
     VisitMediaController? visitMediaController,
     MedicationController? medicationController,
+    BackupController? backupController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -93,6 +96,16 @@ extension PumpApp on WidgetTester {
       addTearDown(resolvedMedicationController.dispose);
     }
 
+    final resolvedBackupController =
+        backupController ??
+        BackupController(
+          dependencies: resolvedDependencies,
+          familyController: resolvedController,
+        );
+    if (backupController == null) {
+      addTearDown(resolvedBackupController.dispose);
+    }
+
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
@@ -103,6 +116,7 @@ extension PumpApp on WidgetTester {
         firstAidController: resolvedFirstAidController,
         visitMediaController: resolvedVisitMediaController,
         medicationController: resolvedMedicationController,
+        backupController: resolvedBackupController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

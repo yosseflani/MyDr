@@ -5,6 +5,7 @@ import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/theme/app_theme.dart';
 import 'package:mydr/features/appointments/appointment_controller.dart';
+import 'package:mydr/features/backup/backup_controller.dart';
 import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
@@ -75,6 +76,12 @@ class _MyDrAppState extends State<MyDrApp> {
   /// only a limited number of reminders is scheduled ahead.
   late final AppLifecycleListener _lifecycle;
 
+  /// Connects to the cloud only when the backup screen is opened.
+  late final BackupController _backupController = BackupController(
+    dependencies: widget.dependencies,
+    familyController: _familyController,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +98,7 @@ class _MyDrAppState extends State<MyDrApp> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    _backupController.dispose();
     _firstAidController.dispose();
     // Disposed in reverse order of creation, since each listens to the
     // ones created before it.
@@ -114,6 +122,7 @@ class _MyDrAppState extends State<MyDrApp> {
       firstAidController: _firstAidController,
       visitMediaController: _visitMediaController,
       medicationController: _medicationController,
+      backupController: _backupController,
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

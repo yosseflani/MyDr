@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/core/widgets/section_header.dart';
 import 'package:mydr/features/appointments/appointment_form_screen.dart';
+import 'package:mydr/features/dashboard/widgets/backup_card.dart';
 import 'package:mydr/features/dashboard/widgets/dashboard_header.dart';
 import 'package:mydr/features/dashboard/widgets/emergency_card.dart';
 import 'package:mydr/features/dashboard/widgets/family_card.dart';
@@ -54,6 +55,8 @@ class DashboardScreen extends StatelessWidget {
                 const EmergencyCard(),
                 const SizedBox(height: 24),
                 const FamilyCard(),
+                const SizedBox(height: 16),
+                const BackupCard(),
                 const SizedBox(height: 24),
                 const SectionHeader(title: AppStrings.quickActionsTitle),
                 QuickActionsRow(

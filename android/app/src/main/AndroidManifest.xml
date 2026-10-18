@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cloud backup (Firebase Authentication and Cloud Storage), used only
+         when the user opens backup. Everything uploaded is encrypted on the
+         device first. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Dose reminders (flutter_local_notifications). POST_NOTIFICATIONS is
          asked for at run time on Android 13+, only after a medication is
          added. Without SCHEDULE_EXACT_ALARM granted (off by default from
