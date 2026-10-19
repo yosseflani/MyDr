@@ -23,6 +23,9 @@ class _ReminderStatusCardState extends State<ReminderStatusCard> {
   /// about the system settings can be shown.
   bool _requestRefused = false;
 
+  /// The same, for exact timing.
+  bool _exactRefused = false;
+
   Future<void> _request(MedicationController controller) async {
     if (_isRequesting) return;
     setState(() => _isRequesting = true);
@@ -31,6 +34,17 @@ class _ReminderStatusCardState extends State<ReminderStatusCard> {
     setState(() {
       _isRequesting = false;
       _requestRefused = result == ReminderAvailability.disabled;
+    });
+  }
+
+  Future<void> _requestExact(MedicationController controller) async {
+    if (_isRequesting) return;
+    setState(() => _isRequesting = true);
+    final mayBeLate = await controller.requestExactReminders();
+    if (!mounted) return;
+    setState(() {
+      _isRequesting = false;
+      _exactRefused = mayBeLate;
     });
   }
 
@@ -83,7 +97,7 @@ class _ReminderStatusCardState extends State<ReminderStatusCard> {
           case ReminderAvailability.enabled:
             final plan = status.plan;
             final last = plan?.lastReminderAt;
-            return _Note(
+            final note = _Note(
               icon: Icons.notifications_active_outlined,
               lines: [
                 if (last == null)
@@ -98,6 +112,29 @@ class _ReminderStatusCardState extends State<ReminderStatusCard> {
                   ),
                 if (plan?.isTruncated ?? false) AppStrings.remindersTruncated,
                 AppStrings.remindersPrivacy,
+              ],
+            );
+            if (!status.mayBeLate) return note;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _Banner(
+                  icon: Icons.schedule_outlined,
+                  background: colorScheme.tertiaryContainer,
+                  foreground: colorScheme.onTertiaryContainer,
+                  message: _exactRefused
+                      ? '${AppStrings.remindersMayBeLate}\n'
+                            '${AppStrings.exactRemindersSettingsHint}'
+                      : AppStrings.remindersMayBeLate,
+                  action: TextButton(
+                    onPressed: _isRequesting
+                        ? null
+                        : () => _requestExact(controller),
+                    child: const Text(AppStrings.allowExactReminders),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                note,
               ],
             );
         }

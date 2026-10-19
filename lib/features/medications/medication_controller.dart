@@ -379,6 +379,19 @@ class MedicationController extends ChangeNotifier {
     return _reminderStatus.availability ?? ReminderAvailability.unsupported;
   }
 
+  /// Opens the system setting that lets reminders come at their exact time,
+  /// then checks again and reschedules, so the reminders follow what the
+  /// user chose. Returns whether they may still be late.
+  Future<bool> requestExactReminders() async {
+    try {
+      await _scheduler.requestExactTiming();
+    } catch (_) {
+      // Checked again by the update below.
+    }
+    await _updateReminders();
+    return _reminderStatus.mayBeLate;
+  }
+
   /// Asks for notification permission after a medication is added, at most
   /// once while the app runs, and only if notifications are off. Never at
   /// start-up: the request comes when its reason is clear.
@@ -457,6 +470,7 @@ class MedicationController extends ChangeNotifier {
         _reminderStatus = ReminderStatus(
           availability: availability,
           plan: plan,
+          mayBeLate: await _mayBeLate(availability, plan),
         );
       } catch (_) {
         _reminderStatus = ReminderStatus(
@@ -468,6 +482,24 @@ class MedicationController extends ChangeNotifier {
     });
     _reminderQueue = update.catchError((_) {});
     return _reminderQueue;
+  }
+
+  /// Only said while notifications are on and something is scheduled, so
+  /// exact timing is never asked for without a reason. A failed check is
+  /// not a scheduling failure: the reminders are in place either way.
+  Future<bool> _mayBeLate(
+    ReminderAvailability availability,
+    ReminderPlan plan,
+  ) async {
+    if (availability != ReminderAvailability.enabled ||
+        plan.reminders.isEmpty) {
+      return false;
+    }
+    try {
+      return !await _scheduler.hasExactTiming();
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Re-reads everything after a change, notifies, and reschedules.
@@ -522,13 +554,15 @@ class ReminderStatus {
     required this.availability,
     this.plan,
     this.hasFailed = false,
+    this.mayBeLate = false,
   });
 
   /// Before the first check.
   const ReminderStatus.unknown()
     : availability = null,
       plan = null,
-      hasFailed = false;
+      hasFailed = false,
+      mayBeLate = false;
 
   /// Null until checked, or when even checking failed.
   final ReminderAvailability? availability;
@@ -539,4 +573,9 @@ class ReminderStatus {
   /// Whether the last update failed; the reminders scheduled before it may
   /// or may not still be in place.
   final bool hasFailed;
+
+  /// Whether reminders are scheduled and notifications are on, but the
+  /// user has not allowed exact timing, so the operating system may
+  /// deliver them late.
+  final bool mayBeLate;
 }

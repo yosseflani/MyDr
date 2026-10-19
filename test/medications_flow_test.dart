@@ -5,6 +5,7 @@ import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/data/mock/mock_data.dart';
 import 'package:mydr/data/models/family_member.dart';
+import 'package:mydr/data/models/medication.dart';
 import 'package:mydr/features/family/member_detail_screen.dart';
 import 'package:mydr/features/family/widgets/delete_member_dialog.dart';
 import 'package:mydr/features/medications/medication_form_screen.dart';
@@ -153,6 +154,42 @@ void main() {
     expect(await dependencies.doseRecordRepository.getAll(), isEmpty);
     expect(scheduler.scheduled, isEmpty);
     expect(await dependencies.familyRepository.getById(child.id), child);
+  });
+
+  testWidgets('exact timing allowed in the system settings is picked up on '
+      'returning to the app', (tester) async {
+    tester.setScreenSize(const Size(400, 2400));
+    final scheduler = FakeReminderScheduler()..exactTiming = false;
+    final dependencies = AppDependencies.empty(reminderScheduler: scheduler);
+    await dependencies.familyRepository.add(self);
+    // The warning only matters once a reminder is scheduled.
+    final today = DateTime.now();
+    await dependencies.medicationRepository.add(
+      Medication(
+        id: 'med1',
+        memberId: self.id,
+        name: 'תרופת בדיקה',
+        dose: '1 tablet',
+        reminderTimes: [DoseTime(8, 0)],
+        startDate: DateTime(today.year, today.month, today.day),
+      ),
+    );
+
+    await tester.pumpWidget(MyDrApp(dependencies: dependencies));
+    await tester.pumpAndSettle();
+    await openTab(tester, AppStrings.tabMedications);
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsOneWidget);
+
+    // The user allows it in Android's settings, outside the app.
+    scheduler.exactTiming = true;
+    final before = scheduler.replacements.length;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsNothing);
+    expect(scheduler.replacements.length, greaterThan(before));
+    expect(scheduler.exactTimingRequests, 0);
   });
 
   testWidgets('the demo data shows each member their own medications', (

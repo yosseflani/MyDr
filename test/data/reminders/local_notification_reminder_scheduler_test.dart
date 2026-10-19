@@ -21,11 +21,13 @@ void main() {
   late List<MethodCall> calls;
   late bool notificationsEnabled;
   late bool exactAllowed;
+  late bool exactGrantedOnRequest;
 
   setUp(() {
     calls = [];
     notificationsEnabled = true;
     exactAllowed = false;
+    exactGrantedOnRequest = false;
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     FlutterLocalNotificationsPlatform.instance =
         AndroidFlutterLocalNotificationsPlugin();
@@ -37,6 +39,9 @@ void main() {
             'areNotificationsEnabled' => notificationsEnabled,
             'requestNotificationsPermission' => notificationsEnabled,
             'canScheduleExactNotifications' => exactAllowed,
+            // The plugin returns once the user is back from the setting.
+            'requestExactAlarmsPermission' => exactAllowed =
+                exactAllowed || exactGrantedOnRequest,
             _ => null,
           };
         });
@@ -142,6 +147,27 @@ void main() {
     );
   });
 
+  test('reports exact timing, and opens its setting only when told to', () async {
+    final scheduler = LocalNotificationReminderScheduler(texts: texts);
+
+    expect(await scheduler.hasExactTiming(), isFalse);
+    expect(
+      calls.map((c) => c.method),
+      isNot(contains('requestExactAlarmsPermission')),
+    );
+
+    // Back from the setting without allowing it.
+    expect(await scheduler.requestExactTiming(), isFalse);
+    expect(
+      calls.where((c) => c.method == 'requestExactAlarmsPermission'),
+      hasLength(1),
+    );
+
+    exactGrantedOnRequest = true;
+    expect(await scheduler.requestExactTiming(), isTrue);
+    expect(await scheduler.hasExactTiming(), isTrue);
+  });
+
   test('platform errors reach the caller, which handles them', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
@@ -156,6 +182,11 @@ void main() {
       ]),
       throwsA(isA<PlatformException>()),
     );
+    // E.g. another permission request still in progress.
+    await expectLater(
+      scheduler.requestExactTiming(),
+      throwsA(isA<PlatformException>()),
+    );
   });
 
   test('platforms without local notifications do nothing', () async {
@@ -163,6 +194,9 @@ void main() {
     final scheduler = LocalNotificationReminderScheduler(texts: texts);
 
     expect(await scheduler.availability(), ReminderAvailability.unsupported);
+    // Nothing to warn about or ask for.
+    expect(await scheduler.hasExactTiming(), isTrue);
+    expect(await scheduler.requestExactTiming(), isTrue);
     await scheduler.replaceAll([
       reminder(DateTime(day.year, day.month, day.day, 8)),
     ]);

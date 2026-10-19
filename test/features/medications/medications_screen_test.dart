@@ -225,6 +225,73 @@ void main() {
     expect(find.text(AppStrings.medicationsNoAdvice), findsOneWidget);
   });
 
+  testWidgets('warns that reminders may be late, and asks for exact timing '
+      'only on a tap', (tester) async {
+    await setUpWith();
+    scheduler.exactTiming = false;
+    await medications.refreshReminders();
+    await pumpScreen(tester);
+
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsOneWidget);
+    expect(find.textContaining(AppStrings.remindersPrivacy), findsOneWidget);
+    expect(scheduler.exactTimingRequests, 0);
+
+    // Back without allowing it: the warning stays and points to the
+    // system settings.
+    await tester.tap(find.text(AppStrings.allowExactReminders));
+    await tester.pumpAndSettle();
+    expect(scheduler.exactTimingRequests, 1);
+    expect(
+      find.textContaining(AppStrings.exactRemindersSettingsHint),
+      findsOneWidget,
+    );
+
+    scheduler.grantExactOnRequest = true;
+    await tester.tap(find.text(AppStrings.allowExactReminders));
+    await tester.pumpAndSettle();
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsNothing);
+    expect(find.textContaining(AppStrings.remindersPrivacy), findsOneWidget);
+  });
+
+  testWidgets('no timing warning while no reminders are scheduled', (
+    tester,
+  ) async {
+    await setUpWith(meds: const []);
+    scheduler.exactTiming = false;
+    await medications.refreshReminders();
+    await pumpScreen(tester);
+
+    expect(
+      find.textContaining(AppStrings.remindersNoneScheduled),
+      findsOneWidget,
+    );
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsNothing);
+    expect(find.text(AppStrings.allowExactReminders), findsNothing);
+  });
+
+  testWidgets("the timing warning covers every member's reminders on the "
+      'device', (tester) async {
+    // Only member B has a medication; member A's page still warns, since
+    // the setting delays every reminder on the device.
+    await setUpWith(meds: [medB]);
+    scheduler.exactTiming = false;
+    await medications.refreshReminders();
+    await pumpScreen(tester, memberId: 'mA');
+
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsOneWidget);
+    expect(find.textContaining(medB.name), findsNothing);
+  });
+
+  testWidgets('no timing warning while notifications are off', (tester) async {
+    await setUpWith(permission: ReminderAvailability.disabled);
+    scheduler.exactTiming = false;
+    await medications.refreshReminders();
+    await pumpScreen(tester);
+
+    expect(find.text(AppStrings.remindersDisabled), findsOneWidget);
+    expect(find.textContaining(AppStrings.remindersMayBeLate), findsNothing);
+  });
+
   testWidgets('a scheduling failure is shown and can be retried', (
     tester,
   ) async {

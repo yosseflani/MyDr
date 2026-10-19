@@ -123,6 +123,28 @@ class LocalNotificationReminderScheduler implements ReminderScheduler {
   }
 
   @override
+  Future<bool> hasExactTiming() async {
+    if (!isSupportedPlatform) return true;
+    await _initialize();
+    // iOS has no such setting. The plugin answers true below Android 12.
+    final android = _android;
+    if (android == null) return true;
+    return await android.canScheduleExactNotifications() ?? false;
+  }
+
+  @override
+  Future<bool> requestExactTiming() async {
+    if (!isSupportedPlatform) return true;
+    await _initialize();
+    final android = _android;
+    if (android == null) return true;
+    // Opens Android's "Alarms & reminders" screen for MyDr, unless already
+    // allowed; completes when the user comes back.
+    await android.requestExactAlarmsPermission();
+    return hasExactTiming();
+  }
+
+  @override
   Future<void> replaceAll(List<PlannedReminder> reminders) async {
     if (!isSupportedPlatform) return;
     await _initialize();

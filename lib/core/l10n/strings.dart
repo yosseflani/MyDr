@@ -770,6 +770,13 @@ abstract final class AppStrings {
       'יש יותר מנות ממה שאפשר לתזמן מראש. פתחו את MyDr מדי פעם כדי '
       'שהתזכורות יתחדשו.';
   static const String remindersNoneScheduled = 'אין כרגע תזכורות מתוזמנות.';
+  static const String remindersMayBeLate =
+      'התזכורות עלולות להגיע באיחור של כמה דקות, כי מערכת ההפעלה דוחה אותן '
+      'כדי לחסוך בסוללה. אפשר לאשר ל־MyDr תזמון מדויק.';
+  static const String allowExactReminders = 'אישור תזמון מדויק';
+  static const String exactRemindersSettingsHint =
+      'אם ההגדרה לא נפתחה, אפשר לאשר "שעונים מעוררים ותזכורות" בהגדרות '
+      'המכשיר, בהגדרות של MyDr.';
   static const String remindersPrivacy =
       'בהתראה מופיע רק "תזכורת מ־MyDr", בלי שם התרופה או בן המשפחה.';
 

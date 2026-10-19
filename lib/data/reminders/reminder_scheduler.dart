@@ -49,6 +49,15 @@ abstract interface class ReminderScheduler {
   /// asking, and returns the resulting state.
   Future<ReminderAvailability> requestPermission();
 
+  /// Whether reminders are scheduled for their exact time. False only where
+  /// the user can allow it and has not (Android 12+, "Alarms & reminders");
+  /// the operating system may then deliver them late to save battery.
+  Future<bool> hasExactTiming();
+
+  /// Opens the system setting that allows exact timing, where there is one,
+  /// and returns [hasExactTiming] once the user is back.
+  Future<bool> requestExactTiming();
+
   /// Replaces every pending reminder with [reminders].
   Future<void> replaceAll(List<PlannedReminder> reminders);
 }
@@ -64,6 +73,12 @@ class UnsupportedReminderScheduler implements ReminderScheduler {
   @override
   Future<ReminderAvailability> requestPermission() async =>
       ReminderAvailability.unsupported;
+
+  @override
+  Future<bool> hasExactTiming() async => true;
+
+  @override
+  Future<bool> requestExactTiming() async => true;
 
   @override
   Future<void> replaceAll(List<PlannedReminder> reminders) async {}

@@ -501,6 +501,85 @@ void main() {
       );
     });
 
+    test('reminders that may be late are reported only while notifications '
+        'are on', () async {
+      await controller.add(exampleA());
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+
+      scheduler.exactTiming = false;
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.mayBeLate, isTrue);
+      expect(controller.reminderStatus.hasFailed, isFalse);
+      expect(scheduler.scheduled, isNotEmpty);
+
+      scheduler.permission = ReminderAvailability.disabled;
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+    });
+
+    test('no warning about late reminders while none are scheduled', () async {
+      scheduler.exactTiming = false;
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.plan!.reminders, isEmpty);
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+
+      await controller.add(exampleA());
+      expect(controller.reminderStatus.plan!.reminders, isNotEmpty);
+      expect(controller.reminderStatus.mayBeLate, isTrue);
+
+      // After the last day of treatment nothing is left to schedule.
+      now = DateTime(2026, 10, 28, 12);
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.plan!.reminders, isEmpty);
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+    });
+
+    test('allowing exact timing reschedules the same reminders', () async {
+      await controller.add(exampleA());
+      scheduler
+        ..exactTiming = false
+        ..grantExactOnRequest = true;
+      await controller.refreshReminders();
+      final before = scheduler.replacements.length;
+      final planned = scheduler.scheduled;
+
+      expect(await controller.requestExactReminders(), isFalse);
+
+      expect(scheduler.exactTimingRequests, 1);
+      expect(scheduler.replacements, hasLength(before + 1));
+      expect(scheduler.scheduled, planned);
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+    });
+
+    test('refusing exact timing keeps the warning until it is allowed in the '
+        'settings', () async {
+      await controller.add(exampleA());
+      scheduler.exactTiming = false;
+      await controller.refreshReminders();
+
+      expect(await controller.requestExactReminders(), isTrue);
+      expect(controller.reminderStatus.mayBeLate, isTrue);
+      expect(controller.reminderStatus.hasFailed, isFalse);
+
+      // Allowed later in the system settings; checked again on resume.
+      scheduler.exactTiming = true;
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+    });
+
+    test('a failing exact-timing check never stops the reminders', () async {
+      await controller.add(exampleA());
+      scheduler.failExactTiming = true;
+
+      await controller.refreshReminders();
+      expect(controller.reminderStatus.hasFailed, isFalse);
+      expect(controller.reminderStatus.mayBeLate, isFalse);
+      expect(scheduler.scheduled, isNotEmpty);
+
+      expect(await controller.requestExactReminders(), isFalse);
+      expect(controller.reminderStatus.hasFailed, isFalse);
+    });
+
     test('data that failed to load never replaces the reminders', () async {
       await controller.add(exampleA());
       final before = scheduler.replacements.length;

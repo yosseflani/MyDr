@@ -17,10 +17,18 @@ class FakeReminderScheduler implements ReminderScheduler {
   /// Whether asking turns a disabled permission into enabled.
   bool grantOnRequest;
 
+  /// Whether reminders are scheduled for their exact time.
+  bool exactTiming = true;
+
+  /// Whether asking for exact timing allows it.
+  bool grantExactOnRequest = false;
+
   bool failAvailability = false;
   bool failReplace = false;
+  bool failExactTiming = false;
 
   int permissionRequests = 0;
+  int exactTimingRequests = 0;
 
   /// Every list passed to [replaceAll], in order.
   final List<List<PlannedReminder>> replacements = [];
@@ -40,6 +48,20 @@ class FakeReminderScheduler implements ReminderScheduler {
     permissionRequests++;
     if (grantOnRequest) permission = ReminderAvailability.enabled;
     return permission;
+  }
+
+  @override
+  Future<bool> hasExactTiming() async {
+    if (failExactTiming) throw const SimulatedSchedulerFailure();
+    return exactTiming;
+  }
+
+  @override
+  Future<bool> requestExactTiming() async {
+    exactTimingRequests++;
+    if (failExactTiming) throw const SimulatedSchedulerFailure();
+    if (grantExactOnRequest) exactTiming = true;
+    return exactTiming;
   }
 
   @override
