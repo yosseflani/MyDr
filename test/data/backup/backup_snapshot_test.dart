@@ -68,7 +68,7 @@ void main() {
     expect(() => BackupSnapshot.decode(utf8.encode('not json')), refused());
     expect(() => BackupSnapshot.decode(utf8.encode('{"a":1}')), refused());
     final json = jsonDecode(utf8.decode(demo().encode())) as Map;
-    json['formatVersion'] = 2;
+    json['formatVersion'] = BackupSnapshot.formatVersion + 1;
     expect(
       () => BackupSnapshot.decode(utf8.encode(jsonEncode(json))),
       throwsA(
@@ -85,5 +85,58 @@ void main() {
       () => BackupSnapshot.decode(utf8.encode(jsonEncode(json))),
       refused(),
     );
+  });
+
+  group('format 2: shared children', () {
+    final children = [
+      for (final m in MockData.members())
+        if (m.relation == FamilyRelation.child) m.id,
+    ];
+
+    test('round-trip', () {
+      final snapshot = BackupSnapshot(
+        familyMembers: MockData.members(),
+        appointments: const [],
+        doctorQuestions: const [],
+        symptoms: const [],
+        visitMedia: const [],
+        medications: const [],
+        doseRecords: const [],
+        sharedMemberIds: [children.first],
+      );
+      final json = jsonDecode(utf8.decode(snapshot.encode())) as Map;
+      expect(json['formatVersion'], 2);
+      expect(BackupSnapshot.decode(snapshot.encode()).sharedMemberIds, [
+        children.first,
+      ]);
+    });
+
+    test('a format 1 backup still reads, with nothing shared', () {
+      final json = jsonDecode(utf8.decode(demo().encode())) as Map;
+      json['formatVersion'] = 1;
+      json.remove('sharedMemberIds');
+      final back = BackupSnapshot.decode(utf8.encode(jsonEncode(json)));
+      expect(back.sharedMemberIds, isEmpty);
+      expect(back.familyMembers, MockData.members());
+    });
+
+    test('only an existing child can be listed as shared', () {
+      final adult = MockData.members().firstWhere(
+        (m) => m.relation != FamilyRelation.child,
+      );
+      for (final ids in [
+        [adult.id],
+        ['nobody'],
+        [children.first, children.first],
+      ]) {
+        final json = jsonDecode(utf8.decode(demo().encode())) as Map;
+        json['sharedMemberIds'] = ids;
+        expect(
+          () => BackupSnapshot.decode(utf8.encode(jsonEncode(json))),
+          refused(),
+          reason: '$ids',
+        );
+      }
+    });
   });
 }

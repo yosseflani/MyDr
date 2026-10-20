@@ -1,6 +1,6 @@
 # שמירת נתונים מקומית ומוצפנת ב־MyDr
 
-המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא, תיעוד תסמינים, תמונות וסרטונים להכנה לביקור (סעיף 9), ותרופות ורישומי מנות (סעיף 10). הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
+המסמך מתאר איך MyDr שומרת את המידע של המשתמש: בני משפחה, תורים, שאלות לרופא, תיעוד תסמינים, תמונות וסרטונים להכנה לביקור (סעיף 9), תרופות ורישומי מנות (סעיף 10), ונתוני השיתוף המשפחתי (סעיף 11). הוא מתאר גם את ההצפנה ואת המגבלות הידועות.
 
 > **חשוב:** המנגנון נבנה בזהירות ונבדק, אבל הוא לא עבר בדיקת אבטחה חיצונית. אין להציג את האפליקציה כמאובטחת לשימוש רפואי אמיתי לפני ביקורת מקצועית מתאימה.
 
@@ -25,7 +25,7 @@
 ```
 lib/app_bootstrap.dart              Startup: opens the database, loading and error screens
 lib/data/local/
-  schema.drift                      The schema (SQL), version 3
+  schema.drift                      The schema (SQL), version 4
   local_database.dart (+ .g.dart)   Drift database; migration policy
   local_database_opener.dart        Opening: key, encryption, foreign keys, schema checks
   local_database_exception.dart     Opening errors, safe to log
@@ -33,7 +33,7 @@ lib/data/local/
   storage_codecs.dart               Conversions between models and stored values
   local_ids.dart                    Random UUID v4 ids
   local_transaction_runner.dart     Atomic transactions
-  repositories/                     The seven Repositories over the database
+  repositories/                     The Repositories over the database (seven for records, one for sync state)
 lib/data/repositories/transaction_runner.dart   Shared interface (in memory: non-atomic)
 lib/data/media/                     Visit photos and videos: validation, private file store, picker
 lib/data/reminders/                 Dose reminders: planner and local notifications (nothing stored)
@@ -47,9 +47,9 @@ lib/data/reminders/                 Dose reminders: planner and local notificati
   - העברת תור לבן משפחה אחר (ניתוק השאלות, ואז עדכון).
 - **אם שלב נכשל:** שום שינוי לא נשמר, ואין מחיקה חלקית.
 
-## 3. מבנה מסד הנתונים (Schema גרסה 3)
+## 3. מבנה מסד הנתונים (Schema גרסה 4)
 
-שבע טבלאות `STRICT`: `family_members`, `appointments`, `doctor_questions`, `symptom_entries`, `visit_media` (נוספה בגרסה 2), ו־`medications` ו־`dose_records` (נוספו בגרסה 3). ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`.
+שבע טבלאות רשומות `STRICT`: `family_members`, `appointments`, `doctor_questions`, `symptom_entries`, `visit_media` (נוספה בגרסה 2), ו־`medications` ו־`dose_records` (נוספו בגרסה 3). ההגדרה המלאה נמצאת ב־`lib/data/local/schema.drift`. גרסה 4 הוסיפה שבע טבלאות `sync_*` לשיתוף המשפחתי, וטריגרים שרושמים שינויים (סעיף 11).
 
 - **מפתחות:**
   - כל רשומה מזוהה ב־`id` טקסטואלי (UUID).
@@ -112,10 +112,11 @@ lib/data/reminders/                 Dose reminders: planner and local notificati
 
 ## 6. מדיניות Migrations
 
-- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 3`, ונשמרת ב־`PRAGMA user_version`.
+- **גרסה:** הגרסה הנוכחית היא `LocalDatabase.currentSchemaVersion = 4`, ונשמרת ב־`PRAGMA user_version`.
 - **1 ← 2:** יוצרת את הטבלה `visit_media` ואת שני האינדקסים שלה. שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. נבדק ב־`test/data/local/visit_media_storage_test.dart`, מול קובץ מוצפן בגרסה 1.
 - **2 ← 3:** יוצרת את הטבלאות `medications` ו־`dose_records` ואת האינדקס של כל אחת. שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. נבדק ב־`test/data/local/medication_storage_test.dart`, מול קובץ מוצפן בגרסה 2.
-- **אחרי השדרוג אין חזרה:** גרסה ישנה של האפליקציה תסרב לפתוח קובץ בגרסה 3 ותציג את הודעת "גרסה חדשה יותר". שום מידע לא נמחק.
+- **3 ← 4:** יוצרת את שבע טבלאות ה־`sync_*`, שני אינדקסים ו־23 טריגרים (`LocalDatabase.syncSchemaV4`). שום טבלה קיימת לא משתנה, ושום מידע לא נמחק. הטריגרים לא רושמים כלום עד שהמכשיר מצטרף למשק, ולכן משתמש שלא משתף לא רואה שום שינוי. נבדק ב־`test/data/local/sync_storage_test.dart`, מול קובץ מוצפן בגרסה 3 (גם שהקובץ לא נקרא בלי המפתח).
+- **אחרי השדרוג אין חזרה:** גרסה ישנה של האפליקציה תסרב לפתוח קובץ בגרסה 4 ותציג את הודעת "גרסה חדשה יותר". שום מידע לא נמחק.
 - **שינוי Schema:** מעלים את הגרסה, ומוסיפים שלב ב־`onUpgrade` של `LocalDatabase` לכל מעבר גרסה.
 - **שלב Migration לעולם לא מוחק נתונים:** אפשר להוסיף, להעביר או להמיר. כל Migration צריכה בדיקה עם קובץ מהגרסה הקודמת.
 - **גרסה חדשה יותר מהאפליקציה:** קובץ כזה לא נפתח, ומוצגת הודעה. אין downgrade.
@@ -187,3 +188,24 @@ flutter test integration_test -d <device-id>
 - **התזכורות לא נשמרות במסד.** הן מחושבות מחדש מהתרופות בכל שינוי, בכל הפעלה ובכל חזרה לאפליקציה. מערכת ההפעלה שומרת רק את רשימת ההתראות המתוזמנות, עם טקסט כללי, בלי מטען (payload) ובלי פרטים רפואיים. הפירוט ב[מסמך התרופות והתזכורות](medication_reminders.md).
 - **מחיקה:** מחיקת תרופה מוחקת את רישומי המנות שלה באותה טרנזקציה. מחיקת בן משפחה מוחקת גם את התרופות והרישומים שלו.
 - **לוגים:** `toString()` של `Medication` ושל `DoseRecord` מחזיר מזהה בלבד.
+
+## 11. שיתוף משפחתי וסנכרון (גרסה 4)
+
+הפירוט המלא ב[מסמך השיתוף המשפחתי](household_sync.md). מה שנשמר במסד המוצפן:
+
+| טבלה | מה יש בה |
+|---|---|
+| `sync_settings` | שורה אחת: מזהה אקראי של המכשיר, המשק, החשבון, התפקיד, המצב (`off`, `joining`, `active`, `removed`), הסנכרון האחרון, המספר הסידורי הבא, ודגל `applying` |
+| `sync_shared_members` | הילדים המשותפים. מפתח זר ל־`family_members` ב־`RESTRICT`; טריגר מסרב לשתף מי שאינו ילד, וטריגר שני מסרב לשנות את הקרבה של פרופיל משותף |
+| `sync_records` | לכל רשומה משותפת: וקטור גרסה, זמן ומכשיר של השינוי האחרון, tombstone, התוכן האחרון שהוחלף (בסיס למיזוג), והאם היא ממתינה לרשומת ההורה שלה |
+| `sync_pending` | שינויים מקומיים שעוד לא נשלחו, עם מונה שינויים |
+| `sync_conflicts` | שינויים ממכשיר אחר שמחכים להחלטה, כולל מחיקות |
+| `sync_cursors` | עד איזו חבילה נקרא היומן של כל מכשיר |
+| `sync_known_members` | חברי משק שהמפתח הציבורי שלהם אומת |
+
+- **מעקב:** 21 טריגרים (`sync_track_*`) רושמים ב־`sync_pending` כל הוספה, עדכון ומחיקה של רשומה של ילד משותף, או של רשומה שהמשק כבר מכיר, באותה טרנזקציה. שינויים שמגיעים ממכשיר אחר נכתבים עם `applying = 1`, ולכן לא נרשמים שוב.
+- **שום מפתח לא נשמר במסד.** מפתח הזהות, מפתחות המשק וסודות ההזמנות נשמרים באחסון המאובטח של מערכת ההפעלה (`SyncKeyStore` ב־`recovery_key_store.dart`).
+- **פורמטים:** תוכן רשומה ווקטור גרסה נשמרים כאובייקט JSON (`StorageCodecs.encodeJsonObject`, `encodeCounters`), עם CHECK של `json_valid`.
+- **מחיקת בן משפחה משותף:** שלב `MemberDeletionStep.sharing` מפסיק את השיתוף באותה טרנזקציה, לפני מחיקת הפרופיל. המחיקות נשלחות למשק בסנכרון הבא, ושם הן מוחלות רק אחרי אישור.
+- **רישומי מנות:** רשומה חדשה מקבלת מזהה שנגזר מהתרופה והמועד (`DoseRecord.idFor`), כך שאותה מנה היא אותה רשומה בכל מכשיר.
+- **שחזור מגיבוי** מאפס את היסטוריית הסנכרון באותה טרנזקציה (סעיף 7 במסמך השיתוף), כך שלא נשלחות מחיקות המוניות.

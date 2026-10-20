@@ -71,6 +71,36 @@ abstract final class StorageCodecs {
     return List.unmodifiable(decoded.cast<String>());
   }
 
+  /// A JSON object, e.g. a synced record's content (sync tables only).
+  static String encodeJsonObject(Map<String, Object?> value) =>
+      jsonEncode(value);
+
+  static Map<String, Object?> decodeJsonObject(String json) {
+    final decoded = jsonDecode(json);
+    if (decoded is! Map<String, Object?>) {
+      throw FormatException('Not a stored object');
+    }
+    return Map.unmodifiable(decoded);
+  }
+
+  /// A version vector: a JSON object from device id to a positive count.
+  static String encodeCounters(Map<String, int> counters) {
+    final sorted = counters.keys.toList()..sort();
+    return jsonEncode({for (final key in sorted) key: counters[key]});
+  }
+
+  static Map<String, int> decodeCounters(String json) {
+    final decoded = decodeJsonObject(json);
+    final counters = <String, int>{};
+    for (final MapEntry(:key, :value) in decoded.entries) {
+      if (key.isEmpty || value is! int || value < 1) {
+        throw FormatException('Not a stored version');
+      }
+      counters[key] = value;
+    }
+    return Map.unmodifiable(counters);
+  }
+
   static String _digits(int value, int width) =>
       value.toString().padLeft(width, '0');
 }

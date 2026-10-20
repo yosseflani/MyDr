@@ -11,6 +11,7 @@ import 'package:mydr/data/models/visit_media.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import '../../helpers/memory_key_store.dart';
+import '../../helpers/schema_versions.dart';
 
 /// Visit media records against both repository implementations, plus the
 /// database-only guarantees: constraints, migration from version 1 and
@@ -304,7 +305,9 @@ void main() {
         await seeded(database);
         await database.close();
         final raw = sqlite3.open(file.path)
-          ..execute("PRAGMA key = \"x'${keys.key}'\"")
+          ..execute("PRAGMA key = \"x'${keys.key}'\"");
+        dropVersion4Objects(raw);
+        raw
           ..execute('DROP TABLE dose_records')
           ..execute('DROP TABLE medications')
           ..execute('DROP TABLE visit_media')

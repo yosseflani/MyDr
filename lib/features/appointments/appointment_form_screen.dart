@@ -279,6 +279,8 @@ class _AppointmentFormScreenState extends State<AppointmentFormScreen> {
           AppStrings.appointmentMissingOnSave,
         AppointmentSaveResult.hasVisitMedia =>
           AppStrings.moveAppointmentHasMedia(_memberName(original!.memberId)),
+        AppointmentSaveResult.sharedMember =>
+          AppStrings.moveSharedAppointment,
         AppointmentSaveResult.failedAfterDetachingQuestions =>
           AppStrings.saveFailedAfterDetaching(_memberName(original!.memberId)),
         AppointmentSaveResult.failed ||

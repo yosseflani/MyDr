@@ -118,4 +118,38 @@ void main() {
       }
     });
   });
+
+  group('sync values', () {
+    test('a JSON object round-trips exactly', () {
+      final value = {
+        'id': 'x',
+        'n': null,
+        'list': ['a', 'ב'],
+        'nested': {'k': 1},
+        'flag': true,
+      };
+      expect(
+        StorageCodecs.decodeJsonObject(StorageCodecs.encodeJsonObject(value)),
+        value,
+      );
+      expect(
+        () => StorageCodecs.decodeJsonObject('[1]'),
+        throwsFormatException,
+      );
+    });
+
+    test('a version vector round-trips, sorted, and refuses bad counts', () {
+      final counters = {'b': 2, 'a': 7};
+      final text = StorageCodecs.encodeCounters(counters);
+      expect(text, '{"a":7,"b":2}');
+      expect(StorageCodecs.decodeCounters(text), counters);
+      for (final bad in ['{"a":0}', '{"a":"1"}', '{"":1}', '[]']) {
+        expect(
+          () => StorageCodecs.decodeCounters(bad),
+          throwsFormatException,
+          reason: bad,
+        );
+      }
+    });
+  });
 }

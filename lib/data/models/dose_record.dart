@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
 /// What the user recorded for a scheduled dose.
 enum DoseStatus { taken, skipped }
 
@@ -23,6 +27,30 @@ class DoseRecord {
        );
 
   final String id;
+
+  /// The id a record of the dose of [medicationId] scheduled at
+  /// [scheduledAt] gets: derived from the two, so the same dose marked on
+  /// two devices of a household is the same record, never a duplicate. A
+  /// random-looking UUID (version 8) that reveals nothing without the
+  /// medication's id.
+  static String idFor(String medicationId, DateTime scheduledAt) {
+    final minute =
+        '${scheduledAt.year.toString().padLeft(4, '0')}-'
+        '${scheduledAt.month.toString().padLeft(2, '0')}-'
+        '${scheduledAt.day.toString().padLeft(2, '0')}T'
+        '${scheduledAt.hour.toString().padLeft(2, '0')}:'
+        '${scheduledAt.minute.toString().padLeft(2, '0')}';
+    final bytes = sha256
+        .convert(utf8.encode('mydr-dose-v1|$medicationId|$minute'))
+        .bytes
+        .sublist(0, 16);
+    bytes[6] = (bytes[6] & 0x0f) | 0x80; // Version 8 (custom).
+    bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 9562 variant.
+    final hex = [for (final b in bytes) b.toRadixString(16).padLeft(2, '0')];
+    return '${hex.sublist(0, 4).join()}-${hex.sublist(4, 6).join()}-'
+        '${hex.sublist(6, 8).join()}-${hex.sublist(8, 10).join()}-'
+        '${hex.sublist(10).join()}';
+  }
 
   /// Id of the [FamilyMember]; always the member of [medicationId].
   final String memberId;

@@ -6,6 +6,7 @@ import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
+import 'package:mydr/features/sharing/sync_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
 import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
 
@@ -26,6 +27,7 @@ class AppScope extends InheritedWidget {
     required this.visitMediaController,
     required this.medicationController,
     required this.backupController,
+    required this.syncController,
     required super.child,
   });
 
@@ -38,6 +40,9 @@ class AppScope extends InheritedWidget {
   final VisitMediaController visitMediaController;
   final MedicationController medicationController;
   final BackupController backupController;
+
+  /// Household sharing and sync.
+  final SyncController syncController;
 
   static AppScope of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();
@@ -58,5 +63,6 @@ class AppScope extends InheritedWidget {
       !identical(firstAidController, oldWidget.firstAidController) ||
       !identical(visitMediaController, oldWidget.visitMediaController) ||
       !identical(medicationController, oldWidget.medicationController) ||
-      !identical(backupController, oldWidget.backupController);
+      !identical(backupController, oldWidget.backupController) ||
+      !identical(syncController, oldWidget.syncController);
 }

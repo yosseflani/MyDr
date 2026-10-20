@@ -64,6 +64,17 @@ class BackupCipher {
     : _secret = SecretKey(List.unmodifiable(key.bytes)),
       _random = random ?? Random.secure();
 
+  /// The same format with any secret of at least 16 bytes, e.g. a
+  /// household key for shared changes and photos (see `HouseholdCrypto`).
+  /// Objects are bound to their context exactly as backup objects are.
+  BackupCipher.withSecret(List<int> secret, {Random? random})
+    : _secret = SecretKey(List.unmodifiable(secret)),
+      _random = random ?? Random.secure() {
+    if (secret.length < 16) {
+      throw ArgumentError.value(secret.length, 'secret', 'Too short');
+    }
+  }
+
   static const List<int> magic = [
     0x4d,
     0x59,

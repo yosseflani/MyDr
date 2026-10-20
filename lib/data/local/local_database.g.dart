@@ -3538,6 +3538,3051 @@ class DoseRecordsCompanion extends UpdateCompanion<DoseRecordRow> {
   }
 }
 
+class SyncSettings extends Table with TableInfo<SyncSettings, SyncSettingsRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncSettings(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (id = 1)',
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(device_id) > 0)',
+  );
+  static const VerificationMeta _householdIdMeta = const VerificationMeta(
+    'householdId',
+  );
+  late final GeneratedColumn<String> householdId = GeneratedColumn<String>(
+    'household_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (household_id IS NULL OR length(household_id) > 0)',
+  );
+  static const VerificationMeta _accountUidMeta = const VerificationMeta(
+    'accountUid',
+  );
+  late final GeneratedColumn<String> accountUid = GeneratedColumn<String>(
+    'account_uid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (account_uid IS NULL OR length(account_uid) > 0)',
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (role IS NULL OR role IN (\'admin\', \'member\'))',
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT \'off\' CHECK (state IN (\'off\', \'joining\', \'active\', \'removed\'))',
+    defaultValue: const CustomExpression('\'off\''),
+  );
+  static const VerificationMeta _inviteIdMeta = const VerificationMeta(
+    'inviteId',
+  );
+  late final GeneratedColumn<String> inviteId = GeneratedColumn<String>(
+    'invite_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _lastSyncAtMeta = const VerificationMeta(
+    'lastSyncAt',
+  );
+  late final GeneratedColumn<int> lastSyncAt = GeneratedColumn<int>(
+    'last_sync_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _nextSeqMeta = const VerificationMeta(
+    'nextSeq',
+  );
+  late final GeneratedColumn<int> nextSeq = GeneratedColumn<int>(
+    'next_seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 1 CHECK (next_seq >= 1)',
+    defaultValue: const CustomExpression('1'),
+  );
+  static const VerificationMeta _applyingMeta = const VerificationMeta(
+    'applying',
+  );
+  late final GeneratedColumn<int> applying = GeneratedColumn<int>(
+    'applying',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (applying IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    deviceId,
+    householdId,
+    accountUid,
+    role,
+    state,
+    inviteId,
+    lastSyncAt,
+    nextSeq,
+    applying,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncSettingsRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('household_id')) {
+      context.handle(
+        _householdIdMeta,
+        householdId.isAcceptableOrUnknown(
+          data['household_id']!,
+          _householdIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('account_uid')) {
+      context.handle(
+        _accountUidMeta,
+        accountUid.isAcceptableOrUnknown(data['account_uid']!, _accountUidMeta),
+      );
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('invite_id')) {
+      context.handle(
+        _inviteIdMeta,
+        inviteId.isAcceptableOrUnknown(data['invite_id']!, _inviteIdMeta),
+      );
+    }
+    if (data.containsKey('last_sync_at')) {
+      context.handle(
+        _lastSyncAtMeta,
+        lastSyncAt.isAcceptableOrUnknown(
+          data['last_sync_at']!,
+          _lastSyncAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_seq')) {
+      context.handle(
+        _nextSeqMeta,
+        nextSeq.isAcceptableOrUnknown(data['next_seq']!, _nextSeqMeta),
+      );
+    }
+    if (data.containsKey('applying')) {
+      context.handle(
+        _applyingMeta,
+        applying.isAcceptableOrUnknown(data['applying']!, _applyingMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SyncSettingsRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncSettingsRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      householdId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}household_id'],
+      ),
+      accountUid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_uid'],
+      ),
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      inviteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}invite_id'],
+      ),
+      lastSyncAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_sync_at'],
+      ),
+      nextSeq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_seq'],
+      )!,
+      applying: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}applying'],
+      )!,
+    );
+  }
+
+  @override
+  SyncSettings createAlias(String alias) {
+    return SyncSettings(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncSettingsRow extends DataClass implements Insertable<SyncSettingsRow> {
+  final int id;
+
+  /// Random, created on first use; names this device's change log.
+  final String deviceId;
+  final String? householdId;
+  final String? accountUid;
+  final String? role;
+  final String state;
+
+  /// The invitation this device accepted, while it waits to be added.
+  final String? inviteId;
+  final int? lastSyncAt;
+
+  /// Sequence number of the next change batch this device uploads.
+  final int nextSeq;
+
+  /// 1 only inside the transaction that applies changes from other devices,
+  /// so those changes are not tracked as local ones.
+  final int applying;
+  const SyncSettingsRow({
+    required this.id,
+    required this.deviceId,
+    this.householdId,
+    this.accountUid,
+    this.role,
+    required this.state,
+    this.inviteId,
+    this.lastSyncAt,
+    required this.nextSeq,
+    required this.applying,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['device_id'] = Variable<String>(deviceId);
+    if (!nullToAbsent || householdId != null) {
+      map['household_id'] = Variable<String>(householdId);
+    }
+    if (!nullToAbsent || accountUid != null) {
+      map['account_uid'] = Variable<String>(accountUid);
+    }
+    if (!nullToAbsent || role != null) {
+      map['role'] = Variable<String>(role);
+    }
+    map['state'] = Variable<String>(state);
+    if (!nullToAbsent || inviteId != null) {
+      map['invite_id'] = Variable<String>(inviteId);
+    }
+    if (!nullToAbsent || lastSyncAt != null) {
+      map['last_sync_at'] = Variable<int>(lastSyncAt);
+    }
+    map['next_seq'] = Variable<int>(nextSeq);
+    map['applying'] = Variable<int>(applying);
+    return map;
+  }
+
+  SyncSettingsCompanion toCompanion(bool nullToAbsent) {
+    return SyncSettingsCompanion(
+      id: Value(id),
+      deviceId: Value(deviceId),
+      householdId: householdId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(householdId),
+      accountUid: accountUid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountUid),
+      role: role == null && nullToAbsent ? const Value.absent() : Value(role),
+      state: Value(state),
+      inviteId: inviteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(inviteId),
+      lastSyncAt: lastSyncAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncAt),
+      nextSeq: Value(nextSeq),
+      applying: Value(applying),
+    );
+  }
+
+  factory SyncSettingsRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncSettingsRow(
+      id: serializer.fromJson<int>(json['id']),
+      deviceId: serializer.fromJson<String>(json['device_id']),
+      householdId: serializer.fromJson<String?>(json['household_id']),
+      accountUid: serializer.fromJson<String?>(json['account_uid']),
+      role: serializer.fromJson<String?>(json['role']),
+      state: serializer.fromJson<String>(json['state']),
+      inviteId: serializer.fromJson<String?>(json['invite_id']),
+      lastSyncAt: serializer.fromJson<int?>(json['last_sync_at']),
+      nextSeq: serializer.fromJson<int>(json['next_seq']),
+      applying: serializer.fromJson<int>(json['applying']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'device_id': serializer.toJson<String>(deviceId),
+      'household_id': serializer.toJson<String?>(householdId),
+      'account_uid': serializer.toJson<String?>(accountUid),
+      'role': serializer.toJson<String?>(role),
+      'state': serializer.toJson<String>(state),
+      'invite_id': serializer.toJson<String?>(inviteId),
+      'last_sync_at': serializer.toJson<int?>(lastSyncAt),
+      'next_seq': serializer.toJson<int>(nextSeq),
+      'applying': serializer.toJson<int>(applying),
+    };
+  }
+
+  SyncSettingsRow copyWith({
+    int? id,
+    String? deviceId,
+    Value<String?> householdId = const Value.absent(),
+    Value<String?> accountUid = const Value.absent(),
+    Value<String?> role = const Value.absent(),
+    String? state,
+    Value<String?> inviteId = const Value.absent(),
+    Value<int?> lastSyncAt = const Value.absent(),
+    int? nextSeq,
+    int? applying,
+  }) => SyncSettingsRow(
+    id: id ?? this.id,
+    deviceId: deviceId ?? this.deviceId,
+    householdId: householdId.present ? householdId.value : this.householdId,
+    accountUid: accountUid.present ? accountUid.value : this.accountUid,
+    role: role.present ? role.value : this.role,
+    state: state ?? this.state,
+    inviteId: inviteId.present ? inviteId.value : this.inviteId,
+    lastSyncAt: lastSyncAt.present ? lastSyncAt.value : this.lastSyncAt,
+    nextSeq: nextSeq ?? this.nextSeq,
+    applying: applying ?? this.applying,
+  );
+  SyncSettingsRow copyWithCompanion(SyncSettingsCompanion data) {
+    return SyncSettingsRow(
+      id: data.id.present ? data.id.value : this.id,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      householdId: data.householdId.present
+          ? data.householdId.value
+          : this.householdId,
+      accountUid: data.accountUid.present
+          ? data.accountUid.value
+          : this.accountUid,
+      role: data.role.present ? data.role.value : this.role,
+      state: data.state.present ? data.state.value : this.state,
+      inviteId: data.inviteId.present ? data.inviteId.value : this.inviteId,
+      lastSyncAt: data.lastSyncAt.present
+          ? data.lastSyncAt.value
+          : this.lastSyncAt,
+      nextSeq: data.nextSeq.present ? data.nextSeq.value : this.nextSeq,
+      applying: data.applying.present ? data.applying.value : this.applying,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncSettingsRow(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('householdId: $householdId, ')
+          ..write('accountUid: $accountUid, ')
+          ..write('role: $role, ')
+          ..write('state: $state, ')
+          ..write('inviteId: $inviteId, ')
+          ..write('lastSyncAt: $lastSyncAt, ')
+          ..write('nextSeq: $nextSeq, ')
+          ..write('applying: $applying')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    deviceId,
+    householdId,
+    accountUid,
+    role,
+    state,
+    inviteId,
+    lastSyncAt,
+    nextSeq,
+    applying,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncSettingsRow &&
+          other.id == this.id &&
+          other.deviceId == this.deviceId &&
+          other.householdId == this.householdId &&
+          other.accountUid == this.accountUid &&
+          other.role == this.role &&
+          other.state == this.state &&
+          other.inviteId == this.inviteId &&
+          other.lastSyncAt == this.lastSyncAt &&
+          other.nextSeq == this.nextSeq &&
+          other.applying == this.applying);
+}
+
+class SyncSettingsCompanion extends UpdateCompanion<SyncSettingsRow> {
+  final Value<int> id;
+  final Value<String> deviceId;
+  final Value<String?> householdId;
+  final Value<String?> accountUid;
+  final Value<String?> role;
+  final Value<String> state;
+  final Value<String?> inviteId;
+  final Value<int?> lastSyncAt;
+  final Value<int> nextSeq;
+  final Value<int> applying;
+  const SyncSettingsCompanion({
+    this.id = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.householdId = const Value.absent(),
+    this.accountUid = const Value.absent(),
+    this.role = const Value.absent(),
+    this.state = const Value.absent(),
+    this.inviteId = const Value.absent(),
+    this.lastSyncAt = const Value.absent(),
+    this.nextSeq = const Value.absent(),
+    this.applying = const Value.absent(),
+  });
+  SyncSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    required String deviceId,
+    this.householdId = const Value.absent(),
+    this.accountUid = const Value.absent(),
+    this.role = const Value.absent(),
+    this.state = const Value.absent(),
+    this.inviteId = const Value.absent(),
+    this.lastSyncAt = const Value.absent(),
+    this.nextSeq = const Value.absent(),
+    this.applying = const Value.absent(),
+  }) : deviceId = Value(deviceId);
+  static Insertable<SyncSettingsRow> custom({
+    Expression<int>? id,
+    Expression<String>? deviceId,
+    Expression<String>? householdId,
+    Expression<String>? accountUid,
+    Expression<String>? role,
+    Expression<String>? state,
+    Expression<String>? inviteId,
+    Expression<int>? lastSyncAt,
+    Expression<int>? nextSeq,
+    Expression<int>? applying,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (deviceId != null) 'device_id': deviceId,
+      if (householdId != null) 'household_id': householdId,
+      if (accountUid != null) 'account_uid': accountUid,
+      if (role != null) 'role': role,
+      if (state != null) 'state': state,
+      if (inviteId != null) 'invite_id': inviteId,
+      if (lastSyncAt != null) 'last_sync_at': lastSyncAt,
+      if (nextSeq != null) 'next_seq': nextSeq,
+      if (applying != null) 'applying': applying,
+    });
+  }
+
+  SyncSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? deviceId,
+    Value<String?>? householdId,
+    Value<String?>? accountUid,
+    Value<String?>? role,
+    Value<String>? state,
+    Value<String?>? inviteId,
+    Value<int?>? lastSyncAt,
+    Value<int>? nextSeq,
+    Value<int>? applying,
+  }) {
+    return SyncSettingsCompanion(
+      id: id ?? this.id,
+      deviceId: deviceId ?? this.deviceId,
+      householdId: householdId ?? this.householdId,
+      accountUid: accountUid ?? this.accountUid,
+      role: role ?? this.role,
+      state: state ?? this.state,
+      inviteId: inviteId ?? this.inviteId,
+      lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+      nextSeq: nextSeq ?? this.nextSeq,
+      applying: applying ?? this.applying,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (householdId.present) {
+      map['household_id'] = Variable<String>(householdId.value);
+    }
+    if (accountUid.present) {
+      map['account_uid'] = Variable<String>(accountUid.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (inviteId.present) {
+      map['invite_id'] = Variable<String>(inviteId.value);
+    }
+    if (lastSyncAt.present) {
+      map['last_sync_at'] = Variable<int>(lastSyncAt.value);
+    }
+    if (nextSeq.present) {
+      map['next_seq'] = Variable<int>(nextSeq.value);
+    }
+    if (applying.present) {
+      map['applying'] = Variable<int>(applying.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('householdId: $householdId, ')
+          ..write('accountUid: $accountUid, ')
+          ..write('role: $role, ')
+          ..write('state: $state, ')
+          ..write('inviteId: $inviteId, ')
+          ..write('lastSyncAt: $lastSyncAt, ')
+          ..write('nextSeq: $nextSeq, ')
+          ..write('applying: $applying')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncSharedMembers extends Table
+    with TableInfo<SyncSharedMembers, SyncSharedMemberRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncSharedMembers(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL PRIMARY KEY REFERENCES family_members(id)ON UPDATE RESTRICT ON DELETE RESTRICT',
+  );
+  static const VerificationMeta _sharedAtMeta = const VerificationMeta(
+    'sharedAt',
+  );
+  late final GeneratedColumn<int> sharedAt = GeneratedColumn<int>(
+    'shared_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [memberId, sharedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_shared_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncSharedMemberRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('shared_at')) {
+      context.handle(
+        _sharedAtMeta,
+        sharedAt.isAcceptableOrUnknown(data['shared_at']!, _sharedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sharedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {memberId};
+  @override
+  SyncSharedMemberRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncSharedMemberRow(
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      sharedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}shared_at'],
+      )!,
+    );
+  }
+
+  @override
+  SyncSharedMembers createAlias(String alias) {
+    return SyncSharedMembers(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncSharedMemberRow extends DataClass
+    implements Insertable<SyncSharedMemberRow> {
+  final String memberId;
+  final int sharedAt;
+  const SyncSharedMemberRow({required this.memberId, required this.sharedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['member_id'] = Variable<String>(memberId);
+    map['shared_at'] = Variable<int>(sharedAt);
+    return map;
+  }
+
+  SyncSharedMembersCompanion toCompanion(bool nullToAbsent) {
+    return SyncSharedMembersCompanion(
+      memberId: Value(memberId),
+      sharedAt: Value(sharedAt),
+    );
+  }
+
+  factory SyncSharedMemberRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncSharedMemberRow(
+      memberId: serializer.fromJson<String>(json['member_id']),
+      sharedAt: serializer.fromJson<int>(json['shared_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'member_id': serializer.toJson<String>(memberId),
+      'shared_at': serializer.toJson<int>(sharedAt),
+    };
+  }
+
+  SyncSharedMemberRow copyWith({String? memberId, int? sharedAt}) =>
+      SyncSharedMemberRow(
+        memberId: memberId ?? this.memberId,
+        sharedAt: sharedAt ?? this.sharedAt,
+      );
+  SyncSharedMemberRow copyWithCompanion(SyncSharedMembersCompanion data) {
+    return SyncSharedMemberRow(
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      sharedAt: data.sharedAt.present ? data.sharedAt.value : this.sharedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncSharedMemberRow(')
+          ..write('memberId: $memberId, ')
+          ..write('sharedAt: $sharedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(memberId, sharedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncSharedMemberRow &&
+          other.memberId == this.memberId &&
+          other.sharedAt == this.sharedAt);
+}
+
+class SyncSharedMembersCompanion extends UpdateCompanion<SyncSharedMemberRow> {
+  final Value<String> memberId;
+  final Value<int> sharedAt;
+  final Value<int> rowid;
+  const SyncSharedMembersCompanion({
+    this.memberId = const Value.absent(),
+    this.sharedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncSharedMembersCompanion.insert({
+    required String memberId,
+    required int sharedAt,
+    this.rowid = const Value.absent(),
+  }) : memberId = Value(memberId),
+       sharedAt = Value(sharedAt);
+  static Insertable<SyncSharedMemberRow> custom({
+    Expression<String>? memberId,
+    Expression<int>? sharedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (memberId != null) 'member_id': memberId,
+      if (sharedAt != null) 'shared_at': sharedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncSharedMembersCompanion copyWith({
+    Value<String>? memberId,
+    Value<int>? sharedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncSharedMembersCompanion(
+      memberId: memberId ?? this.memberId,
+      sharedAt: sharedAt ?? this.sharedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (sharedAt.present) {
+      map['shared_at'] = Variable<int>(sharedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncSharedMembersCompanion(')
+          ..write('memberId: $memberId, ')
+          ..write('sharedAt: $sharedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncRecords extends Table with TableInfo<SyncRecords, SyncRecordRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncRecords(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (kind IN (\'member\', \'appointment\', \'question\', \'symptom\', \'media\', \'medication\', \'dose\', \'share\'))',
+  );
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+    'sync_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(sync_id) > 0)',
+  );
+  static const VerificationMeta _localIdMeta = const VerificationMeta(
+    'localId',
+  );
+  late final GeneratedColumn<String> localId = GeneratedColumn<String>(
+    'local_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(local_id) > 0)',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(member_id) > 0)',
+  );
+  static const VerificationMeta _versionVectorMeta = const VerificationMeta(
+    'versionVector',
+  );
+  late final GeneratedColumn<String> versionVector = GeneratedColumn<String>(
+    'version_vector',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (json_valid(version_vector) AND json_type(version_vector) = \'object\')',
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(updated_by) > 0)',
+  );
+  static const VerificationMeta _deletedMeta = const VerificationMeta(
+    'deleted',
+  );
+  late final GeneratedColumn<int> deleted = GeneratedColumn<int>(
+    'deleted',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (deleted IN (0, 1))',
+  );
+  static const VerificationMeta _baseMeta = const VerificationMeta('base');
+  late final GeneratedColumn<String> base = GeneratedColumn<String>(
+    'base',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (base IS NULL OR(json_valid(base) AND json_type(base) = \'object\'))',
+  );
+  static const VerificationMeta _parkedMeta = const VerificationMeta('parked');
+  late final GeneratedColumn<int> parked = GeneratedColumn<int>(
+    'parked',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (parked IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    kind,
+    syncId,
+    localId,
+    memberId,
+    versionVector,
+    updatedAt,
+    updatedBy,
+    deleted,
+    base,
+    parked,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncRecordRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('sync_id')) {
+      context.handle(
+        _syncIdMeta,
+        syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncIdMeta);
+    }
+    if (data.containsKey('local_id')) {
+      context.handle(
+        _localIdMeta,
+        localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('version_vector')) {
+      context.handle(
+        _versionVectorMeta,
+        versionVector.isAcceptableOrUnknown(
+          data['version_vector']!,
+          _versionVectorMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_versionVectorMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByMeta);
+    }
+    if (data.containsKey('deleted')) {
+      context.handle(
+        _deletedMeta,
+        deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deletedMeta);
+    }
+    if (data.containsKey('base')) {
+      context.handle(
+        _baseMeta,
+        base.isAcceptableOrUnknown(data['base']!, _baseMeta),
+      );
+    }
+    if (data.containsKey('parked')) {
+      context.handle(
+        _parkedMeta,
+        parked.isAcceptableOrUnknown(data['parked']!, _parkedMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {kind, syncId};
+  @override
+  SyncRecordRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncRecordRow(
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      syncId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_id'],
+      )!,
+      localId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      versionVector: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version_vector'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      )!,
+      deleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted'],
+      )!,
+      base: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base'],
+      ),
+      parked: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parked'],
+      )!,
+    );
+  }
+
+  @override
+  SyncRecords createAlias(String alias) {
+    return SyncRecords(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(kind, sync_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncRecordRow extends DataClass implements Insertable<SyncRecordRow> {
+  final String kind;
+  final String syncId;
+  final String localId;
+  final String memberId;
+  final String versionVector;
+  final int updatedAt;
+  final String updatedBy;
+  final int deleted;
+  final String? base;
+
+  /// 1 while a change from another device waits for its parent record
+  /// (e.g. a question whose appointment has not arrived yet).
+  final int parked;
+  const SyncRecordRow({
+    required this.kind,
+    required this.syncId,
+    required this.localId,
+    required this.memberId,
+    required this.versionVector,
+    required this.updatedAt,
+    required this.updatedBy,
+    required this.deleted,
+    this.base,
+    required this.parked,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['kind'] = Variable<String>(kind);
+    map['sync_id'] = Variable<String>(syncId);
+    map['local_id'] = Variable<String>(localId);
+    map['member_id'] = Variable<String>(memberId);
+    map['version_vector'] = Variable<String>(versionVector);
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['updated_by'] = Variable<String>(updatedBy);
+    map['deleted'] = Variable<int>(deleted);
+    if (!nullToAbsent || base != null) {
+      map['base'] = Variable<String>(base);
+    }
+    map['parked'] = Variable<int>(parked);
+    return map;
+  }
+
+  SyncRecordsCompanion toCompanion(bool nullToAbsent) {
+    return SyncRecordsCompanion(
+      kind: Value(kind),
+      syncId: Value(syncId),
+      localId: Value(localId),
+      memberId: Value(memberId),
+      versionVector: Value(versionVector),
+      updatedAt: Value(updatedAt),
+      updatedBy: Value(updatedBy),
+      deleted: Value(deleted),
+      base: base == null && nullToAbsent ? const Value.absent() : Value(base),
+      parked: Value(parked),
+    );
+  }
+
+  factory SyncRecordRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncRecordRow(
+      kind: serializer.fromJson<String>(json['kind']),
+      syncId: serializer.fromJson<String>(json['sync_id']),
+      localId: serializer.fromJson<String>(json['local_id']),
+      memberId: serializer.fromJson<String>(json['member_id']),
+      versionVector: serializer.fromJson<String>(json['version_vector']),
+      updatedAt: serializer.fromJson<int>(json['updated_at']),
+      updatedBy: serializer.fromJson<String>(json['updated_by']),
+      deleted: serializer.fromJson<int>(json['deleted']),
+      base: serializer.fromJson<String?>(json['base']),
+      parked: serializer.fromJson<int>(json['parked']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'kind': serializer.toJson<String>(kind),
+      'sync_id': serializer.toJson<String>(syncId),
+      'local_id': serializer.toJson<String>(localId),
+      'member_id': serializer.toJson<String>(memberId),
+      'version_vector': serializer.toJson<String>(versionVector),
+      'updated_at': serializer.toJson<int>(updatedAt),
+      'updated_by': serializer.toJson<String>(updatedBy),
+      'deleted': serializer.toJson<int>(deleted),
+      'base': serializer.toJson<String?>(base),
+      'parked': serializer.toJson<int>(parked),
+    };
+  }
+
+  SyncRecordRow copyWith({
+    String? kind,
+    String? syncId,
+    String? localId,
+    String? memberId,
+    String? versionVector,
+    int? updatedAt,
+    String? updatedBy,
+    int? deleted,
+    Value<String?> base = const Value.absent(),
+    int? parked,
+  }) => SyncRecordRow(
+    kind: kind ?? this.kind,
+    syncId: syncId ?? this.syncId,
+    localId: localId ?? this.localId,
+    memberId: memberId ?? this.memberId,
+    versionVector: versionVector ?? this.versionVector,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedBy: updatedBy ?? this.updatedBy,
+    deleted: deleted ?? this.deleted,
+    base: base.present ? base.value : this.base,
+    parked: parked ?? this.parked,
+  );
+  SyncRecordRow copyWithCompanion(SyncRecordsCompanion data) {
+    return SyncRecordRow(
+      kind: data.kind.present ? data.kind.value : this.kind,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
+      localId: data.localId.present ? data.localId.value : this.localId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      versionVector: data.versionVector.present
+          ? data.versionVector.value
+          : this.versionVector,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      base: data.base.present ? data.base.value : this.base,
+      parked: data.parked.present ? data.parked.value : this.parked,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordRow(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('memberId: $memberId, ')
+          ..write('versionVector: $versionVector, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deleted: $deleted, ')
+          ..write('base: $base, ')
+          ..write('parked: $parked')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    kind,
+    syncId,
+    localId,
+    memberId,
+    versionVector,
+    updatedAt,
+    updatedBy,
+    deleted,
+    base,
+    parked,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncRecordRow &&
+          other.kind == this.kind &&
+          other.syncId == this.syncId &&
+          other.localId == this.localId &&
+          other.memberId == this.memberId &&
+          other.versionVector == this.versionVector &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedBy == this.updatedBy &&
+          other.deleted == this.deleted &&
+          other.base == this.base &&
+          other.parked == this.parked);
+}
+
+class SyncRecordsCompanion extends UpdateCompanion<SyncRecordRow> {
+  final Value<String> kind;
+  final Value<String> syncId;
+  final Value<String> localId;
+  final Value<String> memberId;
+  final Value<String> versionVector;
+  final Value<int> updatedAt;
+  final Value<String> updatedBy;
+  final Value<int> deleted;
+  final Value<String?> base;
+  final Value<int> parked;
+  final Value<int> rowid;
+  const SyncRecordsCompanion({
+    this.kind = const Value.absent(),
+    this.syncId = const Value.absent(),
+    this.localId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.versionVector = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedBy = const Value.absent(),
+    this.deleted = const Value.absent(),
+    this.base = const Value.absent(),
+    this.parked = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncRecordsCompanion.insert({
+    required String kind,
+    required String syncId,
+    required String localId,
+    required String memberId,
+    required String versionVector,
+    required int updatedAt,
+    required String updatedBy,
+    required int deleted,
+    this.base = const Value.absent(),
+    this.parked = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : kind = Value(kind),
+       syncId = Value(syncId),
+       localId = Value(localId),
+       memberId = Value(memberId),
+       versionVector = Value(versionVector),
+       updatedAt = Value(updatedAt),
+       updatedBy = Value(updatedBy),
+       deleted = Value(deleted);
+  static Insertable<SyncRecordRow> custom({
+    Expression<String>? kind,
+    Expression<String>? syncId,
+    Expression<String>? localId,
+    Expression<String>? memberId,
+    Expression<String>? versionVector,
+    Expression<int>? updatedAt,
+    Expression<String>? updatedBy,
+    Expression<int>? deleted,
+    Expression<String>? base,
+    Expression<int>? parked,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (kind != null) 'kind': kind,
+      if (syncId != null) 'sync_id': syncId,
+      if (localId != null) 'local_id': localId,
+      if (memberId != null) 'member_id': memberId,
+      if (versionVector != null) 'version_vector': versionVector,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedBy != null) 'updated_by': updatedBy,
+      if (deleted != null) 'deleted': deleted,
+      if (base != null) 'base': base,
+      if (parked != null) 'parked': parked,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncRecordsCompanion copyWith({
+    Value<String>? kind,
+    Value<String>? syncId,
+    Value<String>? localId,
+    Value<String>? memberId,
+    Value<String>? versionVector,
+    Value<int>? updatedAt,
+    Value<String>? updatedBy,
+    Value<int>? deleted,
+    Value<String?>? base,
+    Value<int>? parked,
+    Value<int>? rowid,
+  }) {
+    return SyncRecordsCompanion(
+      kind: kind ?? this.kind,
+      syncId: syncId ?? this.syncId,
+      localId: localId ?? this.localId,
+      memberId: memberId ?? this.memberId,
+      versionVector: versionVector ?? this.versionVector,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedBy: updatedBy ?? this.updatedBy,
+      deleted: deleted ?? this.deleted,
+      base: base ?? this.base,
+      parked: parked ?? this.parked,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
+    if (localId.present) {
+      map['local_id'] = Variable<String>(localId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (versionVector.present) {
+      map['version_vector'] = Variable<String>(versionVector.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
+    if (deleted.present) {
+      map['deleted'] = Variable<int>(deleted.value);
+    }
+    if (base.present) {
+      map['base'] = Variable<String>(base.value);
+    }
+    if (parked.present) {
+      map['parked'] = Variable<int>(parked.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncRecordsCompanion(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('memberId: $memberId, ')
+          ..write('versionVector: $versionVector, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deleted: $deleted, ')
+          ..write('base: $base, ')
+          ..write('parked: $parked, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncPending extends Table with TableInfo<SyncPending, SyncPendingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncPending(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (kind IN (\'member\', \'appointment\', \'question\', \'symptom\', \'media\', \'medication\', \'dose\', \'share\'))',
+  );
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+    'sync_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(sync_id) > 0)',
+  );
+  static const VerificationMeta _localIdMeta = const VerificationMeta(
+    'localId',
+  );
+  late final GeneratedColumn<String> localId = GeneratedColumn<String>(
+    'local_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(local_id) > 0)',
+  );
+  static const VerificationMeta _changeCountMeta = const VerificationMeta(
+    'changeCount',
+  );
+  late final GeneratedColumn<int> changeCount = GeneratedColumn<int>(
+    'change_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 1 CHECK (change_count >= 0)',
+    defaultValue: const CustomExpression('1'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [kind, syncId, localId, changeCount];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_pending';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncPendingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('sync_id')) {
+      context.handle(
+        _syncIdMeta,
+        syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncIdMeta);
+    }
+    if (data.containsKey('local_id')) {
+      context.handle(
+        _localIdMeta,
+        localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localIdMeta);
+    }
+    if (data.containsKey('change_count')) {
+      context.handle(
+        _changeCountMeta,
+        changeCount.isAcceptableOrUnknown(
+          data['change_count']!,
+          _changeCountMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {kind, syncId};
+  @override
+  SyncPendingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncPendingRow(
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      syncId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_id'],
+      )!,
+      localId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_id'],
+      )!,
+      changeCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}change_count'],
+      )!,
+    );
+  }
+
+  @override
+  SyncPending createAlias(String alias) {
+    return SyncPending(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(kind, sync_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncPendingRow extends DataClass implements Insertable<SyncPendingRow> {
+  final String kind;
+  final String syncId;
+  final String localId;
+  final int changeCount;
+  const SyncPendingRow({
+    required this.kind,
+    required this.syncId,
+    required this.localId,
+    required this.changeCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['kind'] = Variable<String>(kind);
+    map['sync_id'] = Variable<String>(syncId);
+    map['local_id'] = Variable<String>(localId);
+    map['change_count'] = Variable<int>(changeCount);
+    return map;
+  }
+
+  SyncPendingCompanion toCompanion(bool nullToAbsent) {
+    return SyncPendingCompanion(
+      kind: Value(kind),
+      syncId: Value(syncId),
+      localId: Value(localId),
+      changeCount: Value(changeCount),
+    );
+  }
+
+  factory SyncPendingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncPendingRow(
+      kind: serializer.fromJson<String>(json['kind']),
+      syncId: serializer.fromJson<String>(json['sync_id']),
+      localId: serializer.fromJson<String>(json['local_id']),
+      changeCount: serializer.fromJson<int>(json['change_count']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'kind': serializer.toJson<String>(kind),
+      'sync_id': serializer.toJson<String>(syncId),
+      'local_id': serializer.toJson<String>(localId),
+      'change_count': serializer.toJson<int>(changeCount),
+    };
+  }
+
+  SyncPendingRow copyWith({
+    String? kind,
+    String? syncId,
+    String? localId,
+    int? changeCount,
+  }) => SyncPendingRow(
+    kind: kind ?? this.kind,
+    syncId: syncId ?? this.syncId,
+    localId: localId ?? this.localId,
+    changeCount: changeCount ?? this.changeCount,
+  );
+  SyncPendingRow copyWithCompanion(SyncPendingCompanion data) {
+    return SyncPendingRow(
+      kind: data.kind.present ? data.kind.value : this.kind,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
+      localId: data.localId.present ? data.localId.value : this.localId,
+      changeCount: data.changeCount.present
+          ? data.changeCount.value
+          : this.changeCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPendingRow(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('changeCount: $changeCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(kind, syncId, localId, changeCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncPendingRow &&
+          other.kind == this.kind &&
+          other.syncId == this.syncId &&
+          other.localId == this.localId &&
+          other.changeCount == this.changeCount);
+}
+
+class SyncPendingCompanion extends UpdateCompanion<SyncPendingRow> {
+  final Value<String> kind;
+  final Value<String> syncId;
+  final Value<String> localId;
+  final Value<int> changeCount;
+  final Value<int> rowid;
+  const SyncPendingCompanion({
+    this.kind = const Value.absent(),
+    this.syncId = const Value.absent(),
+    this.localId = const Value.absent(),
+    this.changeCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncPendingCompanion.insert({
+    required String kind,
+    required String syncId,
+    required String localId,
+    this.changeCount = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : kind = Value(kind),
+       syncId = Value(syncId),
+       localId = Value(localId);
+  static Insertable<SyncPendingRow> custom({
+    Expression<String>? kind,
+    Expression<String>? syncId,
+    Expression<String>? localId,
+    Expression<int>? changeCount,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (kind != null) 'kind': kind,
+      if (syncId != null) 'sync_id': syncId,
+      if (localId != null) 'local_id': localId,
+      if (changeCount != null) 'change_count': changeCount,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncPendingCompanion copyWith({
+    Value<String>? kind,
+    Value<String>? syncId,
+    Value<String>? localId,
+    Value<int>? changeCount,
+    Value<int>? rowid,
+  }) {
+    return SyncPendingCompanion(
+      kind: kind ?? this.kind,
+      syncId: syncId ?? this.syncId,
+      localId: localId ?? this.localId,
+      changeCount: changeCount ?? this.changeCount,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
+    if (localId.present) {
+      map['local_id'] = Variable<String>(localId.value);
+    }
+    if (changeCount.present) {
+      map['change_count'] = Variable<int>(changeCount.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncPendingCompanion(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('changeCount: $changeCount, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncConflicts extends Table
+    with TableInfo<SyncConflicts, SyncConflictRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncConflicts(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (kind IN (\'member\', \'appointment\', \'question\', \'symptom\', \'media\', \'medication\', \'dose\'))',
+  );
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+    'sync_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(sync_id) > 0)',
+  );
+  static const VerificationMeta _localIdMeta = const VerificationMeta(
+    'localId',
+  );
+  late final GeneratedColumn<String> localId = GeneratedColumn<String>(
+    'local_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(local_id) > 0)',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(member_id) > 0)',
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (reason IN (\'edited\', \'deleted\', \'deletedHere\'))',
+  );
+  static const VerificationMeta _localMeta = const VerificationMeta('local');
+  late final GeneratedColumn<String> local = GeneratedColumn<String>(
+    'local',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (local IS NULL OR(json_valid(local) AND json_type(local) = \'object\'))',
+  );
+  static const VerificationMeta _remoteMeta = const VerificationMeta('remote');
+  late final GeneratedColumn<String> remote = GeneratedColumn<String>(
+    'remote',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'CHECK (remote IS NULL OR(json_valid(remote) AND json_type(remote) = \'object\'))',
+  );
+  static const VerificationMeta _remoteVectorMeta = const VerificationMeta(
+    'remoteVector',
+  );
+  late final GeneratedColumn<String> remoteVector = GeneratedColumn<String>(
+    'remote_vector',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL CHECK (json_valid(remote_vector) AND json_type(remote_vector) = \'object\')',
+  );
+  static const VerificationMeta _remoteUpdatedAtMeta = const VerificationMeta(
+    'remoteUpdatedAt',
+  );
+  late final GeneratedColumn<int> remoteUpdatedAt = GeneratedColumn<int>(
+    'remote_updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _remoteUpdatedByMeta = const VerificationMeta(
+    'remoteUpdatedBy',
+  );
+  late final GeneratedColumn<String> remoteUpdatedBy = GeneratedColumn<String>(
+    'remote_updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(remote_updated_by) > 0)',
+  );
+  static const VerificationMeta _fieldsMeta = const VerificationMeta('fields');
+  late final GeneratedColumn<String> fields = GeneratedColumn<String>(
+    'fields',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT \'[]\' CHECK (json_valid(fields) AND json_type(fields) = \'array\')',
+    defaultValue: const CustomExpression('\'[]\''),
+  );
+  static const VerificationMeta _detectedAtMeta = const VerificationMeta(
+    'detectedAt',
+  );
+  late final GeneratedColumn<int> detectedAt = GeneratedColumn<int>(
+    'detected_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    kind,
+    syncId,
+    localId,
+    memberId,
+    reason,
+    local,
+    remote,
+    remoteVector,
+    remoteUpdatedAt,
+    remoteUpdatedBy,
+    fields,
+    detectedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_conflicts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncConflictRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('sync_id')) {
+      context.handle(
+        _syncIdMeta,
+        syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_syncIdMeta);
+    }
+    if (data.containsKey('local_id')) {
+      context.handle(
+        _localIdMeta,
+        localId.isAcceptableOrUnknown(data['local_id']!, _localIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_localIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reasonMeta);
+    }
+    if (data.containsKey('local')) {
+      context.handle(
+        _localMeta,
+        local.isAcceptableOrUnknown(data['local']!, _localMeta),
+      );
+    }
+    if (data.containsKey('remote')) {
+      context.handle(
+        _remoteMeta,
+        remote.isAcceptableOrUnknown(data['remote']!, _remoteMeta),
+      );
+    }
+    if (data.containsKey('remote_vector')) {
+      context.handle(
+        _remoteVectorMeta,
+        remoteVector.isAcceptableOrUnknown(
+          data['remote_vector']!,
+          _remoteVectorMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteVectorMeta);
+    }
+    if (data.containsKey('remote_updated_at')) {
+      context.handle(
+        _remoteUpdatedAtMeta,
+        remoteUpdatedAt.isAcceptableOrUnknown(
+          data['remote_updated_at']!,
+          _remoteUpdatedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteUpdatedAtMeta);
+    }
+    if (data.containsKey('remote_updated_by')) {
+      context.handle(
+        _remoteUpdatedByMeta,
+        remoteUpdatedBy.isAcceptableOrUnknown(
+          data['remote_updated_by']!,
+          _remoteUpdatedByMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_remoteUpdatedByMeta);
+    }
+    if (data.containsKey('fields')) {
+      context.handle(
+        _fieldsMeta,
+        fields.isAcceptableOrUnknown(data['fields']!, _fieldsMeta),
+      );
+    }
+    if (data.containsKey('detected_at')) {
+      context.handle(
+        _detectedAtMeta,
+        detectedAt.isAcceptableOrUnknown(data['detected_at']!, _detectedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_detectedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {kind, syncId};
+  @override
+  SyncConflictRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncConflictRow(
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      syncId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_id'],
+      )!,
+      localId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      )!,
+      local: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local'],
+      ),
+      remote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote'],
+      ),
+      remoteVector: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_vector'],
+      )!,
+      remoteUpdatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}remote_updated_at'],
+      )!,
+      remoteUpdatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_updated_by'],
+      )!,
+      fields: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fields'],
+      )!,
+      detectedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}detected_at'],
+      )!,
+    );
+  }
+
+  @override
+  SyncConflicts createAlias(String alias) {
+    return SyncConflicts(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  List<String> get customConstraints => const ['PRIMARY KEY(kind, sync_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncConflictRow extends DataClass implements Insertable<SyncConflictRow> {
+  final String kind;
+  final String syncId;
+  final String localId;
+  final String memberId;
+  final String reason;
+  final String? local;
+  final String? remote;
+  final String remoteVector;
+  final int remoteUpdatedAt;
+  final String remoteUpdatedBy;
+  final String fields;
+  final int detectedAt;
+  const SyncConflictRow({
+    required this.kind,
+    required this.syncId,
+    required this.localId,
+    required this.memberId,
+    required this.reason,
+    this.local,
+    this.remote,
+    required this.remoteVector,
+    required this.remoteUpdatedAt,
+    required this.remoteUpdatedBy,
+    required this.fields,
+    required this.detectedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['kind'] = Variable<String>(kind);
+    map['sync_id'] = Variable<String>(syncId);
+    map['local_id'] = Variable<String>(localId);
+    map['member_id'] = Variable<String>(memberId);
+    map['reason'] = Variable<String>(reason);
+    if (!nullToAbsent || local != null) {
+      map['local'] = Variable<String>(local);
+    }
+    if (!nullToAbsent || remote != null) {
+      map['remote'] = Variable<String>(remote);
+    }
+    map['remote_vector'] = Variable<String>(remoteVector);
+    map['remote_updated_at'] = Variable<int>(remoteUpdatedAt);
+    map['remote_updated_by'] = Variable<String>(remoteUpdatedBy);
+    map['fields'] = Variable<String>(fields);
+    map['detected_at'] = Variable<int>(detectedAt);
+    return map;
+  }
+
+  SyncConflictsCompanion toCompanion(bool nullToAbsent) {
+    return SyncConflictsCompanion(
+      kind: Value(kind),
+      syncId: Value(syncId),
+      localId: Value(localId),
+      memberId: Value(memberId),
+      reason: Value(reason),
+      local: local == null && nullToAbsent
+          ? const Value.absent()
+          : Value(local),
+      remote: remote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remote),
+      remoteVector: Value(remoteVector),
+      remoteUpdatedAt: Value(remoteUpdatedAt),
+      remoteUpdatedBy: Value(remoteUpdatedBy),
+      fields: Value(fields),
+      detectedAt: Value(detectedAt),
+    );
+  }
+
+  factory SyncConflictRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncConflictRow(
+      kind: serializer.fromJson<String>(json['kind']),
+      syncId: serializer.fromJson<String>(json['sync_id']),
+      localId: serializer.fromJson<String>(json['local_id']),
+      memberId: serializer.fromJson<String>(json['member_id']),
+      reason: serializer.fromJson<String>(json['reason']),
+      local: serializer.fromJson<String?>(json['local']),
+      remote: serializer.fromJson<String?>(json['remote']),
+      remoteVector: serializer.fromJson<String>(json['remote_vector']),
+      remoteUpdatedAt: serializer.fromJson<int>(json['remote_updated_at']),
+      remoteUpdatedBy: serializer.fromJson<String>(json['remote_updated_by']),
+      fields: serializer.fromJson<String>(json['fields']),
+      detectedAt: serializer.fromJson<int>(json['detected_at']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'kind': serializer.toJson<String>(kind),
+      'sync_id': serializer.toJson<String>(syncId),
+      'local_id': serializer.toJson<String>(localId),
+      'member_id': serializer.toJson<String>(memberId),
+      'reason': serializer.toJson<String>(reason),
+      'local': serializer.toJson<String?>(local),
+      'remote': serializer.toJson<String?>(remote),
+      'remote_vector': serializer.toJson<String>(remoteVector),
+      'remote_updated_at': serializer.toJson<int>(remoteUpdatedAt),
+      'remote_updated_by': serializer.toJson<String>(remoteUpdatedBy),
+      'fields': serializer.toJson<String>(fields),
+      'detected_at': serializer.toJson<int>(detectedAt),
+    };
+  }
+
+  SyncConflictRow copyWith({
+    String? kind,
+    String? syncId,
+    String? localId,
+    String? memberId,
+    String? reason,
+    Value<String?> local = const Value.absent(),
+    Value<String?> remote = const Value.absent(),
+    String? remoteVector,
+    int? remoteUpdatedAt,
+    String? remoteUpdatedBy,
+    String? fields,
+    int? detectedAt,
+  }) => SyncConflictRow(
+    kind: kind ?? this.kind,
+    syncId: syncId ?? this.syncId,
+    localId: localId ?? this.localId,
+    memberId: memberId ?? this.memberId,
+    reason: reason ?? this.reason,
+    local: local.present ? local.value : this.local,
+    remote: remote.present ? remote.value : this.remote,
+    remoteVector: remoteVector ?? this.remoteVector,
+    remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
+    remoteUpdatedBy: remoteUpdatedBy ?? this.remoteUpdatedBy,
+    fields: fields ?? this.fields,
+    detectedAt: detectedAt ?? this.detectedAt,
+  );
+  SyncConflictRow copyWithCompanion(SyncConflictsCompanion data) {
+    return SyncConflictRow(
+      kind: data.kind.present ? data.kind.value : this.kind,
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
+      localId: data.localId.present ? data.localId.value : this.localId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      local: data.local.present ? data.local.value : this.local,
+      remote: data.remote.present ? data.remote.value : this.remote,
+      remoteVector: data.remoteVector.present
+          ? data.remoteVector.value
+          : this.remoteVector,
+      remoteUpdatedAt: data.remoteUpdatedAt.present
+          ? data.remoteUpdatedAt.value
+          : this.remoteUpdatedAt,
+      remoteUpdatedBy: data.remoteUpdatedBy.present
+          ? data.remoteUpdatedBy.value
+          : this.remoteUpdatedBy,
+      fields: data.fields.present ? data.fields.value : this.fields,
+      detectedAt: data.detectedAt.present
+          ? data.detectedAt.value
+          : this.detectedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflictRow(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('memberId: $memberId, ')
+          ..write('reason: $reason, ')
+          ..write('local: $local, ')
+          ..write('remote: $remote, ')
+          ..write('remoteVector: $remoteVector, ')
+          ..write('remoteUpdatedAt: $remoteUpdatedAt, ')
+          ..write('remoteUpdatedBy: $remoteUpdatedBy, ')
+          ..write('fields: $fields, ')
+          ..write('detectedAt: $detectedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    kind,
+    syncId,
+    localId,
+    memberId,
+    reason,
+    local,
+    remote,
+    remoteVector,
+    remoteUpdatedAt,
+    remoteUpdatedBy,
+    fields,
+    detectedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncConflictRow &&
+          other.kind == this.kind &&
+          other.syncId == this.syncId &&
+          other.localId == this.localId &&
+          other.memberId == this.memberId &&
+          other.reason == this.reason &&
+          other.local == this.local &&
+          other.remote == this.remote &&
+          other.remoteVector == this.remoteVector &&
+          other.remoteUpdatedAt == this.remoteUpdatedAt &&
+          other.remoteUpdatedBy == this.remoteUpdatedBy &&
+          other.fields == this.fields &&
+          other.detectedAt == this.detectedAt);
+}
+
+class SyncConflictsCompanion extends UpdateCompanion<SyncConflictRow> {
+  final Value<String> kind;
+  final Value<String> syncId;
+  final Value<String> localId;
+  final Value<String> memberId;
+  final Value<String> reason;
+  final Value<String?> local;
+  final Value<String?> remote;
+  final Value<String> remoteVector;
+  final Value<int> remoteUpdatedAt;
+  final Value<String> remoteUpdatedBy;
+  final Value<String> fields;
+  final Value<int> detectedAt;
+  final Value<int> rowid;
+  const SyncConflictsCompanion({
+    this.kind = const Value.absent(),
+    this.syncId = const Value.absent(),
+    this.localId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.local = const Value.absent(),
+    this.remote = const Value.absent(),
+    this.remoteVector = const Value.absent(),
+    this.remoteUpdatedAt = const Value.absent(),
+    this.remoteUpdatedBy = const Value.absent(),
+    this.fields = const Value.absent(),
+    this.detectedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncConflictsCompanion.insert({
+    required String kind,
+    required String syncId,
+    required String localId,
+    required String memberId,
+    required String reason,
+    this.local = const Value.absent(),
+    this.remote = const Value.absent(),
+    required String remoteVector,
+    required int remoteUpdatedAt,
+    required String remoteUpdatedBy,
+    this.fields = const Value.absent(),
+    required int detectedAt,
+    this.rowid = const Value.absent(),
+  }) : kind = Value(kind),
+       syncId = Value(syncId),
+       localId = Value(localId),
+       memberId = Value(memberId),
+       reason = Value(reason),
+       remoteVector = Value(remoteVector),
+       remoteUpdatedAt = Value(remoteUpdatedAt),
+       remoteUpdatedBy = Value(remoteUpdatedBy),
+       detectedAt = Value(detectedAt);
+  static Insertable<SyncConflictRow> custom({
+    Expression<String>? kind,
+    Expression<String>? syncId,
+    Expression<String>? localId,
+    Expression<String>? memberId,
+    Expression<String>? reason,
+    Expression<String>? local,
+    Expression<String>? remote,
+    Expression<String>? remoteVector,
+    Expression<int>? remoteUpdatedAt,
+    Expression<String>? remoteUpdatedBy,
+    Expression<String>? fields,
+    Expression<int>? detectedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (kind != null) 'kind': kind,
+      if (syncId != null) 'sync_id': syncId,
+      if (localId != null) 'local_id': localId,
+      if (memberId != null) 'member_id': memberId,
+      if (reason != null) 'reason': reason,
+      if (local != null) 'local': local,
+      if (remote != null) 'remote': remote,
+      if (remoteVector != null) 'remote_vector': remoteVector,
+      if (remoteUpdatedAt != null) 'remote_updated_at': remoteUpdatedAt,
+      if (remoteUpdatedBy != null) 'remote_updated_by': remoteUpdatedBy,
+      if (fields != null) 'fields': fields,
+      if (detectedAt != null) 'detected_at': detectedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncConflictsCompanion copyWith({
+    Value<String>? kind,
+    Value<String>? syncId,
+    Value<String>? localId,
+    Value<String>? memberId,
+    Value<String>? reason,
+    Value<String?>? local,
+    Value<String?>? remote,
+    Value<String>? remoteVector,
+    Value<int>? remoteUpdatedAt,
+    Value<String>? remoteUpdatedBy,
+    Value<String>? fields,
+    Value<int>? detectedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncConflictsCompanion(
+      kind: kind ?? this.kind,
+      syncId: syncId ?? this.syncId,
+      localId: localId ?? this.localId,
+      memberId: memberId ?? this.memberId,
+      reason: reason ?? this.reason,
+      local: local ?? this.local,
+      remote: remote ?? this.remote,
+      remoteVector: remoteVector ?? this.remoteVector,
+      remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
+      remoteUpdatedBy: remoteUpdatedBy ?? this.remoteUpdatedBy,
+      fields: fields ?? this.fields,
+      detectedAt: detectedAt ?? this.detectedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
+    if (localId.present) {
+      map['local_id'] = Variable<String>(localId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (local.present) {
+      map['local'] = Variable<String>(local.value);
+    }
+    if (remote.present) {
+      map['remote'] = Variable<String>(remote.value);
+    }
+    if (remoteVector.present) {
+      map['remote_vector'] = Variable<String>(remoteVector.value);
+    }
+    if (remoteUpdatedAt.present) {
+      map['remote_updated_at'] = Variable<int>(remoteUpdatedAt.value);
+    }
+    if (remoteUpdatedBy.present) {
+      map['remote_updated_by'] = Variable<String>(remoteUpdatedBy.value);
+    }
+    if (fields.present) {
+      map['fields'] = Variable<String>(fields.value);
+    }
+    if (detectedAt.present) {
+      map['detected_at'] = Variable<int>(detectedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncConflictsCompanion(')
+          ..write('kind: $kind, ')
+          ..write('syncId: $syncId, ')
+          ..write('localId: $localId, ')
+          ..write('memberId: $memberId, ')
+          ..write('reason: $reason, ')
+          ..write('local: $local, ')
+          ..write('remote: $remote, ')
+          ..write('remoteVector: $remoteVector, ')
+          ..write('remoteUpdatedAt: $remoteUpdatedAt, ')
+          ..write('remoteUpdatedBy: $remoteUpdatedBy, ')
+          ..write('fields: $fields, ')
+          ..write('detectedAt: $detectedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncCursors extends Table with TableInfo<SyncCursors, SyncCursorRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncCursors(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (length(device_id) > 0)',
+  );
+  static const VerificationMeta _lastSeqMeta = const VerificationMeta(
+    'lastSeq',
+  );
+  late final GeneratedColumn<int> lastSeq = GeneratedColumn<int>(
+    'last_seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (last_seq >= 0)',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [deviceId, lastSeq];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_cursors';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncCursorRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('last_seq')) {
+      context.handle(
+        _lastSeqMeta,
+        lastSeq.isAcceptableOrUnknown(data['last_seq']!, _lastSeqMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lastSeqMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {deviceId};
+  @override
+  SyncCursorRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncCursorRow(
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      lastSeq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_seq'],
+      )!,
+    );
+  }
+
+  @override
+  SyncCursors createAlias(String alias) {
+    return SyncCursors(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncCursorRow extends DataClass implements Insertable<SyncCursorRow> {
+  final String deviceId;
+  final int lastSeq;
+  const SyncCursorRow({required this.deviceId, required this.lastSeq});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['device_id'] = Variable<String>(deviceId);
+    map['last_seq'] = Variable<int>(lastSeq);
+    return map;
+  }
+
+  SyncCursorsCompanion toCompanion(bool nullToAbsent) {
+    return SyncCursorsCompanion(
+      deviceId: Value(deviceId),
+      lastSeq: Value(lastSeq),
+    );
+  }
+
+  factory SyncCursorRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncCursorRow(
+      deviceId: serializer.fromJson<String>(json['device_id']),
+      lastSeq: serializer.fromJson<int>(json['last_seq']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'device_id': serializer.toJson<String>(deviceId),
+      'last_seq': serializer.toJson<int>(lastSeq),
+    };
+  }
+
+  SyncCursorRow copyWith({String? deviceId, int? lastSeq}) => SyncCursorRow(
+    deviceId: deviceId ?? this.deviceId,
+    lastSeq: lastSeq ?? this.lastSeq,
+  );
+  SyncCursorRow copyWithCompanion(SyncCursorsCompanion data) {
+    return SyncCursorRow(
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      lastSeq: data.lastSeq.present ? data.lastSeq.value : this.lastSeq,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncCursorRow(')
+          ..write('deviceId: $deviceId, ')
+          ..write('lastSeq: $lastSeq')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(deviceId, lastSeq);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncCursorRow &&
+          other.deviceId == this.deviceId &&
+          other.lastSeq == this.lastSeq);
+}
+
+class SyncCursorsCompanion extends UpdateCompanion<SyncCursorRow> {
+  final Value<String> deviceId;
+  final Value<int> lastSeq;
+  final Value<int> rowid;
+  const SyncCursorsCompanion({
+    this.deviceId = const Value.absent(),
+    this.lastSeq = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncCursorsCompanion.insert({
+    required String deviceId,
+    required int lastSeq,
+    this.rowid = const Value.absent(),
+  }) : deviceId = Value(deviceId),
+       lastSeq = Value(lastSeq);
+  static Insertable<SyncCursorRow> custom({
+    Expression<String>? deviceId,
+    Expression<int>? lastSeq,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (deviceId != null) 'device_id': deviceId,
+      if (lastSeq != null) 'last_seq': lastSeq,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncCursorsCompanion copyWith({
+    Value<String>? deviceId,
+    Value<int>? lastSeq,
+    Value<int>? rowid,
+  }) {
+    return SyncCursorsCompanion(
+      deviceId: deviceId ?? this.deviceId,
+      lastSeq: lastSeq ?? this.lastSeq,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (lastSeq.present) {
+      map['last_seq'] = Variable<int>(lastSeq.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncCursorsCompanion(')
+          ..write('deviceId: $deviceId, ')
+          ..write('lastSeq: $lastSeq, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class SyncKnownMembers extends Table
+    with TableInfo<SyncKnownMembers, SyncKnownMemberRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  SyncKnownMembers(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _uidMeta = const VerificationMeta('uid');
+  late final GeneratedColumn<String> uid = GeneratedColumn<String>(
+    'uid',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (length(uid) > 0)',
+  );
+  static const VerificationMeta _publicKeyMeta = const VerificationMeta(
+    'publicKey',
+  );
+  late final GeneratedColumn<String> publicKey = GeneratedColumn<String>(
+    'public_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(public_key) > 0)',
+  );
+  static const VerificationMeta _roleMeta = const VerificationMeta('role');
+  late final GeneratedColumn<String> role = GeneratedColumn<String>(
+    'role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (role IN (\'admin\', \'member\'))',
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [uid, publicKey, role, label];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_known_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SyncKnownMemberRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('uid')) {
+      context.handle(
+        _uidMeta,
+        uid.isAcceptableOrUnknown(data['uid']!, _uidMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_uidMeta);
+    }
+    if (data.containsKey('public_key')) {
+      context.handle(
+        _publicKeyMeta,
+        publicKey.isAcceptableOrUnknown(data['public_key']!, _publicKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_publicKeyMeta);
+    }
+    if (data.containsKey('role')) {
+      context.handle(
+        _roleMeta,
+        role.isAcceptableOrUnknown(data['role']!, _roleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_roleMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {uid};
+  @override
+  SyncKnownMemberRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SyncKnownMemberRow(
+      uid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uid'],
+      )!,
+      publicKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}public_key'],
+      )!,
+      role: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}role'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      ),
+    );
+  }
+
+  @override
+  SyncKnownMembers createAlias(String alias) {
+    return SyncKnownMembers(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SyncKnownMemberRow extends DataClass
+    implements Insertable<SyncKnownMemberRow> {
+  final String uid;
+  final String publicKey;
+  final String role;
+  final String? label;
+  const SyncKnownMemberRow({
+    required this.uid,
+    required this.publicKey,
+    required this.role,
+    this.label,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['uid'] = Variable<String>(uid);
+    map['public_key'] = Variable<String>(publicKey);
+    map['role'] = Variable<String>(role);
+    if (!nullToAbsent || label != null) {
+      map['label'] = Variable<String>(label);
+    }
+    return map;
+  }
+
+  SyncKnownMembersCompanion toCompanion(bool nullToAbsent) {
+    return SyncKnownMembersCompanion(
+      uid: Value(uid),
+      publicKey: Value(publicKey),
+      role: Value(role),
+      label: label == null && nullToAbsent
+          ? const Value.absent()
+          : Value(label),
+    );
+  }
+
+  factory SyncKnownMemberRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SyncKnownMemberRow(
+      uid: serializer.fromJson<String>(json['uid']),
+      publicKey: serializer.fromJson<String>(json['public_key']),
+      role: serializer.fromJson<String>(json['role']),
+      label: serializer.fromJson<String?>(json['label']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'uid': serializer.toJson<String>(uid),
+      'public_key': serializer.toJson<String>(publicKey),
+      'role': serializer.toJson<String>(role),
+      'label': serializer.toJson<String?>(label),
+    };
+  }
+
+  SyncKnownMemberRow copyWith({
+    String? uid,
+    String? publicKey,
+    String? role,
+    Value<String?> label = const Value.absent(),
+  }) => SyncKnownMemberRow(
+    uid: uid ?? this.uid,
+    publicKey: publicKey ?? this.publicKey,
+    role: role ?? this.role,
+    label: label.present ? label.value : this.label,
+  );
+  SyncKnownMemberRow copyWithCompanion(SyncKnownMembersCompanion data) {
+    return SyncKnownMemberRow(
+      uid: data.uid.present ? data.uid.value : this.uid,
+      publicKey: data.publicKey.present ? data.publicKey.value : this.publicKey,
+      role: data.role.present ? data.role.value : this.role,
+      label: data.label.present ? data.label.value : this.label,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncKnownMemberRow(')
+          ..write('uid: $uid, ')
+          ..write('publicKey: $publicKey, ')
+          ..write('role: $role, ')
+          ..write('label: $label')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(uid, publicKey, role, label);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SyncKnownMemberRow &&
+          other.uid == this.uid &&
+          other.publicKey == this.publicKey &&
+          other.role == this.role &&
+          other.label == this.label);
+}
+
+class SyncKnownMembersCompanion extends UpdateCompanion<SyncKnownMemberRow> {
+  final Value<String> uid;
+  final Value<String> publicKey;
+  final Value<String> role;
+  final Value<String?> label;
+  final Value<int> rowid;
+  const SyncKnownMembersCompanion({
+    this.uid = const Value.absent(),
+    this.publicKey = const Value.absent(),
+    this.role = const Value.absent(),
+    this.label = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncKnownMembersCompanion.insert({
+    required String uid,
+    required String publicKey,
+    required String role,
+    this.label = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : uid = Value(uid),
+       publicKey = Value(publicKey),
+       role = Value(role);
+  static Insertable<SyncKnownMemberRow> custom({
+    Expression<String>? uid,
+    Expression<String>? publicKey,
+    Expression<String>? role,
+    Expression<String>? label,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (uid != null) 'uid': uid,
+      if (publicKey != null) 'public_key': publicKey,
+      if (role != null) 'role': role,
+      if (label != null) 'label': label,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncKnownMembersCompanion copyWith({
+    Value<String>? uid,
+    Value<String>? publicKey,
+    Value<String>? role,
+    Value<String?>? label,
+    Value<int>? rowid,
+  }) {
+    return SyncKnownMembersCompanion(
+      uid: uid ?? this.uid,
+      publicKey: publicKey ?? this.publicKey,
+      role: role ?? this.role,
+      label: label ?? this.label,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (uid.present) {
+      map['uid'] = Variable<String>(uid.value);
+    }
+    if (publicKey.present) {
+      map['public_key'] = Variable<String>(publicKey.value);
+    }
+    if (role.present) {
+      map['role'] = Variable<String>(role.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncKnownMembersCompanion(')
+          ..write('uid: $uid, ')
+          ..write('publicKey: $publicKey, ')
+          ..write('role: $role, ')
+          ..write('label: $label, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$LocalDatabase extends GeneratedDatabase {
   _$LocalDatabase(QueryExecutor e) : super(e);
   $LocalDatabaseManager get managers => $LocalDatabaseManager(this);
@@ -3584,6 +6629,113 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     'dose_records_by_member',
     'CREATE INDEX dose_records_by_member ON dose_records (member_id, scheduled_at)',
   );
+  late final SyncSettings syncSettings = SyncSettings(this);
+  late final SyncSharedMembers syncSharedMembers = SyncSharedMembers(this);
+  late final SyncRecords syncRecords = SyncRecords(this);
+  late final Index syncRecordsByLocal = Index(
+    'sync_records_by_local',
+    'CREATE INDEX sync_records_by_local ON sync_records (kind, local_id)',
+  );
+  late final Index syncRecordsByMember = Index(
+    'sync_records_by_member',
+    'CREATE INDEX sync_records_by_member ON sync_records (member_id)',
+  );
+  late final SyncPending syncPending = SyncPending(this);
+  late final SyncConflicts syncConflicts = SyncConflicts(this);
+  late final SyncCursors syncCursors = SyncCursors(this);
+  late final SyncKnownMembers syncKnownMembers = SyncKnownMembers(this);
+  late final Trigger syncShareOnlyChildren = Trigger(
+    'CREATE TRIGGER sync_share_only_children BEFORE INSERT ON sync_shared_members WHEN (SELECT relation FROM family_members WHERE id = NEW.member_id) IS NOT \'child\' BEGIN SELECT RAISE (ABORT, \'only a child profile can be shared\');END',
+    'sync_share_only_children',
+  );
+  late final Trigger syncSharedStaysChild = Trigger(
+    'CREATE TRIGGER sync_shared_stays_child BEFORE UPDATE OF relation ON family_members WHEN NEW.relation <> \'child\' AND EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id) BEGIN SELECT RAISE (ABORT, \'a shared profile stays a child\');END',
+    'sync_shared_stays_child',
+  );
+  late final Trigger syncTrackFamilyMembersInsert = Trigger(
+    'CREATE TRIGGER sync_track_family_members_insert AFTER INSERT ON family_members WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'member\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'member\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'member\' AND sync_id = NEW.id;END',
+    'sync_track_family_members_insert',
+  );
+  late final Trigger syncTrackFamilyMembersUpdate = Trigger(
+    'CREATE TRIGGER sync_track_family_members_update AFTER UPDATE ON family_members WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'member\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'member\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'member\' AND sync_id = NEW.id;END',
+    'sync_track_family_members_update',
+  );
+  late final Trigger syncTrackFamilyMembersDelete = Trigger(
+    'CREATE TRIGGER sync_track_family_members_delete AFTER DELETE ON family_members WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'member\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'member\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'member\' AND sync_id = OLD.id;END',
+    'sync_track_family_members_delete',
+  );
+  late final Trigger syncTrackAppointmentsInsert = Trigger(
+    'CREATE TRIGGER sync_track_appointments_insert AFTER INSERT ON appointments WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'appointment\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'appointment\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'appointment\' AND sync_id = NEW.id;END',
+    'sync_track_appointments_insert',
+  );
+  late final Trigger syncTrackAppointmentsUpdate = Trigger(
+    'CREATE TRIGGER sync_track_appointments_update AFTER UPDATE ON appointments WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'appointment\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'appointment\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'appointment\' AND sync_id = NEW.id;END',
+    'sync_track_appointments_update',
+  );
+  late final Trigger syncTrackAppointmentsDelete = Trigger(
+    'CREATE TRIGGER sync_track_appointments_delete AFTER DELETE ON appointments WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'appointment\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'appointment\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'appointment\' AND sync_id = OLD.id;END',
+    'sync_track_appointments_delete',
+  );
+  late final Trigger syncTrackDoctorQuestionsInsert = Trigger(
+    'CREATE TRIGGER sync_track_doctor_questions_insert AFTER INSERT ON doctor_questions WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'question\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'question\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'question\' AND sync_id = NEW.id;END',
+    'sync_track_doctor_questions_insert',
+  );
+  late final Trigger syncTrackDoctorQuestionsUpdate = Trigger(
+    'CREATE TRIGGER sync_track_doctor_questions_update AFTER UPDATE ON doctor_questions WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'question\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'question\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'question\' AND sync_id = NEW.id;END',
+    'sync_track_doctor_questions_update',
+  );
+  late final Trigger syncTrackDoctorQuestionsDelete = Trigger(
+    'CREATE TRIGGER sync_track_doctor_questions_delete AFTER DELETE ON doctor_questions WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'question\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'question\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'question\' AND sync_id = OLD.id;END',
+    'sync_track_doctor_questions_delete',
+  );
+  late final Trigger syncTrackSymptomEntriesInsert = Trigger(
+    'CREATE TRIGGER sync_track_symptom_entries_insert AFTER INSERT ON symptom_entries WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'symptom\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'symptom\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'symptom\' AND sync_id = NEW.id;END',
+    'sync_track_symptom_entries_insert',
+  );
+  late final Trigger syncTrackSymptomEntriesUpdate = Trigger(
+    'CREATE TRIGGER sync_track_symptom_entries_update AFTER UPDATE ON symptom_entries WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'symptom\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'symptom\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'symptom\' AND sync_id = NEW.id;END',
+    'sync_track_symptom_entries_update',
+  );
+  late final Trigger syncTrackSymptomEntriesDelete = Trigger(
+    'CREATE TRIGGER sync_track_symptom_entries_delete AFTER DELETE ON symptom_entries WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'symptom\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'symptom\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'symptom\' AND sync_id = OLD.id;END',
+    'sync_track_symptom_entries_delete',
+  );
+  late final Trigger syncTrackVisitMediaInsert = Trigger(
+    'CREATE TRIGGER sync_track_visit_media_insert AFTER INSERT ON visit_media WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'media\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'media\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'media\' AND sync_id = NEW.id;END',
+    'sync_track_visit_media_insert',
+  );
+  late final Trigger syncTrackVisitMediaUpdate = Trigger(
+    'CREATE TRIGGER sync_track_visit_media_update AFTER UPDATE ON visit_media WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'media\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'media\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'media\' AND sync_id = NEW.id;END',
+    'sync_track_visit_media_update',
+  );
+  late final Trigger syncTrackVisitMediaDelete = Trigger(
+    'CREATE TRIGGER sync_track_visit_media_delete AFTER DELETE ON visit_media WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'media\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'media\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'media\' AND sync_id = OLD.id;END',
+    'sync_track_visit_media_delete',
+  );
+  late final Trigger syncTrackMedicationsInsert = Trigger(
+    'CREATE TRIGGER sync_track_medications_insert AFTER INSERT ON medications WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'medication\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'medication\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'medication\' AND sync_id = NEW.id;END',
+    'sync_track_medications_insert',
+  );
+  late final Trigger syncTrackMedicationsUpdate = Trigger(
+    'CREATE TRIGGER sync_track_medications_update AFTER UPDATE ON medications WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'medication\' AND sync_id = NEW.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'medication\', NEW.id, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'medication\' AND sync_id = NEW.id;END',
+    'sync_track_medications_update',
+  );
+  late final Trigger syncTrackMedicationsDelete = Trigger(
+    'CREATE TRIGGER sync_track_medications_delete AFTER DELETE ON medications WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'medication\' AND sync_id = OLD.id))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'medication\', OLD.id, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'medication\' AND sync_id = OLD.id;END',
+    'sync_track_medications_delete',
+  );
+  late final Trigger syncTrackDoseRecordsInsert = Trigger(
+    'CREATE TRIGGER sync_track_dose_records_insert AFTER INSERT ON dose_records WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'dose\' AND sync_id = NEW.medication_id || \'@\' || NEW.scheduled_at))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'dose\', NEW.medication_id || \'@\' || NEW.scheduled_at, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'dose\' AND sync_id = NEW.medication_id || \'@\' || NEW.scheduled_at;END',
+    'sync_track_dose_records_insert',
+  );
+  late final Trigger syncTrackDoseRecordsUpdate = Trigger(
+    'CREATE TRIGGER sync_track_dose_records_update AFTER UPDATE ON dose_records WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id) OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'dose\' AND sync_id = NEW.medication_id || \'@\' || NEW.scheduled_at))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'dose\', NEW.medication_id || \'@\' || NEW.scheduled_at, NEW.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id WHERE kind = \'dose\' AND sync_id = NEW.medication_id || \'@\' || NEW.scheduled_at;END',
+    'sync_track_dose_records_update',
+  );
+  late final Trigger syncTrackDoseRecordsDelete = Trigger(
+    'CREATE TRIGGER sync_track_dose_records_delete AFTER DELETE ON dose_records WHEN EXISTS (SELECT 1 FROM sync_settings WHERE household_id IS NOT NULL AND applying = 0) AND(EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id) OR EXISTS (SELECT 1 FROM sync_records WHERE kind = \'dose\' AND sync_id = OLD.medication_id || \'@\' || OLD.scheduled_at))BEGIN INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count) VALUES (\'dose\', OLD.medication_id || \'@\' || OLD.scheduled_at, OLD.id, 0);UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id WHERE kind = \'dose\' AND sync_id = OLD.medication_id || \'@\' || OLD.scheduled_at;END',
+    'sync_track_dose_records_delete',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3605,7 +6757,266 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
     medicationsByMember,
     doseRecords,
     doseRecordsByMember,
+    syncSettings,
+    syncSharedMembers,
+    syncRecords,
+    syncRecordsByLocal,
+    syncRecordsByMember,
+    syncPending,
+    syncConflicts,
+    syncCursors,
+    syncKnownMembers,
+    syncShareOnlyChildren,
+    syncSharedStaysChild,
+    syncTrackFamilyMembersInsert,
+    syncTrackFamilyMembersUpdate,
+    syncTrackFamilyMembersDelete,
+    syncTrackAppointmentsInsert,
+    syncTrackAppointmentsUpdate,
+    syncTrackAppointmentsDelete,
+    syncTrackDoctorQuestionsInsert,
+    syncTrackDoctorQuestionsUpdate,
+    syncTrackDoctorQuestionsDelete,
+    syncTrackSymptomEntriesInsert,
+    syncTrackSymptomEntriesUpdate,
+    syncTrackSymptomEntriesDelete,
+    syncTrackVisitMediaInsert,
+    syncTrackVisitMediaUpdate,
+    syncTrackVisitMediaDelete,
+    syncTrackMedicationsInsert,
+    syncTrackMedicationsUpdate,
+    syncTrackMedicationsDelete,
+    syncTrackDoseRecordsInsert,
+    syncTrackDoseRecordsUpdate,
+    syncTrackDoseRecordsDelete,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'sync_shared_members',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'family_members',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'family_members',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'family_members',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'family_members',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'appointments',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'appointments',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'appointments',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'doctor_questions',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'doctor_questions',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'doctor_questions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'symptom_entries',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'symptom_entries',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'symptom_entries',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'visit_media',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'visit_media',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'visit_media',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'medications',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'medications',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'medications',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'dose_records',
+        limitUpdateKind: UpdateKind.insert,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'dose_records',
+        limitUpdateKind: UpdateKind.update,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'dose_records',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('sync_pending', kind: UpdateKind.insert),
+        TableUpdate('sync_pending', kind: UpdateKind.update),
+      ],
+    ),
+  ]);
 }
 
 typedef $FamilyMembersCreateCompanionBuilder =
@@ -3741,6 +7152,27 @@ final class $FamilyMembersReferences
     ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_doseRecordsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<SyncSharedMembers, List<SyncSharedMemberRow>>
+  _syncSharedMembersRefsTable(_$LocalDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.syncSharedMembers,
+        aliasName: 'family_members__id__sync_shared_members__member_id',
+      );
+
+  $SyncSharedMembersProcessedTableManager get syncSharedMembersRefs {
+    final manager = $SyncSharedMembersTableManager(
+      $_db,
+      $_db.syncSharedMembers,
+    ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _syncSharedMembersRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3932,6 +7364,31 @@ class $FamilyMembersFilterComposer
           }) => $DoseRecordsFilterComposer(
             $db: $db,
             $table: $db.doseRecords,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> syncSharedMembersRefs(
+    Expression<bool> Function($SyncSharedMembersFilterComposer f) f,
+  ) {
+    final $SyncSharedMembersFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.syncSharedMembers,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SyncSharedMembersFilterComposer(
+            $db: $db,
+            $table: $db.syncSharedMembers,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4168,6 +7625,31 @@ class $FamilyMembersAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> syncSharedMembersRefs<T extends Object>(
+    Expression<T> Function($SyncSharedMembersAnnotationComposer a) f,
+  ) {
+    final $SyncSharedMembersAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.syncSharedMembers,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SyncSharedMembersAnnotationComposer(
+            $db: $db,
+            $table: $db.syncSharedMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $FamilyMembersTableManager
@@ -4190,6 +7672,7 @@ class $FamilyMembersTableManager
             bool visitMediaRefs,
             bool medicationsRefs,
             bool doseRecordsRefs,
+            bool syncSharedMembersRefs,
           })
         > {
   $FamilyMembersTableManager(_$LocalDatabase db, FamilyMembers table)
@@ -4259,6 +7742,7 @@ class $FamilyMembersTableManager
                 visitMediaRefs = false,
                 medicationsRefs = false,
                 doseRecordsRefs = false,
+                syncSharedMembersRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -4269,6 +7753,7 @@ class $FamilyMembersTableManager
                     if (visitMediaRefs) db.visitMedia,
                     if (medicationsRefs) db.medications,
                     if (doseRecordsRefs) db.doseRecords,
+                    if (syncSharedMembersRefs) db.syncSharedMembers,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -4399,6 +7884,27 @@ class $FamilyMembersTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (syncSharedMembersRefs)
+                        await $_getPrefetchedData<
+                          FamilyMemberRow,
+                          FamilyMembers,
+                          SyncSharedMemberRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $FamilyMembersReferences
+                              ._syncSharedMembersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $FamilyMembersReferences(
+                                db,
+                                table,
+                                p0,
+                              ).syncSharedMembersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4426,6 +7932,7 @@ typedef $FamilyMembersProcessedTableManager =
         bool visitMediaRefs,
         bool medicationsRefs,
         bool doseRecordsRefs,
+        bool syncSharedMembersRefs,
       })
     >;
 typedef $AppointmentsCreateCompanionBuilder =
@@ -6635,6 +10142,1715 @@ typedef $DoseRecordsProcessedTableManager =
       DoseRecordRow,
       PrefetchHooks Function({bool memberId})
     >;
+typedef $SyncSettingsCreateCompanionBuilder =
+    SyncSettingsCompanion Function({
+      Value<int> id,
+      required String deviceId,
+      Value<String?> householdId,
+      Value<String?> accountUid,
+      Value<String?> role,
+      Value<String> state,
+      Value<String?> inviteId,
+      Value<int?> lastSyncAt,
+      Value<int> nextSeq,
+      Value<int> applying,
+    });
+typedef $SyncSettingsUpdateCompanionBuilder =
+    SyncSettingsCompanion Function({
+      Value<int> id,
+      Value<String> deviceId,
+      Value<String?> householdId,
+      Value<String?> accountUid,
+      Value<String?> role,
+      Value<String> state,
+      Value<String?> inviteId,
+      Value<int?> lastSyncAt,
+      Value<int> nextSeq,
+      Value<int> applying,
+    });
+
+class $SyncSettingsFilterComposer
+    extends Composer<_$LocalDatabase, SyncSettings> {
+  $SyncSettingsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get householdId => $composableBuilder(
+    column: $table.householdId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get accountUid => $composableBuilder(
+    column: $table.accountUid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get inviteId => $composableBuilder(
+    column: $table.inviteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextSeq => $composableBuilder(
+    column: $table.nextSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get applying => $composableBuilder(
+    column: $table.applying,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncSettingsOrderingComposer
+    extends Composer<_$LocalDatabase, SyncSettings> {
+  $SyncSettingsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get householdId => $composableBuilder(
+    column: $table.householdId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get accountUid => $composableBuilder(
+    column: $table.accountUid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get inviteId => $composableBuilder(
+    column: $table.inviteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextSeq => $composableBuilder(
+    column: $table.nextSeq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get applying => $composableBuilder(
+    column: $table.applying,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncSettingsAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncSettings> {
+  $SyncSettingsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<String> get householdId => $composableBuilder(
+    column: $table.householdId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get accountUid => $composableBuilder(
+    column: $table.accountUid,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<String> get inviteId =>
+      $composableBuilder(column: $table.inviteId, builder: (column) => column);
+
+  GeneratedColumn<int> get lastSyncAt => $composableBuilder(
+    column: $table.lastSyncAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get nextSeq =>
+      $composableBuilder(column: $table.nextSeq, builder: (column) => column);
+
+  GeneratedColumn<int> get applying =>
+      $composableBuilder(column: $table.applying, builder: (column) => column);
+}
+
+class $SyncSettingsTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncSettings,
+          SyncSettingsRow,
+          $SyncSettingsFilterComposer,
+          $SyncSettingsOrderingComposer,
+          $SyncSettingsAnnotationComposer,
+          $SyncSettingsCreateCompanionBuilder,
+          $SyncSettingsUpdateCompanionBuilder,
+          (
+            SyncSettingsRow,
+            BaseReferences<_$LocalDatabase, SyncSettings, SyncSettingsRow>,
+          ),
+          SyncSettingsRow,
+          PrefetchHooks Function()
+        > {
+  $SyncSettingsTableManager(_$LocalDatabase db, SyncSettings table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncSettingsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncSettingsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncSettingsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> deviceId = const Value.absent(),
+                Value<String?> householdId = const Value.absent(),
+                Value<String?> accountUid = const Value.absent(),
+                Value<String?> role = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<String?> inviteId = const Value.absent(),
+                Value<int?> lastSyncAt = const Value.absent(),
+                Value<int> nextSeq = const Value.absent(),
+                Value<int> applying = const Value.absent(),
+              }) => SyncSettingsCompanion(
+                id: id,
+                deviceId: deviceId,
+                householdId: householdId,
+                accountUid: accountUid,
+                role: role,
+                state: state,
+                inviteId: inviteId,
+                lastSyncAt: lastSyncAt,
+                nextSeq: nextSeq,
+                applying: applying,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String deviceId,
+                Value<String?> householdId = const Value.absent(),
+                Value<String?> accountUid = const Value.absent(),
+                Value<String?> role = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<String?> inviteId = const Value.absent(),
+                Value<int?> lastSyncAt = const Value.absent(),
+                Value<int> nextSeq = const Value.absent(),
+                Value<int> applying = const Value.absent(),
+              }) => SyncSettingsCompanion.insert(
+                id: id,
+                deviceId: deviceId,
+                householdId: householdId,
+                accountUid: accountUid,
+                role: role,
+                state: state,
+                inviteId: inviteId,
+                lastSyncAt: lastSyncAt,
+                nextSeq: nextSeq,
+                applying: applying,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncSettingsProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncSettings,
+      SyncSettingsRow,
+      $SyncSettingsFilterComposer,
+      $SyncSettingsOrderingComposer,
+      $SyncSettingsAnnotationComposer,
+      $SyncSettingsCreateCompanionBuilder,
+      $SyncSettingsUpdateCompanionBuilder,
+      (
+        SyncSettingsRow,
+        BaseReferences<_$LocalDatabase, SyncSettings, SyncSettingsRow>,
+      ),
+      SyncSettingsRow,
+      PrefetchHooks Function()
+    >;
+typedef $SyncSharedMembersCreateCompanionBuilder =
+    SyncSharedMembersCompanion Function({
+      required String memberId,
+      required int sharedAt,
+      Value<int> rowid,
+    });
+typedef $SyncSharedMembersUpdateCompanionBuilder =
+    SyncSharedMembersCompanion Function({
+      Value<String> memberId,
+      Value<int> sharedAt,
+      Value<int> rowid,
+    });
+
+final class $SyncSharedMembersReferences
+    extends
+        BaseReferences<
+          _$LocalDatabase,
+          SyncSharedMembers,
+          SyncSharedMemberRow
+        > {
+  $SyncSharedMembersReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static FamilyMembers _memberIdTable(_$LocalDatabase db) => db.familyMembers
+      .createAlias('sync_shared_members__member_id__family_members__id');
+
+  $FamilyMembersProcessedTableManager get memberId {
+    final $_column = $_itemColumn<String>('member_id')!;
+
+    final manager = $FamilyMembersTableManager(
+      $_db,
+      $_db.familyMembers,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $SyncSharedMembersFilterComposer
+    extends Composer<_$LocalDatabase, SyncSharedMembers> {
+  $SyncSharedMembersFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get sharedAt => $composableBuilder(
+    column: $table.sharedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $FamilyMembersFilterComposer get memberId {
+    final $FamilyMembersFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersFilterComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $SyncSharedMembersOrderingComposer
+    extends Composer<_$LocalDatabase, SyncSharedMembers> {
+  $SyncSharedMembersOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get sharedAt => $composableBuilder(
+    column: $table.sharedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $FamilyMembersOrderingComposer get memberId {
+    final $FamilyMembersOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersOrderingComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $SyncSharedMembersAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncSharedMembers> {
+  $SyncSharedMembersAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get sharedAt =>
+      $composableBuilder(column: $table.sharedAt, builder: (column) => column);
+
+  $FamilyMembersAnnotationComposer get memberId {
+    final $FamilyMembersAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.familyMembers,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $FamilyMembersAnnotationComposer(
+            $db: $db,
+            $table: $db.familyMembers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $SyncSharedMembersTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncSharedMembers,
+          SyncSharedMemberRow,
+          $SyncSharedMembersFilterComposer,
+          $SyncSharedMembersOrderingComposer,
+          $SyncSharedMembersAnnotationComposer,
+          $SyncSharedMembersCreateCompanionBuilder,
+          $SyncSharedMembersUpdateCompanionBuilder,
+          (SyncSharedMemberRow, $SyncSharedMembersReferences),
+          SyncSharedMemberRow,
+          PrefetchHooks Function({bool memberId})
+        > {
+  $SyncSharedMembersTableManager(_$LocalDatabase db, SyncSharedMembers table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncSharedMembersFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncSharedMembersOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncSharedMembersAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> memberId = const Value.absent(),
+                Value<int> sharedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncSharedMembersCompanion(
+                memberId: memberId,
+                sharedAt: sharedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String memberId,
+                required int sharedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncSharedMembersCompanion.insert(
+                memberId: memberId,
+                sharedAt: sharedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $SyncSharedMembersReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({memberId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (memberId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.memberId,
+                                referencedTable: $SyncSharedMembersReferences
+                                    ._memberIdTable(db),
+                                referencedColumn: $SyncSharedMembersReferences
+                                    ._memberIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $SyncSharedMembersProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncSharedMembers,
+      SyncSharedMemberRow,
+      $SyncSharedMembersFilterComposer,
+      $SyncSharedMembersOrderingComposer,
+      $SyncSharedMembersAnnotationComposer,
+      $SyncSharedMembersCreateCompanionBuilder,
+      $SyncSharedMembersUpdateCompanionBuilder,
+      (SyncSharedMemberRow, $SyncSharedMembersReferences),
+      SyncSharedMemberRow,
+      PrefetchHooks Function({bool memberId})
+    >;
+typedef $SyncRecordsCreateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      required String kind,
+      required String syncId,
+      required String localId,
+      required String memberId,
+      required String versionVector,
+      required int updatedAt,
+      required String updatedBy,
+      required int deleted,
+      Value<String?> base,
+      Value<int> parked,
+      Value<int> rowid,
+    });
+typedef $SyncRecordsUpdateCompanionBuilder =
+    SyncRecordsCompanion Function({
+      Value<String> kind,
+      Value<String> syncId,
+      Value<String> localId,
+      Value<String> memberId,
+      Value<String> versionVector,
+      Value<int> updatedAt,
+      Value<String> updatedBy,
+      Value<int> deleted,
+      Value<String?> base,
+      Value<int> parked,
+      Value<int> rowid,
+    });
+
+class $SyncRecordsFilterComposer
+    extends Composer<_$LocalDatabase, SyncRecords> {
+  $SyncRecordsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get versionVector => $composableBuilder(
+    column: $table.versionVector,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get base => $composableBuilder(
+    column: $table.base,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parked => $composableBuilder(
+    column: $table.parked,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncRecordsOrderingComposer
+    extends Composer<_$LocalDatabase, SyncRecords> {
+  $SyncRecordsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get versionVector => $composableBuilder(
+    column: $table.versionVector,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deleted => $composableBuilder(
+    column: $table.deleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get base => $composableBuilder(
+    column: $table.base,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get parked => $composableBuilder(
+    column: $table.parked,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncRecordsAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncRecords> {
+  $SyncRecordsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
+
+  GeneratedColumn<String> get localId =>
+      $composableBuilder(column: $table.localId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get versionVector => $composableBuilder(
+    column: $table.versionVector,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
+  GeneratedColumn<int> get deleted =>
+      $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<String> get base =>
+      $composableBuilder(column: $table.base, builder: (column) => column);
+
+  GeneratedColumn<int> get parked =>
+      $composableBuilder(column: $table.parked, builder: (column) => column);
+}
+
+class $SyncRecordsTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncRecords,
+          SyncRecordRow,
+          $SyncRecordsFilterComposer,
+          $SyncRecordsOrderingComposer,
+          $SyncRecordsAnnotationComposer,
+          $SyncRecordsCreateCompanionBuilder,
+          $SyncRecordsUpdateCompanionBuilder,
+          (
+            SyncRecordRow,
+            BaseReferences<_$LocalDatabase, SyncRecords, SyncRecordRow>,
+          ),
+          SyncRecordRow,
+          PrefetchHooks Function()
+        > {
+  $SyncRecordsTableManager(_$LocalDatabase db, SyncRecords table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncRecordsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncRecordsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncRecordsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> kind = const Value.absent(),
+                Value<String> syncId = const Value.absent(),
+                Value<String> localId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> versionVector = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<String> updatedBy = const Value.absent(),
+                Value<int> deleted = const Value.absent(),
+                Value<String?> base = const Value.absent(),
+                Value<int> parked = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncRecordsCompanion(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                memberId: memberId,
+                versionVector: versionVector,
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deleted: deleted,
+                base: base,
+                parked: parked,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String kind,
+                required String syncId,
+                required String localId,
+                required String memberId,
+                required String versionVector,
+                required int updatedAt,
+                required String updatedBy,
+                required int deleted,
+                Value<String?> base = const Value.absent(),
+                Value<int> parked = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncRecordsCompanion.insert(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                memberId: memberId,
+                versionVector: versionVector,
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deleted: deleted,
+                base: base,
+                parked: parked,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncRecordsProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncRecords,
+      SyncRecordRow,
+      $SyncRecordsFilterComposer,
+      $SyncRecordsOrderingComposer,
+      $SyncRecordsAnnotationComposer,
+      $SyncRecordsCreateCompanionBuilder,
+      $SyncRecordsUpdateCompanionBuilder,
+      (
+        SyncRecordRow,
+        BaseReferences<_$LocalDatabase, SyncRecords, SyncRecordRow>,
+      ),
+      SyncRecordRow,
+      PrefetchHooks Function()
+    >;
+typedef $SyncPendingCreateCompanionBuilder =
+    SyncPendingCompanion Function({
+      required String kind,
+      required String syncId,
+      required String localId,
+      Value<int> changeCount,
+      Value<int> rowid,
+    });
+typedef $SyncPendingUpdateCompanionBuilder =
+    SyncPendingCompanion Function({
+      Value<String> kind,
+      Value<String> syncId,
+      Value<String> localId,
+      Value<int> changeCount,
+      Value<int> rowid,
+    });
+
+class $SyncPendingFilterComposer
+    extends Composer<_$LocalDatabase, SyncPending> {
+  $SyncPendingFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get changeCount => $composableBuilder(
+    column: $table.changeCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncPendingOrderingComposer
+    extends Composer<_$LocalDatabase, SyncPending> {
+  $SyncPendingOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get changeCount => $composableBuilder(
+    column: $table.changeCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncPendingAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncPending> {
+  $SyncPendingAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
+
+  GeneratedColumn<String> get localId =>
+      $composableBuilder(column: $table.localId, builder: (column) => column);
+
+  GeneratedColumn<int> get changeCount => $composableBuilder(
+    column: $table.changeCount,
+    builder: (column) => column,
+  );
+}
+
+class $SyncPendingTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncPending,
+          SyncPendingRow,
+          $SyncPendingFilterComposer,
+          $SyncPendingOrderingComposer,
+          $SyncPendingAnnotationComposer,
+          $SyncPendingCreateCompanionBuilder,
+          $SyncPendingUpdateCompanionBuilder,
+          (
+            SyncPendingRow,
+            BaseReferences<_$LocalDatabase, SyncPending, SyncPendingRow>,
+          ),
+          SyncPendingRow,
+          PrefetchHooks Function()
+        > {
+  $SyncPendingTableManager(_$LocalDatabase db, SyncPending table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncPendingFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncPendingOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncPendingAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> kind = const Value.absent(),
+                Value<String> syncId = const Value.absent(),
+                Value<String> localId = const Value.absent(),
+                Value<int> changeCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPendingCompanion(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                changeCount: changeCount,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String kind,
+                required String syncId,
+                required String localId,
+                Value<int> changeCount = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncPendingCompanion.insert(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                changeCount: changeCount,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncPendingProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncPending,
+      SyncPendingRow,
+      $SyncPendingFilterComposer,
+      $SyncPendingOrderingComposer,
+      $SyncPendingAnnotationComposer,
+      $SyncPendingCreateCompanionBuilder,
+      $SyncPendingUpdateCompanionBuilder,
+      (
+        SyncPendingRow,
+        BaseReferences<_$LocalDatabase, SyncPending, SyncPendingRow>,
+      ),
+      SyncPendingRow,
+      PrefetchHooks Function()
+    >;
+typedef $SyncConflictsCreateCompanionBuilder =
+    SyncConflictsCompanion Function({
+      required String kind,
+      required String syncId,
+      required String localId,
+      required String memberId,
+      required String reason,
+      Value<String?> local,
+      Value<String?> remote,
+      required String remoteVector,
+      required int remoteUpdatedAt,
+      required String remoteUpdatedBy,
+      Value<String> fields,
+      required int detectedAt,
+      Value<int> rowid,
+    });
+typedef $SyncConflictsUpdateCompanionBuilder =
+    SyncConflictsCompanion Function({
+      Value<String> kind,
+      Value<String> syncId,
+      Value<String> localId,
+      Value<String> memberId,
+      Value<String> reason,
+      Value<String?> local,
+      Value<String?> remote,
+      Value<String> remoteVector,
+      Value<int> remoteUpdatedAt,
+      Value<String> remoteUpdatedBy,
+      Value<String> fields,
+      Value<int> detectedAt,
+      Value<int> rowid,
+    });
+
+class $SyncConflictsFilterComposer
+    extends Composer<_$LocalDatabase, SyncConflicts> {
+  $SyncConflictsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get local => $composableBuilder(
+    column: $table.local,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remote => $composableBuilder(
+    column: $table.remote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteVector => $composableBuilder(
+    column: $table.remoteVector,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteUpdatedBy => $composableBuilder(
+    column: $table.remoteUpdatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fields => $composableBuilder(
+    column: $table.fields,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncConflictsOrderingComposer
+    extends Composer<_$LocalDatabase, SyncConflicts> {
+  $SyncConflictsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localId => $composableBuilder(
+    column: $table.localId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get local => $composableBuilder(
+    column: $table.local,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remote => $composableBuilder(
+    column: $table.remote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteVector => $composableBuilder(
+    column: $table.remoteVector,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteUpdatedBy => $composableBuilder(
+    column: $table.remoteUpdatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fields => $composableBuilder(
+    column: $table.fields,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncConflictsAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncConflicts> {
+  $SyncConflictsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
+
+  GeneratedColumn<String> get localId =>
+      $composableBuilder(column: $table.localId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<String> get local =>
+      $composableBuilder(column: $table.local, builder: (column) => column);
+
+  GeneratedColumn<String> get remote =>
+      $composableBuilder(column: $table.remote, builder: (column) => column);
+
+  GeneratedColumn<String> get remoteVector => $composableBuilder(
+    column: $table.remoteVector,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get remoteUpdatedAt => $composableBuilder(
+    column: $table.remoteUpdatedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get remoteUpdatedBy => $composableBuilder(
+    column: $table.remoteUpdatedBy,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fields =>
+      $composableBuilder(column: $table.fields, builder: (column) => column);
+
+  GeneratedColumn<int> get detectedAt => $composableBuilder(
+    column: $table.detectedAt,
+    builder: (column) => column,
+  );
+}
+
+class $SyncConflictsTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncConflicts,
+          SyncConflictRow,
+          $SyncConflictsFilterComposer,
+          $SyncConflictsOrderingComposer,
+          $SyncConflictsAnnotationComposer,
+          $SyncConflictsCreateCompanionBuilder,
+          $SyncConflictsUpdateCompanionBuilder,
+          (
+            SyncConflictRow,
+            BaseReferences<_$LocalDatabase, SyncConflicts, SyncConflictRow>,
+          ),
+          SyncConflictRow,
+          PrefetchHooks Function()
+        > {
+  $SyncConflictsTableManager(_$LocalDatabase db, SyncConflicts table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncConflictsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncConflictsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncConflictsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> kind = const Value.absent(),
+                Value<String> syncId = const Value.absent(),
+                Value<String> localId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> reason = const Value.absent(),
+                Value<String?> local = const Value.absent(),
+                Value<String?> remote = const Value.absent(),
+                Value<String> remoteVector = const Value.absent(),
+                Value<int> remoteUpdatedAt = const Value.absent(),
+                Value<String> remoteUpdatedBy = const Value.absent(),
+                Value<String> fields = const Value.absent(),
+                Value<int> detectedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsCompanion(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                memberId: memberId,
+                reason: reason,
+                local: local,
+                remote: remote,
+                remoteVector: remoteVector,
+                remoteUpdatedAt: remoteUpdatedAt,
+                remoteUpdatedBy: remoteUpdatedBy,
+                fields: fields,
+                detectedAt: detectedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String kind,
+                required String syncId,
+                required String localId,
+                required String memberId,
+                required String reason,
+                Value<String?> local = const Value.absent(),
+                Value<String?> remote = const Value.absent(),
+                required String remoteVector,
+                required int remoteUpdatedAt,
+                required String remoteUpdatedBy,
+                Value<String> fields = const Value.absent(),
+                required int detectedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncConflictsCompanion.insert(
+                kind: kind,
+                syncId: syncId,
+                localId: localId,
+                memberId: memberId,
+                reason: reason,
+                local: local,
+                remote: remote,
+                remoteVector: remoteVector,
+                remoteUpdatedAt: remoteUpdatedAt,
+                remoteUpdatedBy: remoteUpdatedBy,
+                fields: fields,
+                detectedAt: detectedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncConflictsProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncConflicts,
+      SyncConflictRow,
+      $SyncConflictsFilterComposer,
+      $SyncConflictsOrderingComposer,
+      $SyncConflictsAnnotationComposer,
+      $SyncConflictsCreateCompanionBuilder,
+      $SyncConflictsUpdateCompanionBuilder,
+      (
+        SyncConflictRow,
+        BaseReferences<_$LocalDatabase, SyncConflicts, SyncConflictRow>,
+      ),
+      SyncConflictRow,
+      PrefetchHooks Function()
+    >;
+typedef $SyncCursorsCreateCompanionBuilder =
+    SyncCursorsCompanion Function({
+      required String deviceId,
+      required int lastSeq,
+      Value<int> rowid,
+    });
+typedef $SyncCursorsUpdateCompanionBuilder =
+    SyncCursorsCompanion Function({
+      Value<String> deviceId,
+      Value<int> lastSeq,
+      Value<int> rowid,
+    });
+
+class $SyncCursorsFilterComposer
+    extends Composer<_$LocalDatabase, SyncCursors> {
+  $SyncCursorsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lastSeq => $composableBuilder(
+    column: $table.lastSeq,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncCursorsOrderingComposer
+    extends Composer<_$LocalDatabase, SyncCursors> {
+  $SyncCursorsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lastSeq => $composableBuilder(
+    column: $table.lastSeq,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncCursorsAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncCursors> {
+  $SyncCursorsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<int> get lastSeq =>
+      $composableBuilder(column: $table.lastSeq, builder: (column) => column);
+}
+
+class $SyncCursorsTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncCursors,
+          SyncCursorRow,
+          $SyncCursorsFilterComposer,
+          $SyncCursorsOrderingComposer,
+          $SyncCursorsAnnotationComposer,
+          $SyncCursorsCreateCompanionBuilder,
+          $SyncCursorsUpdateCompanionBuilder,
+          (
+            SyncCursorRow,
+            BaseReferences<_$LocalDatabase, SyncCursors, SyncCursorRow>,
+          ),
+          SyncCursorRow,
+          PrefetchHooks Function()
+        > {
+  $SyncCursorsTableManager(_$LocalDatabase db, SyncCursors table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncCursorsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncCursorsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncCursorsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> deviceId = const Value.absent(),
+                Value<int> lastSeq = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncCursorsCompanion(
+                deviceId: deviceId,
+                lastSeq: lastSeq,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String deviceId,
+                required int lastSeq,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncCursorsCompanion.insert(
+                deviceId: deviceId,
+                lastSeq: lastSeq,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncCursorsProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncCursors,
+      SyncCursorRow,
+      $SyncCursorsFilterComposer,
+      $SyncCursorsOrderingComposer,
+      $SyncCursorsAnnotationComposer,
+      $SyncCursorsCreateCompanionBuilder,
+      $SyncCursorsUpdateCompanionBuilder,
+      (
+        SyncCursorRow,
+        BaseReferences<_$LocalDatabase, SyncCursors, SyncCursorRow>,
+      ),
+      SyncCursorRow,
+      PrefetchHooks Function()
+    >;
+typedef $SyncKnownMembersCreateCompanionBuilder =
+    SyncKnownMembersCompanion Function({
+      required String uid,
+      required String publicKey,
+      required String role,
+      Value<String?> label,
+      Value<int> rowid,
+    });
+typedef $SyncKnownMembersUpdateCompanionBuilder =
+    SyncKnownMembersCompanion Function({
+      Value<String> uid,
+      Value<String> publicKey,
+      Value<String> role,
+      Value<String?> label,
+      Value<int> rowid,
+    });
+
+class $SyncKnownMembersFilterComposer
+    extends Composer<_$LocalDatabase, SyncKnownMembers> {
+  $SyncKnownMembersFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $SyncKnownMembersOrderingComposer
+    extends Composer<_$LocalDatabase, SyncKnownMembers> {
+  $SyncKnownMembersOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get uid => $composableBuilder(
+    column: $table.uid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get role => $composableBuilder(
+    column: $table.role,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $SyncKnownMembersAnnotationComposer
+    extends Composer<_$LocalDatabase, SyncKnownMembers> {
+  $SyncKnownMembersAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get uid =>
+      $composableBuilder(column: $table.uid, builder: (column) => column);
+
+  GeneratedColumn<String> get publicKey =>
+      $composableBuilder(column: $table.publicKey, builder: (column) => column);
+
+  GeneratedColumn<String> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+}
+
+class $SyncKnownMembersTableManager
+    extends
+        RootTableManager<
+          _$LocalDatabase,
+          SyncKnownMembers,
+          SyncKnownMemberRow,
+          $SyncKnownMembersFilterComposer,
+          $SyncKnownMembersOrderingComposer,
+          $SyncKnownMembersAnnotationComposer,
+          $SyncKnownMembersCreateCompanionBuilder,
+          $SyncKnownMembersUpdateCompanionBuilder,
+          (
+            SyncKnownMemberRow,
+            BaseReferences<
+              _$LocalDatabase,
+              SyncKnownMembers,
+              SyncKnownMemberRow
+            >,
+          ),
+          SyncKnownMemberRow,
+          PrefetchHooks Function()
+        > {
+  $SyncKnownMembersTableManager(_$LocalDatabase db, SyncKnownMembers table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $SyncKnownMembersFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $SyncKnownMembersOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $SyncKnownMembersAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> uid = const Value.absent(),
+                Value<String> publicKey = const Value.absent(),
+                Value<String> role = const Value.absent(),
+                Value<String?> label = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncKnownMembersCompanion(
+                uid: uid,
+                publicKey: publicKey,
+                role: role,
+                label: label,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String uid,
+                required String publicKey,
+                required String role,
+                Value<String?> label = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncKnownMembersCompanion.insert(
+                uid: uid,
+                publicKey: publicKey,
+                role: role,
+                label: label,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $SyncKnownMembersProcessedTableManager =
+    ProcessedTableManager<
+      _$LocalDatabase,
+      SyncKnownMembers,
+      SyncKnownMemberRow,
+      $SyncKnownMembersFilterComposer,
+      $SyncKnownMembersOrderingComposer,
+      $SyncKnownMembersAnnotationComposer,
+      $SyncKnownMembersCreateCompanionBuilder,
+      $SyncKnownMembersUpdateCompanionBuilder,
+      (
+        SyncKnownMemberRow,
+        BaseReferences<_$LocalDatabase, SyncKnownMembers, SyncKnownMemberRow>,
+      ),
+      SyncKnownMemberRow,
+      PrefetchHooks Function()
+    >;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
@@ -6653,4 +11869,18 @@ class $LocalDatabaseManager {
       $MedicationsTableManager(_db, _db.medications);
   $DoseRecordsTableManager get doseRecords =>
       $DoseRecordsTableManager(_db, _db.doseRecords);
+  $SyncSettingsTableManager get syncSettings =>
+      $SyncSettingsTableManager(_db, _db.syncSettings);
+  $SyncSharedMembersTableManager get syncSharedMembers =>
+      $SyncSharedMembersTableManager(_db, _db.syncSharedMembers);
+  $SyncRecordsTableManager get syncRecords =>
+      $SyncRecordsTableManager(_db, _db.syncRecords);
+  $SyncPendingTableManager get syncPending =>
+      $SyncPendingTableManager(_db, _db.syncPending);
+  $SyncConflictsTableManager get syncConflicts =>
+      $SyncConflictsTableManager(_db, _db.syncConflicts);
+  $SyncCursorsTableManager get syncCursors =>
+      $SyncCursorsTableManager(_db, _db.syncCursors);
+  $SyncKnownMembersTableManager get syncKnownMembers =>
+      $SyncKnownMembersTableManager(_db, _db.syncKnownMembers);
 }

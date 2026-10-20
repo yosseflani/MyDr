@@ -5,6 +5,7 @@ import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/repositories/appointment_repository.dart';
 import 'package:mydr/data/repositories/doctor_question_repository.dart';
 import 'package:mydr/data/repositories/family_repository.dart';
+import 'package:mydr/data/repositories/sync_state_repository.dart';
 import 'package:mydr/data/media/visit_media_file_store.dart';
 import 'package:mydr/data/repositories/visit_media_repository.dart';
 import 'package:mydr/features/family/family_controller.dart';
@@ -31,6 +32,11 @@ enum AppointmentSaveResult {
   /// member are attached to the appointment. Nothing was changed: they
   /// document that member, so they must never move to another one.
   hasVisitMedia,
+
+  /// The member was being changed, from or to a profile shared with the
+  /// household. Nothing was changed: a shared appointment stays with its
+  /// child, so its questions and photos stay consistent on every device.
+  sharedMember,
 }
 
 /// The steps of deleting an appointment, in the order they run.
@@ -71,6 +77,7 @@ class AppointmentController extends ChangeNotifier {
        _visitMediaRepository = dependencies.visitMediaRepository,
        _visitMediaFiles = dependencies.visitMediaFiles,
        _transactions = dependencies.transactions,
+       _syncState = dependencies.syncStateRepository,
        _familyController = familyController,
        _seenFamilyRevision = familyController.relatedDataRevision {
     _familyController.addListener(_onFamilyChanged);
@@ -82,6 +89,7 @@ class AppointmentController extends ChangeNotifier {
   final VisitMediaRepository _visitMediaRepository;
   final VisitMediaFileStore _visitMediaFiles;
   final TransactionRunner _transactions;
+  final SyncStateRepository _syncState;
   final FamilyController _familyController;
   int _seenFamilyRevision;
 
@@ -192,6 +200,11 @@ class AppointmentController extends ChangeNotifier {
         return AppointmentSaveResult.memberNotFound;
       }
       if (stored.memberId != appointment.memberId) {
+        final shared = await _syncState.sharedMemberIds();
+        if (shared.contains(stored.memberId) ||
+            shared.contains(appointment.memberId)) {
+          return AppointmentSaveResult.sharedMember;
+        }
         final media = await _visitMediaRepository.getAll(
           appointmentId: appointment.id,
         );
@@ -258,8 +271,9 @@ class AppointmentController extends ChangeNotifier {
   /// Must only be called after the user explicitly confirmed the deletion in
   /// the UI; passing false for [userConfirmed] throws an [ArgumentError].
   ///
-  /// The steps are separate operations, not a transaction. Each is safe to
-  /// repeat, so after a failure calling this again finishes the deletion.
+  /// The steps run in one [TransactionRunner] transaction, so with an atomic
+  /// runner a failure undoes them all. Each step is also safe to repeat, so
+  /// with a non-atomic runner calling this again finishes the deletion.
   Future<AppointmentDeletionResult> delete(
     String appointmentId, {
     required bool userConfirmed,

@@ -11,6 +11,7 @@ import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
+import 'package:mydr/features/sharing/sync_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
 import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
 
@@ -33,6 +34,7 @@ extension PumpApp on WidgetTester {
     VisitMediaController? visitMediaController,
     MedicationController? medicationController,
     BackupController? backupController,
+    SyncController? syncController,
   }) {
     final resolvedDependencies = dependencies ?? AppDependencies.empty();
     final resolvedController =
@@ -106,6 +108,22 @@ extension PumpApp on WidgetTester {
       addTearDown(resolvedBackupController.dispose);
     }
 
+    final resolvedSyncController =
+        syncController ??
+        SyncController(
+          dependencies: resolvedDependencies,
+          backupController: resolvedBackupController,
+          familyController: resolvedController,
+          appointmentController: resolvedAppointmentController,
+          medicationController: resolvedMedicationController,
+          doctorQuestionController: resolvedQuestionController,
+          symptomController: resolvedSymptomController,
+          visitMediaController: resolvedVisitMediaController,
+        );
+    if (syncController == null) {
+      addTearDown(resolvedSyncController.dispose);
+    }
+
     return pumpWidget(
       AppScope(
         dependencies: resolvedDependencies,
@@ -117,6 +135,7 @@ extension PumpApp on WidgetTester {
         visitMediaController: resolvedVisitMediaController,
         medicationController: resolvedMedicationController,
         backupController: resolvedBackupController,
+        syncController: resolvedSyncController,
         child: MaterialApp(
           theme: AppTheme.light,
           locale: MyDrApp.hebrew,

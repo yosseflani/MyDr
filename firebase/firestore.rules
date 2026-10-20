@@ -1,0 +1,141 @@
+rules_version = '2';
+
+// MyDr household sharing. Everything medical is encrypted on the devices
+// with the household key before it is written here; these rules decide who
+// may read and write the encrypted pieces. Membership is a document at
+// households/{hid}/members/{uid}; only admins manage members and keys.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberPath(hid, uid) {
+      return /databases/$(database)/documents/households/$(hid)/members/$(uid);
+    }
+
+    function isMember(hid) {
+      return signedIn() && exists(memberPath(hid, request.auth.uid));
+    }
+
+    function isAdmin(hid) {
+      return isMember(hid)
+        && get(memberPath(hid, request.auth.uid)).data.role == 'admin';
+    }
+
+    function householdPath(hid) {
+      return /databases/$(database)/documents/households/$(hid);
+    }
+
+    // Creating a household: its creator becomes its first admin, in the
+    // same write.
+    function creatingOwnHousehold(hid) {
+      return signedIn()
+        && !exists(householdPath(hid))
+        && getAfter(householdPath(hid)).data.createdBy == request.auth.uid;
+    }
+
+    match /households/{hid} {
+      allow get: if isMember(hid);
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.epoch == 1
+        && request.resource.data.needsRotation == false
+        && existsAfter(memberPath(hid, request.auth.uid));
+      // Admins move to a new key epoch (never back); any member may ask
+      // for a rotation when leaving.
+      allow update: if (isAdmin(hid)
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.epoch >= resource.data.epoch)
+        || (isMember(hid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['needsRotation'])
+          && request.resource.data.needsRotation == true);
+      allow delete: if false;
+
+      match /members/{uid} {
+        allow read: if isMember(hid);
+        allow create: if (creatingOwnHousehold(hid)
+            && uid == request.auth.uid
+            && request.resource.data.role == 'admin')
+          || isAdmin(hid);
+        allow update: if isAdmin(hid)
+          && request.resource.data.uid == uid
+          && request.resource.data.publicKey == resource.data.publicKey;
+        // Admins remove members; anyone may leave.
+        allow delete: if isAdmin(hid)
+          || (isMember(hid) && uid == request.auth.uid);
+
+        // Household keys wrapped for this member: readable by them only.
+        match /keys/{epoch} {
+          allow read: if isMember(hid) && uid == request.auth.uid;
+          allow create: if isAdmin(hid)
+            || (creatingOwnHousehold(hid) && uid == request.auth.uid);
+          allow update: if false;
+          allow delete: if isAdmin(hid)
+            || (isMember(hid) && uid == request.auth.uid);
+        }
+      }
+
+      // Each device's append-only change log.
+      match /devices/{deviceId} {
+        allow read: if isMember(hid);
+        allow create: if isMember(hid)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.lastSeq == 1
+          && existsAfter(/databases/$(database)/documents/households/$(hid)/devices/$(deviceId)/log/1);
+        allow update: if isMember(hid)
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.lastSeq == resource.data.lastSeq + 1
+          && existsAfter(/databases/$(database)/documents/households/$(hid)/devices/$(deviceId)/log/$(string(request.resource.data.lastSeq)));
+        allow delete: if false;
+
+        match /log/{seq} {
+          allow read: if isMember(hid);
+          allow create: if isMember(hid)
+            && request.resource.data.uid == request.auth.uid
+            && seq == string(request.resource.data.seq)
+            && getAfter(/databases/$(database)/documents/households/$(hid)/devices/$(deviceId)).data.uid == request.auth.uid
+            && getAfter(/databases/$(database)/documents/households/$(hid)/devices/$(deviceId)).data.lastSeq == request.resource.data.seq
+            && request.resource.data.data is bytes
+            && request.resource.data.data.size() <= 900 * 1024;
+          allow update, delete: if false;
+        }
+      }
+    }
+
+    // Invitations, stored under an id derived from the invite code. Anyone
+    // signed in may read one by its id (which needs the code); nobody can
+    // list them except the household's members.
+    match /invites/{inviteId} {
+      allow get: if signedIn();
+      allow list: if isMember(resource.data.householdId);
+      allow create: if isAdmin(request.resource.data.householdId)
+        && request.resource.data.inviterUid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if signedIn() && (
+        // The invitee answers once, before it expires.
+        (resource.data.status == 'open'
+          && resource.data.expiresAt > request.time
+          && request.resource.data.inviteeUid == request.auth.uid
+          && request.resource.data.status in ['accepted', 'rejected']
+          && !isMember(resource.data.householdId)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'inviteeUid', 'inviteePublicKey',
+              'inviteeMac', 'inviteeLabel']))
+        // An admin marks it used when adding the member.
+        || (isAdmin(resource.data.householdId)
+          && resource.data.status == 'accepted'
+          && request.resource.data.status == 'completed'
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status'])));
+      allow delete: if isAdmin(resource.data.householdId);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

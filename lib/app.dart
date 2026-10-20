@@ -10,6 +10,7 @@ import 'package:mydr/features/emergency/first_aid_controller.dart';
 import 'package:mydr/features/family/family_controller.dart';
 import 'package:mydr/features/medications/medication_controller.dart';
 import 'package:mydr/features/questions/doctor_question_controller.dart';
+import 'package:mydr/features/sharing/sync_controller.dart';
 import 'package:mydr/features/symptoms/symptom_controller.dart';
 import 'package:mydr/features/shell/home_shell.dart';
 import 'package:mydr/features/visit_preparation/visit_media_controller.dart';
@@ -82,6 +83,19 @@ class _MyDrAppState extends State<MyDrApp> {
     familyController: _familyController,
   );
 
+  /// Household sharing. Reads only local state at start-up; it connects
+  /// when its screen is opened and syncs only when the user asks.
+  late final SyncController _syncController = SyncController(
+    dependencies: widget.dependencies,
+    backupController: _backupController,
+    familyController: _familyController,
+    appointmentController: _appointmentController,
+    medicationController: _medicationController,
+    doctorQuestionController: _doctorQuestionController,
+    symptomController: _symptomController,
+    visitMediaController: _visitMediaController,
+  )..loadLocal();
+
   @override
   void initState() {
     super.initState();
@@ -98,6 +112,7 @@ class _MyDrAppState extends State<MyDrApp> {
   @override
   void dispose() {
     _lifecycle.dispose();
+    _syncController.dispose();
     _backupController.dispose();
     _firstAidController.dispose();
     // Disposed in reverse order of creation, since each listens to the
@@ -123,6 +138,7 @@ class _MyDrAppState extends State<MyDrApp> {
       visitMediaController: _visitMediaController,
       medicationController: _medicationController,
       backupController: _backupController,
+      syncController: _syncController,
       child: MaterialApp(
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,

@@ -8,11 +8,20 @@ import 'package:mydr/data/repositories/dose_record_repository.dart';
 import 'package:mydr/data/repositories/family_repository.dart';
 import 'package:mydr/data/repositories/medication_repository.dart';
 import 'package:mydr/data/repositories/symptom_repository.dart';
+import 'package:mydr/data/repositories/sync_state_repository.dart';
 import 'package:mydr/data/media/visit_media_file_store.dart';
 import 'package:mydr/data/repositories/visit_media_repository.dart';
 
 /// Outcome of adding or updating a family member.
-enum FamilySaveResult { success, selfAlreadyExists, failed }
+enum FamilySaveResult {
+  success,
+  selfAlreadyExists,
+
+  /// The profile is shared with the household, so it must stay a child
+  /// (the relation every parent's phone agrees on).
+  sharedMustStayChild,
+  failed,
+}
 
 /// The steps of deleting a family member, in the order they run.
 ///
@@ -25,6 +34,10 @@ enum MemberDeletionStep {
   doseRecords,
   medications,
   appointments,
+
+  /// Stops sharing the profile with the household (if it was shared); the
+  /// deletions above reach the household at the next sync.
+  sharing,
   profile,
 }
 
@@ -87,6 +100,7 @@ class FamilyController extends ChangeNotifier {
       _visitMediaFiles = dependencies.visitMediaFiles,
       _medicationRepository = dependencies.medicationRepository,
       _doseRecordRepository = dependencies.doseRecordRepository,
+      _syncState = dependencies.syncStateRepository,
       _transactions = dependencies.transactions;
 
   final FamilyRepository _familyRepository;
@@ -97,6 +111,7 @@ class FamilyController extends ChangeNotifier {
   final VisitMediaFileStore _visitMediaFiles;
   final MedicationRepository _medicationRepository;
   final DoseRecordRepository _doseRecordRepository;
+  final SyncStateRepository _syncState;
   final TransactionRunner _transactions;
 
   List<FamilyMember> _members = const [];
@@ -249,6 +264,10 @@ class FamilyController extends ChangeNotifier {
         MemberDeletionStep.appointments,
         () => _appointmentRepository.deleteByMember(memberId),
       ),
+      (
+        MemberDeletionStep.sharing,
+        () => _syncState.setShared(memberId, shared: false),
+      ),
       (MemberDeletionStep.profile, () => _familyRepository.delete(memberId)),
     ];
 
@@ -309,6 +328,10 @@ class FamilyController extends ChangeNotifier {
       if (member.relation == FamilyRelation.self &&
           await _anotherSelfExists(member.id)) {
         return FamilySaveResult.selfAlreadyExists;
+      }
+      if (member.relation != FamilyRelation.child &&
+          (await _syncState.sharedMemberIds()).contains(member.id)) {
+        return FamilySaveResult.sharedMustStayChild;
       }
       if (isNew) {
         await _familyRepository.add(member);

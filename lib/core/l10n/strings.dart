@@ -936,6 +936,264 @@ abstract final class AppStrings {
   static const String backupFailedUnknown =
       'הפעולה נכשלה. המידע במכשיר לא השתנה. נסו שוב.';
 
+  // Household sharing (two parents)
+  static const String sharingTitle = 'שיתוף משפחתי';
+  static const String sharingCardSubtitle =
+      'שיתוף מוצפן של פרופילי הילדים עם ההורה השני';
+  static String sharingCardConflicts(int count) => count == 1
+      ? 'שינוי אחד מחכה להחלטה שלכם'
+      : '$count שינויים מחכים להחלטה שלכם';
+  static const String sharingPrivacy =
+      'רק פרופילים של ילדים שבחרתם משותפים. כל שינוי מוצפן במכשיר לפני שהוא '
+      'נשלח, במפתח שנמצא רק אצל חברי המשק. השרת רואה רק מידע מוצפן, ואת מי '
+      'שייך למשק, מתי ומאיזה מכשיר נשלחו שינויים, ובאיזה גודל.';
+  static const String sharingManualOnly =
+      'הסנכרון מתבצע רק כשלוחצים על "סנכרון עכשיו". שינויים שנעשו בלי '
+      'אינטרנט נשמרים במכשיר ונשלחים בסנכרון הבא.';
+  static const String sharingMediaNote =
+      'תמונות וסרטונים מוצפנים לפני ההעלאה. במכשיר עצמו הקבצים אינם מוצפנים.';
+  static const String sharingUnavailable =
+      'שיתוף משפחתי לא זמין בגרסה הזו של האפליקציה.';
+  static const String sharingConnecting = 'מתחברים…';
+  static const String sharingSignInFirst =
+      'כדי לשתף, צריך להתחבר לחשבון במסך "גיבוי וחשבון".';
+  static const String sharingOpenAccount = 'מעבר לחשבון';
+  static const String sharingOtherAccount =
+      'המכשיר הצטרף למשק עם חשבון אחר. התחברו לחשבון ההוא כדי להמשיך.';
+
+  static const String householdNoneTitle = 'עדיין אין משק משותף';
+  static const String householdNoneMessage =
+      'אחד ההורים יוצר משק ומזמין את השני בקוד חד־פעמי, שמעבירים פנים מול '
+      'פנים או בטלפון. אין צורך לשתף סיסמאות.';
+  static const String householdCreate = 'יצירת משק';
+  static const String householdJoin = 'הצטרפות עם קוד הזמנה';
+  static const String householdCreated = 'המשק נוצר';
+
+  static const String joiningTitle = 'ממתינים לאישור';
+  static String joiningWaitingFor(String name) =>
+      'קיבלתם את ההזמנה. כש־$name ישלים את ההוספה, לחצו "בדיקה".';
+  static const String joiningWaiting =
+      'קיבלתם את ההזמנה. כשההורה שהזמין ישלים את ההוספה, לחצו "בדיקה".';
+  static const String joiningCheck = 'בדיקה';
+  static const String joiningCancel = 'ביטול ההצטרפות';
+  static const String joiningNotYet = 'עדיין לא נוספתם למשק.';
+  static const String joiningDone = 'הצטרפתם למשק';
+
+  static const String removedTitle = 'אינכם חלק מהמשק';
+  static const String removedMessage =
+      'החשבון הוסר מהמשק, או שעזבתם אותו. כל המידע שבמכשיר נשאר, אבל הוא '
+      'כבר לא מסתנכרן.';
+  static const String removedAcknowledge = 'הבנתי';
+
+  static const String syncSectionTitle = 'סנכרון';
+  static const String syncNow = 'סנכרון עכשיו';
+  static const String syncing = 'מסנכרנים…';
+  static const String syncNever = 'עדיין לא סונכרן.';
+  static String syncLast(String when) => 'סנכרון אחרון: $when';
+  static String syncPending(int count) => count == 1
+      ? 'שינוי אחד ממתין לשליחה'
+      : '$count שינויים ממתינים לשליחה';
+  static const String syncSucceeded = 'הסנכרון הושלם';
+  static String syncSummary(int received, int sent) =>
+      'התקבלו $received שינויים, נשלחו $sent.';
+  static String syncWaiting(int count) =>
+      '$count שינויים ממתינים לרשומה שהם שייכים אליה, ויוחלו בסנכרון הבא.';
+  static String conflictsWaiting(int count) => count == 1
+      ? 'שינוי אחד מחכה להחלטה שלכם'
+      : '$count שינויים מחכים להחלטה שלכם';
+  static const String reviewConflicts = 'לבדיקה ולהחלטה';
+
+  static const String sharedChildrenTitle = 'ילדים משותפים';
+  static const String sharedChildrenHint =
+      'רק פרופילים של ילדים אפשר לשתף. הפרופיל שלכם, של בן או בת הזוג ושל '
+      'בני משפחה אחרים נשארים במכשיר הזה בלבד.';
+  static const String noChildrenToShare =
+      'אין פרופילים של ילדים. אפשר להוסיף אותם בלשונית "משפחה".';
+  static const String shareConfirmTitle = 'לשתף את הפרופיל?';
+  static String shareConfirmMessage(String name) =>
+      'כל המידע של $name (תורים, שאלות, תסמינים, תרופות, מנות, תמונות '
+      'וסרטונים) יישלח מוצפן לחברי המשק בסנכרון הבא. מעכשיו, גם שינויים '
+      'ומחיקות שהם יעשו יגיעו למכשיר הזה. מחיקה תוחל רק אחרי שתאשרו אותה.';
+  static const String shareConfirm = 'שיתוף';
+  static const String unshareConfirmTitle = 'להפסיק לשתף?';
+  static String unshareConfirmMessage(String name) =>
+      'מהסנכרון הבא, $name לא יסתנכרן יותר. אצל כל אחד נשאר העותק שלו, '
+      'ושום דבר לא נמחק. מידע שכבר נשלח נשאר אצל חברי המשק.';
+  static const String unshareConfirm = 'הפסקת השיתוף';
+  static const String sharedBadge = 'משותף';
+
+  static const String membersTitle = 'חברי המשק';
+  static const String memberYou = '(אתם)';
+  static const String roleAdmin = 'מנהל';
+  static const String roleMember = 'חבר';
+  static String fingerprintLabel(String value) => 'טביעת מפתח: $value';
+  static const String memberUnverified =
+      'לא אומת: המפתח שלו לא נבדק מול המשק, ולכן הוא לא יקבל מפתחות.';
+  static const String makeAdmin = 'הפיכה למנהל';
+  static const String makeMember = 'הפיכה לחבר';
+  static const String removeMember = 'הסרה מהמשק';
+  static const String removeMemberConfirmTitle = 'להסיר מהמשק?';
+  static const String removeMemberConfirmMessage =
+      'הגישה שלו לשינויים חדשים תיחסם, והמשק יעבור למפתח הצפנה חדש. מידע שכבר '
+      'הגיע למכשיר שלו נשאר שם, ואי אפשר למחוק אותו מרחוק.';
+  static const String memberRemoved = 'הוסר מהמשק';
+
+  static const String invitesTitle = 'הזמנות';
+  static const String inviteParent = 'הזמנת הורה';
+  static const String noInvites = 'אין הזמנות פתוחות.';
+  static const String inviteCodeTitle = 'קוד ההזמנה';
+  static const String inviteCodeMessage =
+      'העבירו את הקוד להורה השני פנים מול פנים או בשיחת טלפון, לא בהודעה '
+      'כתובה. הקוד מוצג פעם אחת, ותקף ל־48 שעות.';
+  static String inviteYourFingerprint(String value) =>
+      'טביעת המפתח שלכם: $value. ההורה השני יראה אותה כשיזין את הקוד; '
+      'כדאי לוודא שהיא זהה.';
+  static const String inviteStatusOpen = 'ממתינה לתשובה';
+  static const String inviteStatusAccepted = 'התקבלה, ממתינה להשלמה';
+  static const String inviteStatusRejected = 'נדחתה';
+  static const String inviteStatusCompleted = 'הושלמה';
+  static const String inviteExpired = 'פג תוקף';
+  static String inviteFrom(String name) => 'מאת $name';
+  static const String inviteComplete = 'השלמת ההוספה';
+  static const String inviteDelete = 'מחיקת ההזמנה';
+  static const String inviteNotVerified =
+      'המפתח של המוזמן לא תואם לקוד. אל תשלימו את ההוספה; מחקו את ההזמנה '
+      'וצרו חדשה.';
+  static const String completeInviteTitle = 'להוסיף למשק?';
+  static String completeInviteMessage(String fingerprint) =>
+      'טביעת המפתח של המוזמן: $fingerprint. בקשו ממנו להקריא את הטביעה '
+      'שמופיעה אצלו, וודאו שהיא זהה.';
+  static const String completeAsMember = 'הוספה כחבר';
+  static const String completeAsAdmin = 'הוספה כמנהל';
+  static const String memberAdded = 'נוסף למשק';
+
+  static const String joinTitle = 'הצטרפות למשק';
+  static const String joinCodeLabel = 'קוד ההזמנה';
+  static const String joinCodeHint = 'XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX';
+  static const String joinCheck = 'בדיקת הקוד';
+  static const String invitePreviewTitle = 'הזמנה למשק';
+  static String invitePreviewFrom(String name) => 'ההזמנה נשלחה מ־$name.';
+  static String invitePreviewFingerprint(String value) =>
+      'טביעת המפתח של המזמין: $value. וודאו שהיא זהה לזו שמופיעה אצלו.';
+  static const String invitePreviewAccept = 'קבלה';
+  static const String invitePreviewReject = 'דחייה';
+  static const String inviteRejected = 'ההזמנה נדחתה';
+
+  static const String leaveHousehold = 'עזיבת המשק';
+  static const String leaveConfirmTitle = 'לעזוב את המשק?';
+  static const String leaveConfirmMessage =
+      'המכשיר יפסיק להסתנכרן, וכל המידע שבו יישאר. מנהל המשק יחליף את מפתח '
+      'ההצפנה בסנכרון הבא שלו.';
+  static const String leaveConfirm = 'עזיבה';
+
+  // Conflicts
+  static const String conflictsTitle = 'שינויים לבדיקה';
+  static const String noConflicts = 'אין שינויים שמחכים להחלטה.';
+  static const String conflictsIntro =
+      'המכשירים שינו את אותן רשומות בדרכים שונות, או שחבר משק מחק רשומה. '
+      'שום דבר לא הוחלף או נמחק בלי אישורכם. עד שתחליטו, נשמרת הגרסה '
+      'שבמכשיר הזה.';
+  static const String conflictEdited = 'נערך גם כאן וגם במכשיר אחר';
+  static const String conflictDeleted = 'נמחק במכשיר אחר';
+  static const String conflictDeletedHere = 'נמחק כאן, ונערך במכשיר אחר';
+  static const String conflictThisDevice = 'במכשיר הזה';
+  static const String conflictOtherDevice = 'במכשיר האחר';
+  static const String conflictKeepMine = 'השארת הגרסה שלי';
+  static const String conflictUseOther = 'שימוש בגרסה האחרת';
+  static const String conflictKeep = 'השארה';
+  static const String conflictDeleteHere = 'מחיקה גם כאן';
+  static const String conflictKeepDeleted = 'להשאיר מחוק';
+  static const String conflictRestore = 'שחזור הגרסה האחרת';
+  static const String conflictResolved = 'ההחלטה נשמרה';
+  static const String deleteHereConfirmTitle = 'למחוק גם במכשיר הזה?';
+  static const String deleteHereConfirmMessage =
+      'הרשומה תימחק מהמכשיר הזה, יחד עם מה ששייך לה, כמו מחיקה רגילה. אי '
+      'אפשר לבטל את זה.';
+  static const String applyAllDeletions = 'מחיקת כל מה שנמחק במכשירים אחרים';
+  static String applyAllDeletionsMessage(int count) =>
+      '$count רשומות יימחקו מהמכשיר הזה, יחד עם מה ששייך להן. אי אפשר לבטל '
+      'את זה.';
+  static const String emptyValue = '—';
+  static const String yes = 'כן';
+  static const String no = 'לא';
+
+  static const String kindMember = 'פרופיל';
+  static const String kindAppointment = 'תור';
+  static const String kindMedication = 'תרופה';
+  static const String kindQuestion = 'שאלה לרופא';
+  static const String kindSymptom = 'תסמין';
+  static const String kindMedia = 'תמונה או סרטון';
+  static const String kindDose = 'רישום מנה';
+
+  static const Map<String, String> syncFieldLabels = {
+    'name': 'שם',
+    'relation': 'קרבה',
+    'birthDate': 'תאריך לידה',
+    'allergies': 'אלרגיות',
+    'chronicConditions': 'מצבים כרוניים',
+    'notes': 'הערות',
+    'doctorName': 'שם הרופא',
+    'dateTime': 'מועד',
+    'specialty': 'התמחות',
+    'location': 'מיקום',
+    'text': 'השאלה',
+    'isResolved': 'טופלה',
+    'doctorAnswer': 'תשובת הרופא',
+    'appointmentId': 'תור מקושר',
+    'startedAt': 'התחלה',
+    'severity': 'חומרה',
+    'status': 'סטטוס',
+    'durationMicros': 'משך',
+    'dose': 'מינון',
+    'instructions': 'הוראות',
+    'reminderTimes': 'שעות תזכורת',
+    'startDate': 'תאריך התחלה',
+    'endDate': 'תאריך סיום',
+    'description': 'תיאור',
+    'scheduledAt': 'מועד המנה',
+    'memberId': 'בן משפחה',
+  };
+
+  // Sharing failures
+  static const String sharingFailedNetwork =
+      'אין חיבור לשירות. שום מידע במכשיר לא השתנה. נסו שוב.';
+  static const String sharingFailedPermission =
+      'אין הרשאה לפעולה הזו. ייתכן שהחשבון הוסר מהמשק.';
+  static const String sharingFailedInvalidCode =
+      'הקוד לא תקין או לא קיים. בדקו שהקלדתם את כל 28 התווים.';
+  static const String sharingFailedExpired = 'פג התוקף של ההזמנה. בקשו קוד חדש.';
+  static const String sharingFailedAlreadyUsed = 'ההזמנה כבר נענתה או נוצלה.';
+  static const String sharingFailedVerification =
+      'האימות נכשל: המפתח לא תואם. שום דבר לא התקבל. אל תמשיכו, וצרו הזמנה '
+      'חדשה.';
+  static const String sharingFailedNotAdmin = 'רק מנהל משק יכול לעשות זאת.';
+  static const String sharingFailedLastAdmin =
+      'במשק חייב להישאר מנהל. הפכו חבר אחר למנהל קודם.';
+  static const String sharingFailedKey =
+      'אין במכשיר מפתח לחלק מהמידע של המשק. בקשו ממנהל המשק לסנכרן ונסו שוב.';
+  static const String sharingFailedAlreadyInHousehold =
+      'המכשיר כבר שייך למשק.';
+  static const String sharingFailedNotInHousehold = 'המכשיר לא שייך למשק.';
+  static const String sharingFailedRemoved =
+      'החשבון כבר לא חבר במשק. המידע שבמכשיר נשאר.';
+  static const String sharingFailedDamaged =
+      'חלק מהמידע בענן פגום או ששונה, ולכן לא הוחל. המידע במכשיר לא השתנה.';
+  static const String sharingFailedLocalWrite =
+      'לא הצלחנו לשמור במכשיר. המידע במכשיר לא השתנה.';
+  static const String sharingFailedNotSignedIn = 'צריך להתחבר לחשבון.';
+  static const String sharingFailedDelete =
+      'המחיקה במכשיר לא הצליחה. נסו שוב.';
+  static const String sharingFailedUnknown =
+      'הפעולה נכשלה. המידע במכשיר לא השתנה. נסו שוב.';
+
+  // Shared profiles in other screens
+  static const String sharedProfileMustStayChild =
+      'הפרופיל משותף עם המשק, ולכן הקרבה שלו נשארת "ילד/ה". אפשר להפסיק את '
+      'השיתוף במסך "שיתוף משפחתי".';
+  static const String moveSharedAppointment =
+      'אי אפשר להעביר תור אל פרופיל משותף או ממנו. אפשר למחוק אותו וליצור '
+      'תור חדש.';
+
   // Placeholders
   static const String comingSoonBadge = 'בקרוב';
 }

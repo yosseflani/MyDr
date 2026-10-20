@@ -1,8 +1,10 @@
 rules_version = '2';
 
-// MyDr cloud backup. Every object is already encrypted on the device with
-// the user's recovery key; these rules make sure each account can reach
-// only its own folder, and nothing else exists.
+// MyDr cloud backup and household media. Every object is already
+// encrypted on the device (backups with the user's recovery key, household
+// media with the household key); these rules make sure each account can
+// reach only its own backup folder and its own households' media, and
+// nothing else exists.
 service firebase.storage {
   match /b/{bucket}/o {
     match /users/{uid}/backups/{path=**} {
@@ -18,6 +20,20 @@ service firebase.storage {
         && request.resource.size <= 200 * 1024 * 1024
         && request.resource.contentType == 'application/octet-stream';
       allow update: if false;
+    }
+
+    // Household sharing: photos and videos encrypted on the device with the
+    // household key. Only members of the household (a Firestore document)
+    // may read or add them; nothing is ever overwritten or deleted here.
+    match /households/{hid}/media/{object} {
+      allow read: if request.auth != null
+        && firestore.exists(/databases/(default)/documents/households/$(hid)/members/$(request.auth.uid));
+      allow create: if request.auth != null
+        && firestore.exists(/databases/(default)/documents/households/$(hid)/members/$(request.auth.uid))
+        && resource == null
+        && request.resource.size <= 200 * 1024 * 1024
+        && request.resource.contentType == 'application/octet-stream';
+      allow update, delete: if false;
     }
 
     match /{other=**} {

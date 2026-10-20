@@ -92,6 +92,10 @@ class BackupController extends ChangeNotifier {
   DateTime? _lastBackupAt;
 
   CloudStatus get status => _status;
+
+  /// The connected cloud services, once [start] succeeded. Household
+  /// sharing uses the same connection and account.
+  CloudServices? get services => _services;
   Account? get account => _account;
 
   /// Whether this device holds the signed-in account's recovery key.

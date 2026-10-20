@@ -36,6 +36,14 @@ class RecoveryKey {
     );
   }
 
+  /// A key from its [byteLength] bytes, e.g. read back from storage.
+  static RecoveryKey fromBytes(List<int> bytes) {
+    if (bytes.length != byteLength) {
+      throw const FormatException('A recovery key has 16 bytes');
+    }
+    return RecoveryKey._(Uint8List.fromList(bytes));
+  }
+
   /// Reads a key typed by the user. Spaces, dashes and case are ignored,
   /// and the letters I and L are read as 1 and O as 0. Throws a
   /// [FormatException] for anything else, including a wrong check.

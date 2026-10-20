@@ -178,6 +178,11 @@ class _MemberFormScreenState extends State<MemberFormScreen> {
           _isSaving = false;
           _saveError = AppStrings.selfAlreadyExists;
         });
+      case FamilySaveResult.sharedMustStayChild:
+        setState(() {
+          _isSaving = false;
+          _saveError = AppStrings.sharedProfileMustStayChild;
+        });
       case FamilySaveResult.failed:
         setState(() {
           _isSaving = false;

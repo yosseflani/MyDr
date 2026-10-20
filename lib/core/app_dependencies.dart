@@ -13,6 +13,7 @@ import 'package:mydr/data/local/repositories/local_dose_record_repository.dart';
 import 'package:mydr/data/local/repositories/local_family_repository.dart';
 import 'package:mydr/data/local/repositories/local_medication_repository.dart';
 import 'package:mydr/data/local/repositories/local_symptom_repository.dart';
+import 'package:mydr/data/local/repositories/local_sync_state_repository.dart';
 import 'package:mydr/data/local/repositories/local_visit_media_repository.dart';
 import 'package:mydr/data/media/media_picker.dart';
 import 'package:mydr/data/media/visit_media_file_store.dart';
@@ -30,9 +31,11 @@ import 'package:mydr/data/repositories/in_memory/in_memory_dose_record_repositor
 import 'package:mydr/data/repositories/in_memory/in_memory_family_repository.dart';
 import 'package:mydr/data/repositories/in_memory/in_memory_medication_repository.dart';
 import 'package:mydr/data/repositories/in_memory/in_memory_symptom_repository.dart';
+import 'package:mydr/data/repositories/in_memory/in_memory_sync_state_repository.dart';
 import 'package:mydr/data/repositories/in_memory/in_memory_visit_media_repository.dart';
 import 'package:mydr/data/repositories/medication_repository.dart';
 import 'package:mydr/data/repositories/symptom_repository.dart';
+import 'package:mydr/data/repositories/sync_state_repository.dart';
 import 'package:mydr/data/repositories/transaction_runner.dart';
 import 'package:mydr/data/repositories/visit_media_repository.dart';
 import 'package:path/path.dart' as p;
@@ -59,11 +62,19 @@ class AppDependencies {
     this.cloudBackend,
     RecoveryKeyStore? recoveryKeyStore,
     Future<Directory> Function()? backupWorkDirectory,
+    SyncStateRepository? syncStateRepository,
+    SyncKeyStore? syncKeyStore,
+    Future<Directory> Function()? syncWorkDirectory,
     this.emergencyDialer = const UrlLauncherEmergencyDialer(),
     this.firstAidRepository = const AssetFirstAidRepository(),
     this.transactions = const SequentialTransactionRunner(),
     this.persistsData = false,
-  }) : visitMediaRepository =
+  }) : syncStateRepository =
+           syncStateRepository ??
+           InMemorySyncStateRepository(familyRepository: familyRepository),
+       syncKeyStore = syncKeyStore ?? InMemorySyncKeyStore(),
+       syncWorkDirectory = syncWorkDirectory ?? _defaultSyncWorkDirectory,
+       visitMediaRepository =
            visitMediaRepository ?? InMemoryVisitMediaRepository(),
        visitMediaFiles = visitMediaFiles ?? InMemoryVisitMediaFileStore(),
        mediaPicker = mediaPicker ?? ImagePickerMediaPicker(),
@@ -77,6 +88,12 @@ class AppDependencies {
   /// The app's private temporary folder, never a shared one.
   static Future<Directory> _defaultBackupWorkDirectory() async => Directory(
     p.join((await getTemporaryDirectory()).path, 'mydr_backup_work'),
+  );
+
+  /// A separate private folder for decrypting shared photos and videos, so
+  /// a backup and a sync never clear each other's files.
+  static Future<Directory> _defaultSyncWorkDirectory() async => Directory(
+    p.join((await getTemporaryDirectory()).path, 'mydr_sync_work'),
   );
 
   /// Firebase, when the build was configured for it (see [CloudConfig]);
@@ -116,6 +133,9 @@ class AppDependencies {
     ReminderScheduler reminderScheduler = const UnsupportedReminderScheduler(),
     CloudBackend? cloudBackend,
     RecoveryKeyStore recoveryKeyStore = const SecureRecoveryKeyStore(),
+    SyncKeyStore syncKeyStore = const SecureSyncKeyStore(),
+    Future<Directory> Function()? backupWorkDirectory,
+    Future<Directory> Function()? syncWorkDirectory,
   }) {
     return AppDependencies(
       familyRepository: LocalFamilyRepository(database),
@@ -130,6 +150,10 @@ class AppDependencies {
       reminderScheduler: reminderScheduler,
       cloudBackend: cloudBackend,
       recoveryKeyStore: recoveryKeyStore,
+      backupWorkDirectory: backupWorkDirectory,
+      syncStateRepository: LocalSyncStateRepository(database),
+      syncKeyStore: syncKeyStore,
+      syncWorkDirectory: syncWorkDirectory,
       emergencyDialer: emergencyDialer,
       firstAidRepository: firstAidRepository,
       transactions: LocalTransactionRunner(database),
@@ -182,6 +206,8 @@ class AppDependencies {
     CloudBackend? cloudBackend,
     RecoveryKeyStore? recoveryKeyStore,
     Future<Directory> Function()? backupWorkDirectory,
+    SyncKeyStore? syncKeyStore,
+    Future<Directory> Function()? syncWorkDirectory,
   }) {
     return AppDependencies(
       familyRepository: InMemoryFamilyRepository(),
@@ -195,6 +221,8 @@ class AppDependencies {
       cloudBackend: cloudBackend,
       recoveryKeyStore: recoveryKeyStore,
       backupWorkDirectory: backupWorkDirectory,
+      syncKeyStore: syncKeyStore,
+      syncWorkDirectory: syncWorkDirectory,
       emergencyDialer: emergencyDialer ?? const UrlLauncherEmergencyDialer(),
       firstAidRepository: firstAidRepository ?? const AssetFirstAidRepository(),
     );
@@ -232,6 +260,16 @@ class AppDependencies {
 
   /// Private scratch folder for encrypting and decrypting backups.
   final Future<Directory> Function() backupWorkDirectory;
+
+  /// Household sharing bookkeeping (shared children, versions, pending
+  /// changes, conflicts). Empty unless the device joins a household.
+  final SyncStateRepository syncStateRepository;
+
+  /// Identity and household keys, kept on this device only.
+  final SyncKeyStore syncKeyStore;
+
+  /// Private scratch folder for encrypting and decrypting shared media.
+  final Future<Directory> Function() syncWorkDirectory;
 
   /// Opens the phone's dialer for emergency numbers.
   final EmergencyDialer emergencyDialer;

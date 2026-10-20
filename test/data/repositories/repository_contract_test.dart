@@ -7,6 +7,7 @@ import 'package:mydr/data/models/appointment.dart';
 import 'package:mydr/data/models/doctor_question.dart';
 import 'package:mydr/data/models/family_member.dart';
 import 'package:mydr/data/models/symptom_entry.dart';
+import 'package:mydr/data/models/sync_state.dart';
 
 import '../../helpers/memory_key_store.dart';
 
@@ -408,6 +409,188 @@ void main() {
           expect(await repos.symptomRepository.getAll(), isEmpty);
         },
       );
+
+      group('sync state', () {
+        test('settings start off, with a lasting device id', () async {
+          final state = repos.syncStateRepository;
+          final first = await state.settings();
+          expect(first.state, SyncState.off);
+          expect(first.householdId, isNull);
+          expect(first.deviceId, isNotEmpty);
+          expect((await state.settings()).deviceId, first.deviceId);
+          final joined = first.copyWith(
+            householdId: () => 'h1',
+            accountUid: () => 'uid-1',
+            role: () => HouseholdRole.member,
+            state: SyncState.active,
+            lastSyncAt: () => DateTime(2026, 10, 19, 12, 0, 0, 0, 7),
+            nextSeq: 3,
+          );
+          await state.saveSettings(joined);
+          expect(await state.settings(), joined);
+        });
+
+        test('only a child can be shared; stopping keeps the profile', () async {
+          await addFamily();
+          final state = repos.syncStateRepository;
+          await state.setShared('m2', shared: true, at: DateTime(2026));
+          await expectLater(
+            state.setShared('m1', shared: true, at: DateTime(2026)),
+            throwsStateError,
+          );
+          await expectLater(
+            state.setShared('missing', shared: true, at: DateTime(2026)),
+            throwsStateError,
+          );
+          expect(await state.sharedMemberIds(), {'m2'});
+          await state.setShared('m2', shared: false);
+          expect(await state.sharedMemberIds(), isEmpty);
+          expect(await repos.familyRepository.getById('m2'), noa);
+        });
+
+        test('pending changes count up and clear only what was sent', () async {
+          final state = repos.syncStateRepository;
+          await state.markPending(SyncKind.symptom, 's1', 's1');
+          await state.markPending(SyncKind.symptom, 's1', 's1');
+          final pending = (await state.pendingChanges()).single;
+          expect(pending.changeCount, 2);
+          await state.clearPending(
+            const PendingChange(
+              kind: SyncKind.symptom,
+              syncId: 's1',
+              localId: 's1',
+              changeCount: 1,
+            ),
+          );
+          expect(await state.pendingChanges(), hasLength(1));
+          await state.clearPending(pending);
+          expect(await state.pendingChanges(), isEmpty);
+        });
+
+        test('records, tombstones and parked records round-trip', () async {
+          final state = repos.syncStateRepository;
+          final record = SyncRecordState(
+            kind: SyncKind.dose,
+            syncId: 'med@2026-10-19T08:00:00.000000',
+            localId: 'local-dose',
+            memberId: 'm2',
+            vector: VersionVector({'d1': 2, 'd2': 1}),
+            updatedAt: DateTime(2026, 10, 19, 8, 0, 0, 0, 5),
+            updatedBy: 'd1',
+            base: {
+              'status': 'taken',
+              'list': ['a'],
+              'n': null,
+            },
+          );
+          final tombstone = SyncRecordState(
+            kind: SyncKind.symptom,
+            syncId: 's1',
+            localId: 's1',
+            memberId: 'm2',
+            vector: VersionVector({'d2': 1}),
+            updatedAt: DateTime(2026, 10, 19),
+            updatedBy: 'd2',
+            deleted: true,
+          );
+          final parked = tombstone.copyWith(
+            deleted: false,
+            base: () => {'id': 'q1'},
+            parked: true,
+          );
+          await state.saveRecord(record);
+          await state.saveRecord(tombstone);
+          expect(await state.record(SyncKind.dose, record.syncId), record);
+          expect(
+            await state.recordByLocalId(SyncKind.dose, 'local-dose'),
+            record,
+          );
+          expect(await state.record(SyncKind.symptom, 's1'), tombstone);
+          await state.saveRecord(parked);
+          expect(await state.records(parked: true), [parked]);
+          expect(await state.records(memberId: 'm2'), hasLength(2));
+          expect(await state.record(SyncKind.member, 'none'), isNull);
+        });
+
+        test('conflicts round-trip and are removed', () async {
+          final state = repos.syncStateRepository;
+          final conflict = SyncConflict(
+            kind: SyncKind.appointment,
+            syncId: 'a1',
+            localId: 'a1',
+            memberId: 'm2',
+            reason: ConflictReason.edited,
+            local: {'doctorName': 'x'},
+            remote: {'doctorName': 'y'},
+            remoteVector: VersionVector({'d2': 3}),
+            remoteUpdatedAt: DateTime(2026, 10, 19, 9),
+            remoteUpdatedBy: 'd2',
+            fields: const ['doctorName'],
+            detectedAt: DateTime(2026, 10, 19, 10),
+          );
+          await state.saveConflict(conflict);
+          expect(await state.conflicts(), [conflict]);
+          expect(await state.conflict(SyncKind.appointment, 'a1'), conflict);
+          await state.deleteConflict(SyncKind.appointment, 'a1');
+          expect(await state.conflicts(), isEmpty);
+        });
+
+        test('cursors and verified members', () async {
+          final state = repos.syncStateRepository;
+          await state.saveCursor('d1', 4);
+          await state.saveCursor('d1', 5);
+          expect(await state.cursors(), {'d1': 5});
+          const member = KnownMember(
+            uid: 'u1',
+            publicKey: 'cHVibGlj',
+            role: HouseholdRole.admin,
+            label: 'a@example.test',
+          );
+          await state.saveKnownMember(member);
+          expect(await state.knownMembers(), [member]);
+          await state.deleteKnownMember('u1');
+          expect(await state.knownMembers(), isEmpty);
+        });
+
+        test(
+          'reset keeps family data; clearing also forgets the household',
+          () async {
+            await addFamily();
+            final state = repos.syncStateRepository;
+            await state.saveSettings(
+              (await state.settings()).copyWith(
+                householdId: () => 'h1',
+                state: SyncState.active,
+              ),
+            );
+            await state.setShared('m2', shared: true, at: DateTime(2026));
+            await state.markPending(SyncKind.member, 'm2', 'm2');
+            await state.saveCursor('d1', 2);
+            await state.saveKnownMember(
+              const KnownMember(
+                uid: 'u1',
+                publicKey: 'cA==',
+                role: HouseholdRole.member,
+              ),
+            );
+            await state.resetHistory();
+            expect(await state.sharedMemberIds(), isEmpty);
+            expect(await state.pendingChanges(), isEmpty);
+            expect(await state.cursors(), isEmpty);
+            expect((await state.settings()).householdId, 'h1');
+            expect(await state.knownMembers(), hasLength(1));
+
+            final deviceId = (await state.settings()).deviceId;
+            await state.clearHousehold(state: SyncState.removed);
+            final settings = await state.settings();
+            expect(settings.householdId, isNull);
+            expect(settings.state, SyncState.removed);
+            expect(settings.deviceId, deviceId);
+            expect(await state.knownMembers(), isEmpty);
+            expect(await repos.familyRepository.getAll(), hasLength(3));
+          },
+        );
+      });
     });
   }
 }

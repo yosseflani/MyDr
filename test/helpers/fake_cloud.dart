@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:mydr/data/cloud/account_service.dart';
 import 'package:mydr/data/cloud/backup_storage.dart';
 import 'package:mydr/data/cloud/cloud_backend.dart';
+import 'package:mydr/data/cloud/household_cloud.dart';
 
 /// Cloud storage in memory, with the owner rule of storage.rules (only
 /// `users/{uid}/…` of the signed-in account) and switches to fail.
@@ -193,14 +194,20 @@ class FakeAccountService implements AccountService {
 }
 
 class FakeCloudBackend implements CloudBackend {
-  FakeCloudBackend({FakeAccountService? accounts, FakeBackupStorage? storage})
-    : accounts = accounts ?? FakeAccountService(),
-      storage = storage ?? FakeBackupStorage() {
+  FakeCloudBackend({
+    FakeAccountService? accounts,
+    FakeBackupStorage? storage,
+    this.household,
+  }) : accounts = accounts ?? FakeAccountService(),
+       storage = storage ?? FakeBackupStorage() {
     this.storage.currentUid ??= () => this.accounts.current?.uid;
   }
 
   final FakeAccountService accounts;
   final FakeBackupStorage storage;
+
+  /// Household sharing, when a test needs it.
+  final HouseholdCloud? household;
   bool failConnect = false;
   int connects = 0;
 
@@ -208,6 +215,10 @@ class FakeCloudBackend implements CloudBackend {
   Future<CloudServices> connect() async {
     connects++;
     if (failConnect) throw const SocketException('offline');
-    return CloudServices(accounts: accounts, storage: storage);
+    return CloudServices(
+      accounts: accounts,
+      storage: storage,
+      household: household,
+    );
   }
 }

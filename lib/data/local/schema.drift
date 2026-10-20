@@ -1,5 +1,6 @@
--- MyDr local database, schema version 3 (v2 added visit_media; v3 added
--- medications and dose_records).
+-- MyDr local database, schema version 4 (v2 added visit_media; v3 added
+-- medications and dose_records; v4 added the sync_* tables and triggers for
+-- household sharing).
 --
 -- Mirrors the models in lib/data/models exactly. Formats:
 --   * local date and time: 'YYYY-MM-DDTHH:MM:SS.ffffff' (wall-clock time,
@@ -162,3 +163,417 @@ CREATE TABLE dose_records (
 ) STRICT AS DoseRecordRow;
 
 CREATE INDEX dose_records_by_member ON dose_records (member_id, scheduled_at);
+
+-- ---------------------------------------------------------------------------
+-- Household sharing and two-way sync (added in version 4). Everything below
+-- is bookkeeping for sharing selected children with a household. A user who
+-- never creates or joins a household has empty tables and no tracking: the
+-- triggers check sync_settings first. No key is stored here; identity and
+-- household keys live in the OS secure storage (see SyncKeyStore).
+-- ---------------------------------------------------------------------------
+
+-- This device's sync identity and household link. At most one row.
+CREATE TABLE sync_settings (
+  id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+  -- Random, created on first use; names this device's change log.
+  device_id TEXT NOT NULL CHECK (length(device_id) > 0),
+  household_id TEXT CHECK (household_id IS NULL OR length(household_id) > 0),
+  account_uid TEXT CHECK (account_uid IS NULL OR length(account_uid) > 0),
+  role TEXT CHECK (role IS NULL OR role IN ('admin', 'member')),
+  state TEXT NOT NULL DEFAULT 'off'
+    CHECK (state IN ('off', 'joining', 'active', 'removed')),
+  -- The invitation this device accepted, while it waits to be added.
+  invite_id TEXT,
+  last_sync_at INTEGER,
+  -- Sequence number of the next change batch this device uploads.
+  next_seq INTEGER NOT NULL DEFAULT 1 CHECK (next_seq >= 1),
+  -- 1 only inside the transaction that applies changes from other devices,
+  -- so those changes are not tracked as local ones.
+  applying INTEGER NOT NULL DEFAULT 0 CHECK (applying IN (0, 1))
+) STRICT AS SyncSettingsRow;
+
+-- Children shared with the household. Only a "child" profile can be
+-- shared, since that relation is the same on every parent's phone.
+CREATE TABLE sync_shared_members (
+  member_id TEXT NOT NULL PRIMARY KEY
+    REFERENCES family_members (id) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  shared_at INTEGER NOT NULL
+) STRICT AS SyncSharedMemberRow;
+
+-- What this device knows about each shared record: its version vector, who
+-- changed it last and when, whether it was deleted (a tombstone, kept so a
+-- deleted record never comes back), and the content last exchanged (the
+-- base of a three-way merge). member_id has no foreign key on purpose: a
+-- tombstone outlives its family member.
+CREATE TABLE sync_records (
+  kind TEXT NOT NULL CHECK (kind IN ('member', 'appointment', 'question',
+    'symptom', 'media', 'medication', 'dose', 'share')),
+  sync_id TEXT NOT NULL CHECK (length(sync_id) > 0),
+  local_id TEXT NOT NULL CHECK (length(local_id) > 0),
+  member_id TEXT NOT NULL CHECK (length(member_id) > 0),
+  version_vector TEXT NOT NULL CHECK (json_valid(version_vector)
+    AND json_type(version_vector) = 'object'),
+  updated_at INTEGER NOT NULL,
+  updated_by TEXT NOT NULL CHECK (length(updated_by) > 0),
+  deleted INTEGER NOT NULL CHECK (deleted IN (0, 1)),
+  base TEXT CHECK (base IS NULL OR (json_valid(base)
+    AND json_type(base) = 'object')),
+  -- 1 while a change from another device waits for its parent record
+  -- (e.g. a question whose appointment has not arrived yet).
+  parked INTEGER NOT NULL DEFAULT 0 CHECK (parked IN (0, 1)),
+  PRIMARY KEY (kind, sync_id)
+) STRICT AS SyncRecordRow;
+
+CREATE INDEX sync_records_by_local ON sync_records (kind, local_id);
+CREATE INDEX sync_records_by_member ON sync_records (member_id);
+
+-- Local changes not uploaded yet, filled by the triggers below.
+-- change_count lets an upload clear only the changes it actually sent.
+CREATE TABLE sync_pending (
+  kind TEXT NOT NULL CHECK (kind IN ('member', 'appointment', 'question',
+    'symptom', 'media', 'medication', 'dose', 'share')),
+  sync_id TEXT NOT NULL CHECK (length(sync_id) > 0),
+  local_id TEXT NOT NULL CHECK (length(local_id) > 0),
+  change_count INTEGER NOT NULL DEFAULT 1 CHECK (change_count >= 0),
+  PRIMARY KEY (kind, sync_id)
+) STRICT AS SyncPendingRow;
+
+-- Changes from another device that were not applied because they clash
+-- with this device's data, or delete it. The user resolves each one; until
+-- then the record keeps this device's version and is not uploaded.
+CREATE TABLE sync_conflicts (
+  kind TEXT NOT NULL CHECK (kind IN ('member', 'appointment', 'question',
+    'symptom', 'media', 'medication', 'dose')),
+  sync_id TEXT NOT NULL CHECK (length(sync_id) > 0),
+  local_id TEXT NOT NULL CHECK (length(local_id) > 0),
+  member_id TEXT NOT NULL CHECK (length(member_id) > 0),
+  reason TEXT NOT NULL CHECK (reason IN ('edited', 'deleted', 'deletedHere')),
+  local TEXT CHECK (local IS NULL OR (json_valid(local)
+    AND json_type(local) = 'object')),
+  remote TEXT CHECK (remote IS NULL OR (json_valid(remote)
+    AND json_type(remote) = 'object')),
+  remote_vector TEXT NOT NULL CHECK (json_valid(remote_vector)
+    AND json_type(remote_vector) = 'object'),
+  remote_updated_at INTEGER NOT NULL,
+  remote_updated_by TEXT NOT NULL CHECK (length(remote_updated_by) > 0),
+  fields TEXT NOT NULL DEFAULT '[]'
+    CHECK (json_valid(fields) AND json_type(fields) = 'array'),
+  detected_at INTEGER NOT NULL,
+  PRIMARY KEY (kind, sync_id)
+) STRICT AS SyncConflictRow;
+
+-- The last change batch read from each device's log.
+CREATE TABLE sync_cursors (
+  device_id TEXT NOT NULL PRIMARY KEY CHECK (length(device_id) > 0),
+  last_seq INTEGER NOT NULL CHECK (last_seq >= 0)
+) STRICT AS SyncCursorRow;
+
+-- Household members whose public keys this device verified (through the
+-- invitation code or a membership attestation), so the server cannot swap
+-- a key unnoticed.
+CREATE TABLE sync_known_members (
+  uid TEXT NOT NULL PRIMARY KEY CHECK (length(uid) > 0),
+  public_key TEXT NOT NULL CHECK (length(public_key) > 0),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member')),
+  label TEXT
+) STRICT AS SyncKnownMemberRow;
+
+-- Only a child can be shared, and a shared profile stays a child.
+CREATE TRIGGER sync_share_only_children BEFORE INSERT ON sync_shared_members
+WHEN (SELECT relation FROM family_members WHERE id = NEW.member_id)
+  IS NOT 'child'
+BEGIN
+  SELECT RAISE(ABORT, 'only a child profile can be shared');
+END;
+
+CREATE TRIGGER sync_shared_stays_child BEFORE UPDATE OF relation
+ON family_members
+WHEN NEW.relation <> 'child'
+  AND EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id)
+BEGIN
+  SELECT RAISE(ABORT, 'a shared profile stays a child');
+END;
+
+-- Change tracking: every insert, update and delete of a shared child's
+-- record, or of a record already known to the household, is noted in
+-- sync_pending, in the same transaction as the change itself.
+
+CREATE TRIGGER sync_track_family_members_insert AFTER INSERT ON family_members
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'member' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('member', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'member' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_family_members_update AFTER UPDATE ON family_members
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'member' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('member', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'member' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_family_members_delete AFTER DELETE ON family_members
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'member' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('member', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'member' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_appointments_insert AFTER INSERT ON appointments
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'appointment' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('appointment', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'appointment' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_appointments_update AFTER UPDATE ON appointments
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'appointment' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('appointment', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'appointment' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_appointments_delete AFTER DELETE ON appointments
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'appointment' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('appointment', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'appointment' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_doctor_questions_insert AFTER INSERT ON doctor_questions
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'question' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('question', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'question' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_doctor_questions_update AFTER UPDATE ON doctor_questions
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'question' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('question', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'question' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_doctor_questions_delete AFTER DELETE ON doctor_questions
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'question' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('question', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'question' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_symptom_entries_insert AFTER INSERT ON symptom_entries
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'symptom' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('symptom', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'symptom' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_symptom_entries_update AFTER UPDATE ON symptom_entries
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'symptom' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('symptom', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'symptom' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_symptom_entries_delete AFTER DELETE ON symptom_entries
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'symptom' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('symptom', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'symptom' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_visit_media_insert AFTER INSERT ON visit_media
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'media' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('media', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'media' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_visit_media_update AFTER UPDATE ON visit_media
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'media' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('media', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'media' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_visit_media_delete AFTER DELETE ON visit_media
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'media' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('media', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'media' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_medications_insert AFTER INSERT ON medications
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'medication' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('medication', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'medication' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_medications_update AFTER UPDATE ON medications
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'medication' AND sync_id = NEW.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('medication', NEW.id, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'medication' AND sync_id = NEW.id;
+END;
+
+CREATE TRIGGER sync_track_medications_delete AFTER DELETE ON medications
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'medication' AND sync_id = OLD.id))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('medication', OLD.id, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'medication' AND sync_id = OLD.id;
+END;
+
+CREATE TRIGGER sync_track_dose_records_insert AFTER INSERT ON dose_records
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'dose' AND sync_id = NEW.medication_id || '@' || NEW.scheduled_at))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('dose', NEW.medication_id || '@' || NEW.scheduled_at, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'dose' AND sync_id = NEW.medication_id || '@' || NEW.scheduled_at;
+END;
+
+CREATE TRIGGER sync_track_dose_records_update AFTER UPDATE ON dose_records
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = NEW.member_id)
+    OR EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'dose' AND sync_id = NEW.medication_id || '@' || NEW.scheduled_at))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('dose', NEW.medication_id || '@' || NEW.scheduled_at, NEW.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = NEW.id
+    WHERE kind = 'dose' AND sync_id = NEW.medication_id || '@' || NEW.scheduled_at;
+END;
+
+CREATE TRIGGER sync_track_dose_records_delete AFTER DELETE ON dose_records
+WHEN EXISTS (SELECT 1 FROM sync_settings
+    WHERE household_id IS NOT NULL AND applying = 0)
+  AND (EXISTS (SELECT 1 FROM sync_shared_members WHERE member_id = OLD.member_id)
+    OR EXISTS (SELECT 1 FROM sync_records
+      WHERE kind = 'dose' AND sync_id = OLD.medication_id || '@' || OLD.scheduled_at))
+BEGIN
+  INSERT OR IGNORE INTO sync_pending (kind, sync_id, local_id, change_count)
+    VALUES ('dose', OLD.medication_id || '@' || OLD.scheduled_at, OLD.id, 0);
+  UPDATE sync_pending SET change_count = change_count + 1, local_id = OLD.id
+    WHERE kind = 'dose' AND sync_id = OLD.medication_id || '@' || OLD.scheduled_at;
+END;

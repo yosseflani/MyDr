@@ -12,6 +12,7 @@ import 'package:mydr/data/models/symptom_entry.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import '../../helpers/memory_key_store.dart';
+import '../../helpers/schema_versions.dart';
 
 /// Medications and dose records against both repository implementations,
 /// plus the database-only guarantees: constraints, migration from version 2
@@ -429,7 +430,9 @@ void main() {
         await deps.symptomRepository.add(symptom);
         await database.close();
         final raw = sqlite3.open(file.path)
-          ..execute("PRAGMA key = \"x'${keys.key}'\"")
+          ..execute("PRAGMA key = \"x'${keys.key}'\"");
+        dropVersion4Objects(raw);
+        raw
           ..execute('DROP TABLE dose_records')
           ..execute('DROP TABLE medications')
           ..execute('PRAGMA user_version = 2');
@@ -450,7 +453,6 @@ void main() {
             .customSelect('PRAGMA user_version')
             .getSingle();
         expect(version.data.values.first, LocalDatabase.currentSchemaVersion);
-        expect(LocalDatabase.currentSchemaVersion, 3);
         expect(await upgraded.familyRepository.getAll(), hasLength(2));
         expect(await upgraded.symptomRepository.getById('s1'), symptom);
 

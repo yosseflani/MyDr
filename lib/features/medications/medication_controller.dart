@@ -333,7 +333,8 @@ class MedicationController extends ChangeNotifier {
       if (!canRecord(at)) return DoseRecordResult.inFuture;
       await _doseRecordRepository.save(
         DoseRecord(
-          id: _doseRecordRepository.createId(),
+          // The same id on every device of a household (see idFor).
+          id: DoseRecord.idFor(medication.id, at),
           memberId: medication.memberId,
           medicationId: medication.id,
           scheduledAt: at,

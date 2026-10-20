@@ -4,10 +4,10 @@
 
 MyDr helps one household keep its health information in one place: family member profiles, doctor appointments, questions for the doctor, a symptom journal, photos and videos to show at a visit, medications with dose reminders, and an emergency center with a first-aid library. The interface is Hebrew-only and laid out right-to-left.
 
-All data is stored on the device in an encrypted database. If the user chooses, they can make an end-to-end encrypted backup to the cloud and restore it on another device.
+All data is stored on the device in an encrypted database. If the user chooses, they can make an encrypted backup to the cloud and restore it on another device, and share selected children's profiles with the other parent through encrypted, user-initiated two-way sync.
 
 > [!WARNING]
-> MyDr has **not** had an external security audit or an external medical review. It does not diagnose, give medical advice or recommend treatment. It must not be used to store real medical information until those reviews are done. Cloud backup has **only been verified against the local Firebase Emulator Suite** with fictional data. It is not configured for any production Firebase project.
+> MyDr has **not** had an external security audit or an external medical review. It does not diagnose, give medical advice or recommend treatment. It must not be used to store real medical information until those reviews are done. Cloud backup and household sync have **only been verified against the local Firebase Emulator Suite and automated tests** with fictional data. Household sync has never run between two real devices. Nothing is configured for a production Firebase project.
 
 ---
 
@@ -42,9 +42,10 @@ All data is stored on the device in an encrypted database. If the user chooses, 
 | First-aid draft review preview | 🧪 Developer tool | Debug builds only, behind a build flag |
 | Account sign-in (email and password) | 🧪 Emulator only | Firebase Authentication, tested against the local emulator |
 | Encrypted cloud backup and restore | 🧪 Emulator only | Not connected to a real Firebase project |
+| Household sharing and two-way sync between parents | 🧪 Emulator and tests only | Children's profiles only; sync runs only when the user taps "Sync now". Never run on two real devices |
 | Demo mode | 🛠️ Development only | Fictional data in memory, nothing saved |
 | iOS | ❓ Not verified | The code is intended to support iOS, but it has never been built or tested |
-| Automatic or scheduled backup, multi-user sharing, sync | ❌ Not implemented | Outside the current scope |
+| Automatic, scheduled or background backup and sync | ❌ Not implemented | Not allowed by the project rules (no automatic upload) |
 | Account deletion from the app | ❌ Not implemented | Required by app stores before release |
 | App lock / screenshot protection (`FLAG_SECURE`) | ❌ Not implemented | Deferred |
 | Encryption of visit photo and video files at rest | ❌ Not implemented | Deferred |
@@ -154,6 +155,31 @@ How it works:
 - **No network without configuration.** A build without cloud defines has no cloud backup and does not connect to the network. With a configuration, the app connects only when the backup screen is opened.
 - **Losing the recovery key means losing the backup.** This is by design: there is no server-side recovery.
 
+### Household sharing and sync (experimental)
+
+> [!IMPORTANT]
+> Verified only with automated tests (two real encrypted databases against an in-memory cloud) and the Firebase emulators (`demo-mydr`, fictional data). It has **not** been run between two real devices or against a real Firebase project, and has had no external security review. See [docs/household_sync.md](docs/household_sync.md).
+
+In a build with a cloud configuration, the home screen shows a "Family sharing" card. With the same account as backup, a parent can:
+
+- **Create a household** and **invite the other parent** with a one-time 28-character code, passed in person or by phone. No credentials are shared. The invitee **accepts or rejects**; the inviter then **completes** the addition after comparing key fingerprints.
+- **Manage members:** admins change roles and remove members; any member can leave.
+- **Choose which children to share.** Only `child` profiles can be shared (the database enforces it). Each parent's own profile, the spouse's and other relatives' stay on the device and are never uploaded.
+- **Sync now.** All records of shared children sync both ways: profile, appointments, questions, symptoms, medications, dose records, and visit photos and videos. **There is no background or automatic sync**; offline changes are kept and sent at the next sync the user starts.
+- **Resolve conflicts** on a dedicated screen that shows both versions as entered.
+
+How it works:
+
+- **Change tracking** by database triggers, in the same transaction as each change. Each shared record has a **version vector**, the time and device of its last change, and a **tombstone** once deleted, so deleted records never come back.
+- **Per-device append-only change logs** in Cloud Firestore; each sync pulls and merges the other devices' batches in **one transaction**, then pushes local changes.
+- **Merging:** changes to different fields combine; the same field changed differently becomes a **conflict for the user**, never a silent overwrite. **Deletions from another device are applied only after the user confirms** them, through the app's normal deletion.
+- **No duplicate doses:** a scheduled dose has a deterministic id from its medication and time; the same status recorded on both phones merges (keeping the later recording time); different statuses are a conflict.
+- **Encryption on the device:** every batch and photo is encrypted with a household key (AES-256-GCM, per-object HKDF) before upload. Each member has an **X25519 identity key** kept in secure storage; the household key is wrapped for each member and authenticated by a member the recipient already verified. Invitations authenticate both public keys with MACs derived from the code, so the server cannot swap keys. **Removing a member rotates the household key.**
+- **Security rules** (`firebase/firestore.rules`, `firebase/storage.rules`) let only members read or write a household, only admins manage it, and never overwrite a log batch or photo. 38 emulator checks pass (`tool/household_rules_check.dart`).
+- **Reminders** are rescheduled from the synced data after every sync that changed something; notification ids come from the dose time, so there are no duplicates.
+- **Restoring a backup** resets the device's sync history in the same transaction, so a restore never pushes mass deletions; the next sync compares with the household and turns differences into conflicts.
+- **What the server can see:** member account ids, emails (shown to other members), roles and public keys; when and from which (random) device id each encrypted batch or photo was written, and its size; invitation times. Never names, record contents or record ids.
+
 ### Demo mode (development only)
 
 `--dart-define=MYDR_DEMO=true` starts the app on in-memory repositories filled with fictional data. A banner says that changes are not saved. In demo mode nothing is persisted, no reminders are scheduled and cloud backup is not available.
@@ -171,8 +197,8 @@ How it works:
 | Media | `image_picker`, `video_player`, `path_provider` |
 | Reminders | `flutter_local_notifications`, `timezone` |
 | Emergency dialing | `url_launcher` (`tel:` links) |
-| Cloud (experimental) | `firebase_core`, `firebase_auth`, `firebase_storage` |
-| Backup cryptography | `cryptography` (pure Dart AES-GCM and HKDF), `crypto` (SHA-256) |
+| Cloud (experimental) | `firebase_core`, `firebase_auth`, `firebase_storage`, `cloud_firestore` (household sharing) |
+| Backup and sync cryptography | `cryptography` (pure Dart AES-GCM, HKDF, HMAC, X25519), `crypto` (SHA-256) |
 | Code generation | `drift_dev`, `build_runner` |
 | Linting | `flutter_lints` |
 
@@ -207,7 +233,7 @@ Key points:
 - **Dependency injection.** `AppDependencies` (`lib/core/app_dependencies.dart`) holds the single shared instance of every repository and service. It has three factories: `local(database)` for the encrypted database, `withMockData` for demo mode and `empty` for tests. `AppScope` exposes the dependencies and controllers to the widget tree.
 - **Startup.** `MyDrBootstrap` (`lib/app_bootstrap.dart`) opens the encrypted database while a startup screen is shown. If opening fails (missing key, wrong key or damaged file, newer schema, unavailable secure storage or encryption), the screen explains the problem and offers a retry. **It never deletes or resets data**, and emergency dialing and the first-aid library stay available.
 - **Atomic multi-step operations.** Deleting a family member with all their records, deleting a medication with its dose records, deleting an appointment and moving an appointment to another member all run in one `TransactionRunner` transaction. Partial changes are never saved.
-- **Data integrity in the database.** The tables are `STRICT` (schema version 3, `lib/data/local/schema.drift`), with foreign keys, composite keys that keep linked records on the same family member, `CHECK` constraints and unique indexes. Schema migrations only add data and are tested against encrypted files from the previous version.
+- **Data integrity in the database.** The tables are `STRICT` (schema version 4, `lib/data/local/schema.drift`), with foreign keys, composite keys that keep linked records on the same family member, `CHECK` constraints and unique indexes. Schema migrations only add data and are tested against encrypted files from the previous version.
 - **Reminders are not stored.** The pure `ReminderPlanner` rebuilds them from the saved medications, and `ReminderScheduler` replaces all pending notifications.
 - **Cloud is behind an interface.** `CloudBackend`, `AccountService` and `BackupStorage` contain no Firebase types. `FirebaseCloudBackend` is the only Firebase adapter, and tests use fakes.
 - **First-aid content is data.** It lives in JSON assets (`assets/first_aid/`), separate from the code that shows it, and `FirstAidContentParser` validates it in a published mode and a review mode.
@@ -236,8 +262,9 @@ lib/
     reminders/              Reminder planner and local-notification scheduler
     emergency/              Emergency numbers and dialer
     first_aid/              Content parser, approvals, review document generator
-    backup/                 Recovery key, backup cipher, snapshot format, backup service
-    cloud/                  Cloud interfaces, Firebase adapter, recovery key store
+    backup/                 Recovery key, backup cipher, snapshot format, record JSON, backup service
+    cloud/                  Cloud interfaces (backup, household), Firebase adapter, key stores
+    sync/                   Household crypto, household service, sync engine, merge
     mock/                   Fictional demo data
   features/
     shell/                  Bottom navigation
@@ -250,13 +277,14 @@ lib/
     medications/            Medications, doses, reminder status
     emergency/              Emergency center, first-aid library, review preview
     backup/                 Account, backup and restore screen
+    sharing/                Family sharing, invitations, sync status, conflicts
 assets/first_aid/           he.json (published content), review/he.draft.json (drafts)
 config/                     firebase.emulator.json, firebase.example.json (template)
-firebase/                   storage.rules, firebase.json (emulators), .firebaserc (demo-mydr)
+firebase/                   firestore.rules, storage.rules, firebase.json (emulators), .firebaserc (demo-mydr)
 docs/                       Technical documentation (Hebrew) and development prompts
 integration_test/           On-device tests: encryption, persistence, cloud backup
 test/                       Unit, widget and flow tests; helpers/ contains fakes
-tool/                       first_aid_review.dart, storage_rules_check.dart
+tool/                       first_aid_review.dart, storage_rules_check.dart, household_rules_check.dart
 scripts/check.ps1           Runs flutter analyze, then flutter test
 ```
 
@@ -283,7 +311,8 @@ scripts/check.ps1           Runs flutter analyze, then flutter test
 
 - A build without cloud configuration has no cloud backup and does not connect to the network. The first build downloads the SQLCipher library from GitHub and checks its SHA-256.
 - Connecting to the Firebase emulator is allowed only in non-release builds with a `demo-` project. Plain HTTP is allowed only in debug builds, and only to `10.0.2.2`, `localhost` and `127.0.0.1`.
-- The cloud only receives data encrypted on the device. The server can see the account id, backup times, encrypted sizes and object counts.
+- The cloud only receives data encrypted on the device. For backups the server can see the account id, backup times, encrypted sizes and object counts. For household sharing, see the metadata list above.
+- Firestore's local cache is disabled, and its network access is switched on only while a sharing action the user started runs.
 
 **Known security gaps** (see also [Limitations](#limitations-and-known-issues))
 
@@ -325,7 +354,7 @@ flutter run --dart-define=MYDR_FIRST_AID_REVIEW=true
 | `MYDR_FIRST_AID_REVIEW=true` | First-aid review preview; ignored in release builds |
 | `MYDR_FIREBASE_PROJECT_ID`, `MYDR_FIREBASE_EMULATOR_HOST` | Cloud backup against the local emulators (`demo-` project, non-release builds) |
 | `MYDR_FIREBASE_API_KEY`, `MYDR_FIREBASE_APP_ID`, `MYDR_FIREBASE_SENDER_ID`, `MYDR_FIREBASE_STORAGE_BUCKET` | A real Firebase project. **Not set up or tested.** See `config/firebase.example.json` |
-| `MYDR_FIREBASE_AUTH_PORT`, `MYDR_FIREBASE_STORAGE_PORT` | Emulator ports (default 9099 / 9199) |
+| `MYDR_FIREBASE_AUTH_PORT`, `MYDR_FIREBASE_STORAGE_PORT`, `MYDR_FIREBASE_FIRESTORE_PORT` | Emulator ports (default 9099 / 9199 / 8080) |
 
 Without any `MYDR_FIREBASE_*` defines, the build has no cloud backup.
 
@@ -334,7 +363,7 @@ Without any `MYDR_FIREBASE_*` defines, the build has no cloud backup.
 ```sh
 # Terminal 1: no Firebase account or secrets needed
 cd firebase
-firebase emulators:start --project demo-mydr --only auth,storage
+firebase emulators:start --project demo-mydr --only auth,firestore,storage
 
 # Terminal 2, from the project root
 flutter run --dart-define-from-file=config/firebase.emulator.json   # Android emulator reaches the host at 10.0.2.2
@@ -365,7 +394,7 @@ flutter analyze
 flutter test        # runs against real SQLCipher on the host
 ```
 
-On 2026-10-18, `scripts/check.ps1` passed: `flutter analyze` found no issues, and all 1,038 tests passed.
+On 2026-10-19, `scripts/check.ps1` passed: `flutter analyze` found no issues, and all 1,127 tests passed. The same day, against the local emulators, all 38 household rule checks and all 12 storage rule checks passed.
 
 The test suite covers:
 
@@ -375,6 +404,7 @@ The test suite covers:
 - **Reminders:** planner rules and the notification scheduler against the plugin's platform channel.
 - **First-aid content:** parser validation, bundled content, and that the published content matches the drafts and the review document.
 - **Backup:** cipher, recovery key, snapshot format and the full backup/restore service across two real encrypted databases with a fake cloud.
+- **Household sync:** crypto (wrapping, rotation, invite MACs, swapped keys), merge rules, version vectors, dose dedup, and a two-device, two-account simulation over real encrypted databases and a fake cloud that enforces the security rules: invitation, offline edits and reconnect, concurrent edits, delete propagation and tombstones, revocation, and restore. Also the v3 to v4 migration from an encrypted file, the sync state repository contract, the controller and the screens.
 
 **On-device integration tests**
 
@@ -388,8 +418,9 @@ flutter test integration_test -d <device-id>
 flutter test integration_test/cloud_backup_test.dart -d <test-emulator> \
   --dart-define-from-file=config/firebase.emulator.json
 
-# Storage security rules, with the Firebase emulators running
+# Security rules, with the Firebase emulators running
 dart run tool/storage_rules_check.dart
+dart run tool/household_rules_check.dart
 ```
 
 According to [docs/exercise_4_final_report.md](docs/exercise_4_final_report.md), the cloud backup integration test passed on an Android 16 emulator against the Firebase emulators: back up on phone A, block access from another account, and restore on phone B, including a photo that matched byte for byte. All 12 storage rule checks passed.
@@ -404,6 +435,13 @@ According to [docs/exercise_4_final_report.md](docs/exercise_4_final_report.md),
 - The `contentType` condition in the storage rules could not be tested, because the emulator ignores the content type that is sent.
 - No real network interruption during upload or download has been tested on a device; it has only been tested with a fake storage. Backing up a large (~150 MB) video has not been measured.
 - Backup is manual only (no scheduled backup), and a restore replaces all data on the device (no merging). Signing out does not delete local data.
+
+**Household sync**
+- **User-initiated only:** no background, scheduled or on-reconnect sync, because the project rules forbid automatic upload. Changing that is a product decision.
+- Never run between two real devices or against a real Firebase project; no external security or cryptography review.
+- Data already shared stays with a removed member; it cannot be deleted remotely. The cloud log is never compacted, and logs and photos of unshared children or abandoned households stay in the cloud (encrypted). There is no in-app account or household deletion.
+- Losing a device's identity key (reinstall) means being removed and invited again. Duplicate profiles created separately by both parents are not merged.
+- See [docs/household_sync.md](docs/household_sync.md), section 10.
 
 **Platforms**
 - Only Android has been tested. iOS has not been built or tested; development was done on Windows. The other platform folders (Windows, Linux, macOS, Web) are Flutter scaffolding and have not been tested.
@@ -434,6 +472,7 @@ The detailed technical documents are in Hebrew:
 |---|---|
 | [docs/local_storage.md](docs/local_storage.md) | Encrypted local storage: schema, keys, migrations, opening errors, media files |
 | [docs/cloud_backup.md](docs/cloud_backup.md) | Account and cloud backup: cryptography, restore safety, storage rules, production checklist |
+| [docs/household_sync.md](docs/household_sync.md) | Household sharing and two-way sync: invitations, keys, merge rules, conflicts, security rules, metadata, limitations |
 | [docs/medication_reminders.md](docs/medication_reminders.md) | Medications and reminders: architecture, notification privacy, platform limits, Android manual test plan |
 | [docs/first_aid_content_policy.md](docs/first_aid_content_policy.md) | First-aid content policy: sources, schema, content states, approval process |
 | [docs/first_aid_medical_review.md](docs/first_aid_medical_review.md) | Generated medical review document for every topic (do not edit by hand) |

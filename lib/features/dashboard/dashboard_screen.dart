@@ -11,6 +11,7 @@ import 'package:mydr/features/dashboard/widgets/family_card.dart';
 import 'package:mydr/features/dashboard/widgets/next_appointment_card.dart';
 import 'package:mydr/features/dashboard/widgets/quick_actions_row.dart';
 import 'package:mydr/features/dashboard/widgets/recent_symptoms_card.dart';
+import 'package:mydr/features/dashboard/widgets/sharing_card.dart';
 import 'package:mydr/features/questions/doctor_questions_screen.dart';
 import 'package:mydr/features/symptoms/symptom_form_screen.dart';
 
@@ -57,6 +58,7 @@ class DashboardScreen extends StatelessWidget {
                 const FamilyCard(),
                 const SizedBox(height: 16),
                 const BackupCard(),
+                const SharingCard(),
                 const SizedBox(height: 24),
                 const SectionHeader(title: AppStrings.quickActionsTitle),
                 QuickActionsRow(
