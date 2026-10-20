@@ -6,7 +6,7 @@ Detailed rules live in `.claude/rules/` (privacy and logging; first-aid content)
 
 ## Forbidden
 
-- Logging or showing medical data, keys, tokens or recovery keys, including in model `toString()` (id only) and error messages (error type only). Reason: it is family health data.
+- Logging or showing medical data, keys, tokens or recovery keys; details in `.claude/rules/privacy-and-logging.md`. Reason: it is family health data.
 - Creating an unencrypted database, exposing the database key, or removing the `sqlcipher` hook in `pubspec.yaml`. Reason: the whole local database must stay encrypted at rest.
 - Deleting, resetting or overwriting user data without the user's explicit confirmation (`userConfirmed: true`), or a migration step that removes data. Reason: lost medical records cannot be recovered.
 - Letting a record show up under, or link to, another family member, or loosening the composite member keys in `schema.drift`. Reason: each member's data must stay isolated.
@@ -14,8 +14,9 @@ Detailed rules live in `.claude/rules/` (privacy and logging; first-aid content)
 - Diagnosing, giving medical advice, recommending medications, doses or treatment, or interpreting symptoms or medication records. Reason: MyDr only organizes; it is not a medical device.
 - Hand-editing `docs/first_aid_medical_review.md`. Reason: it is generated, and tests fail when it differs from the content.
 - Medication names, family member names or a payload in notifications. Reason: they show on the lock screen, and the plugin stores them unencrypted.
-- Network access in a build without cloud configuration, or automatic upload or background sync. Reason: data leaves the device only when the user backs it up, encrypted on the device first.
-- Sending real medical data to any cloud project. Reason: backup is verified only against the local emulator, with fictional data.
+- Network access in a build without cloud configuration, or automatic upload or background sync. Reason: data leaves the device only when the user starts a backup or a household sync, encrypted on the device first.
+- Sharing any profile other than a child's with the household. Reason: other relations differ per phone and are private; triggers in `schema.drift` enforce it.
+- Sending real medical data to any cloud project. Reason: backup and household sync are verified only against the local emulators, with fictional data.
 - Describing visit photo or video files as encrypted. Reason: only their records are encrypted; the files are not.
 - Reading `.env`, or committing `config/firebase.json` or recovery keys. Reason: they hold secrets.
 - Running `flutter test integration_test` on a device with real data. Reason: it uninstalls the app and deletes its data.
@@ -46,6 +47,7 @@ Detailed rules live in `.claude/rules/` (privacy and logging; first-aid content)
 - Reminders: `flutter_local_notifications`, `timezone`.
 - Emergency dialing: `url_launcher`. It opens the dialer and never places the call.
 - Cloud backup (emulator only): Firebase Auth and Storage behind `CloudBackend`. Encryption uses `cryptography` (AES-256-GCM, HKDF) and `crypto` (SHA-256).
+- Household sharing and sync (emulator only): Cloud Firestore (`cloud_firestore`) and Storage behind `HouseholdCloud`; code in `lib/data/sync/` and `lib/features/sharing/`, X25519 key wrapping, details in `docs/household_sync.md`. Sync runs only when the user taps it.
 - Code generation: `drift_dev` and `build_runner`.
 - Platforms: development is on Windows. Android is verified; iOS has never been built.
 
@@ -54,16 +56,19 @@ Detailed rules live in `.claude/rules/` (privacy and logging; first-aid content)
 Verified (ran successfully on 2026-10-19):
 - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/check.ps1`: runs `flutter analyze`, then `flutter test`, and stops at the first failure.
 
+Verified (ran successfully on 2026-10-20), cloud against the local emulators (ports in `firebase/firebase.json`: Auth 9099, Firestore 8080, Storage 9199):
+- `firebase emulators:start --project demo-mydr --only auth,firestore,storage` (run in `firebase/`). It keeps running; stop it when done.
+- Security rules, with the emulators running:
+  - `dart run tool/household_rules_check.dart`: `firestore.rules` and the household part of `storage.rules` (38 checks).
+  - `dart run tool/storage_rules_check.dart`: the backup part of `storage.rules` (12 checks).
+
 Documented in the repository but not yet run:
 - `flutter pub get`
 - `flutter run` for the encrypted database. Add `--dart-define=MYDR_DEMO=true` for in-memory demo data, or `--dart-define=MYDR_FIRST_AID_REVIEW=true` for the debug-only first-aid review preview.
 - `dart run build_runner build --force-jit` after changing `lib/data/local/schema.drift`.
 - `dart run tool/first_aid_review.dart` after changing first-aid content.
 - `flutter test integration_test -d <device-id>`. Test devices only; see Forbidden.
-- Cloud against the local emulators:
-  - `firebase emulators:start --project demo-mydr --only auth,storage` (run in `firebase/`).
-  - `flutter run --dart-define-from-file=config/firebase.emulator.json`
-  - `dart run tool/storage_rules_check.dart`
+- `flutter run --dart-define-from-file=config/firebase.emulator.json`, with the emulators running.
 
 ## Open questions
 
@@ -76,4 +81,5 @@ Unresolved. Ask the user; don't decide these yourself.
   - An app lock and screenshot protection (`FLAG_SECURE`).
   - In-app account deletion.
   - A production Firebase project.
+  - Background or on-reconnect household sync, and deleting a household from the app.
   - Separate notes versus extended questions for visit preparation.

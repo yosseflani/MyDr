@@ -2,6 +2,9 @@
 paths:
   - "assets/first_aid/**"
   - "lib/data/first_aid/**"
+  - "lib/features/emergency/**"
+  - "tool/first_aid_review.dart"
+  - "docs/first_aid_*.md"
 ---
 
 # First Aid Content Rules
