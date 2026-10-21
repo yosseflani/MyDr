@@ -18,7 +18,7 @@ Review the current changes in the MyDr Flutter project before committing.
    - First-aid content (`assets/first_aid/`, `lib/data/first_aid/`): `dart run tool/first_aid_review.dart` was run, and `docs/first_aid_medical_review.md` was not edited by hand.
    - New or changed models: `toString()` shows the id only.
    - Deletes or moves: they require `userConfirmed: true` and run in a single `TransactionRunner` transaction.
-   - A new repository: both a Drift and an in-memory implementation, plus coverage in `test/data/repositories/repository_contract_test.dart`.
+   - A new repository: both a Drift and an in-memory implementation, shared contract tests in `test/data/repositories/repository_contract_test.dart` where applicable (run against both), and dedicated tests for repository-specific behavior (see `lib/data/CLAUDE.md`).
    - Notifications: no medication or member names and no payload.
    - User-facing text: in `lib/core/l10n/strings.dart`.
 6. Run `scripts/check.ps1` from PowerShell when the environment supports it.

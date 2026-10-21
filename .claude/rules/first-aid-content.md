@@ -15,4 +15,5 @@ Source: docs/first_aid_content_policy.md
 - Do not add or modify professional approval status without genuine medical sign-off.
 - Clearly distinguish draft content from approved content.
 - Preserve the existing medical review and approval workflow.
+- Never hand-edit `docs/first_aid_medical_review.md`; regenerate it with `dart run tool/first_aid_review.dart` after changing first-aid content. Reason: it is generated, and tests fail when it differs from the content.
 - Do not present unreviewed medical guidance as professionally validated.

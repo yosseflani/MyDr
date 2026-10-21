@@ -26,8 +26,10 @@ Rules for code in this directory. They add to the root `CLAUDE.md` and `.claude/
 
 ## Tests
 
-- Test both implementations the way `test/data/local/medication_storage_test.dart` does: one group over both, a `local database guarantees` group for database-only constraints, and an upgrade test from a real encrypted file of the previous schema version. Data is fictional.
-- Medications, dose records and visit media are tested this way, not in `test/data/repositories/repository_contract_test.dart`.
+- A new repository gets shared contract tests in `test/data/repositories/repository_contract_test.dart` where applicable, run against both the Drift and the in-memory implementation.
+- Behavior that needs more specific coverage gets dedicated tests, the way `test/data/local/medication_storage_test.dart` does: one group over both implementations, a `local database guarantees` group for database-only constraints, and an upgrade test from a real encrypted file of the previous schema version.
+- Medications, dose records and visit media currently have only dedicated tests.
+- Test data is fictional.
 
 ## Backup
 
