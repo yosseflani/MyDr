@@ -11,6 +11,7 @@ import 'package:mydr/features/questions/doctor_questions_screen.dart';
 import 'package:mydr/features/questions/widgets/question_card.dart';
 
 import 'helpers/pump_app.dart';
+import 'helpers/question_finders.dart';
 
 /// End-to-end walk through questions to the doctor in the real app widget,
 /// with the demo data the app starts with.
@@ -33,7 +34,7 @@ void main() {
     final saveButton = find.widgetWithText(FilledButton, AppStrings.save);
     Finder card(String text) => find.widgetWithText(QuestionCard, text);
     Finder toggleOf(String text) =>
-        find.descendant(of: card(text), matching: find.byType(IconButton));
+        find.descendant(of: card(text), matching: questionStatusToggle);
     Finder statusOf(String text, String status) =>
         find.descendant(of: card(text), matching: find.text(status));
 

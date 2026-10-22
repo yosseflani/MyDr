@@ -21,6 +21,7 @@ import 'package:mydr/features/questions/widgets/question_card.dart';
 
 import '../../helpers/flaky_repositories.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/question_finders.dart';
 
 void main() {
   final now = DateTime(2026, 10, 15, 12);
@@ -225,7 +226,7 @@ void main() {
       await openDetails(tester, 'a1');
 
       await tester.tap(
-        find.descendant(of: card('פתוחה 1'), matching: find.byType(IconButton)),
+        find.descendant(of: card('פתוחה 1'), matching: questionStatusToggle),
       );
       await tester.pumpAndSettle();
 
@@ -246,7 +247,7 @@ void main() {
       questionRepository.failUpdate = true;
 
       await tester.tap(
-        find.descendant(of: card('פתוחה 1'), matching: find.byType(IconButton)),
+        find.descendant(of: card('פתוחה 1'), matching: questionStatusToggle),
       );
       await tester.pumpAndSettle();
 

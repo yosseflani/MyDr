@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mydr/core/app_scope.dart';
 import 'package:mydr/core/l10n/strings.dart';
 import 'package:mydr/data/models/doctor_question.dart';
@@ -6,7 +7,8 @@ import 'package:mydr/features/questions/doctor_question_controller.dart';
 import 'package:mydr/features/questions/widgets/question_card.dart';
 
 /// A [QuestionCard] wired to the shared controllers: looks up the member
-/// name and linked appointment, and toggles the handled status.
+/// name and linked appointment, toggles the handled status and copies the
+/// question text.
 ///
 /// While the status is being saved the toggle shows progress and ignores
 /// taps. The card keeps showing the stored status until the save succeeds,
@@ -65,6 +67,27 @@ class _QuestionTileState extends State<QuestionTile> {
       );
   }
 
+  /// Copies only the question text: no member name, appointment or answer.
+  /// A failure is reported by type only, never its message.
+  Future<void> _copy() async {
+    final messenger = ScaffoldMessenger.of(context);
+    var copied = true;
+    try {
+      await Clipboard.setData(ClipboardData(text: widget.question.text));
+    } catch (_) {
+      copied = false;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            copied ? AppStrings.questionCopied : AppStrings.questionCopyFailed,
+          ),
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
@@ -82,6 +105,7 @@ class _QuestionTileState extends State<QuestionTile> {
       now: widget.now,
       isUpdating: _isUpdating,
       onToggleResolved: _toggleResolved,
+      onCopy: _copy,
       showAppointment: widget.showAppointment,
       onTap: widget.onTap,
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mydr/core/app_dependencies.dart';
 import 'package:mydr/core/l10n/strings.dart';
@@ -18,6 +19,7 @@ import 'package:mydr/features/questions/widgets/question_card.dart';
 
 import '../../helpers/flaky_repositories.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/question_finders.dart';
 
 void main() {
   final now = DateTime(2026, 10, 15, 12);
@@ -148,7 +150,7 @@ void main() {
 
   Future<void> tapToggle(WidgetTester tester, String cardText) async {
     await tester.tap(
-      find.descendant(of: card(cardText), matching: find.byType(IconButton)),
+      find.descendant(of: card(cardText), matching: questionStatusToggle),
     );
   }
 
@@ -306,6 +308,71 @@ void main() {
     });
   });
 
+  group('copying', () {
+    /// Captures what the app puts on the clipboard; [fail] makes the
+    /// platform refuse instead.
+    List<String> mockClipboard(WidgetTester tester, {bool fail = false}) {
+      final copied = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method != 'Clipboard.setData') return null;
+          if (fail) throw PlatformException(code: 'unavailable');
+          copied.add((call.arguments as Map)['text'] as String);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      return copied;
+    }
+
+    Future<void> tapCopy(WidgetTester tester, String cardText) async {
+      await tester.tap(
+        find.descendant(
+          of: card(cardText),
+          matching: find.byTooltip(AppStrings.copyQuestion),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('copies only the question text and confirms', (tester) async {
+      await setUpWith(sampleQuestions);
+      await pumpScreen(tester);
+      final copied = mockClipboard(tester);
+      final before = await questionRepository.getById('שאלה ג');
+
+      // Has a recorded answer and a member, neither of which is copied.
+      await tapCopy(tester, 'שאלה ג');
+
+      expect(copied, ['שאלה ג']);
+      expect(find.text(AppStrings.questionCopied), findsOneWidget);
+      // Neither opens the form nor changes the stored question.
+      expect(find.byType(DoctorQuestionFormScreen), findsNothing);
+      expect(questionRepository.updateCalls, 0);
+      expect(await questionRepository.getById('שאלה ג'), before);
+    });
+
+    testWidgets('a clipboard failure explains and copies nothing', (
+      tester,
+    ) async {
+      await setUpWith(sampleQuestions);
+      await pumpScreen(tester);
+      final copied = mockClipboard(tester, fail: true);
+
+      await tapCopy(tester, 'שאלה א');
+
+      expect(copied, isEmpty);
+      expect(find.text(AppStrings.questionCopyFailed), findsOneWidget);
+      expect(find.text(AppStrings.questionCopied), findsNothing);
+    });
+  });
+
   group('changing the status', () {
     testWidgets('moves a question between the groups, both ways', (
       tester,
@@ -358,7 +425,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: card('שאלה א'), matching: find.byType(IconButton)),
+        find.descendant(of: card('שאלה א'), matching: questionStatusToggle),
         findsNothing,
       );
       // Still shown as not handled until the save completes.
@@ -392,7 +459,7 @@ void main() {
       );
       expect(shownQuestions(tester).first, 'שאלה א');
       expect(
-        find.descendant(of: card('שאלה א'), matching: find.byType(IconButton)),
+        find.descendant(of: card('שאלה א'), matching: questionStatusToggle),
         findsOneWidget,
       );
     });

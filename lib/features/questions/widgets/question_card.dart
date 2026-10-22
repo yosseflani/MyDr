@@ -9,8 +9,8 @@ import 'package:mydr/features/appointments/appointment_formatting.dart';
 /// it was handled, the linked appointment (if any) and the recorded answer.
 ///
 /// The status can be toggled from the card. While [isUpdating], the toggle
-/// shows progress and ignores taps. Tappable as a whole only when [onTap]
-/// is given.
+/// shows progress and ignores taps. The question text can be copied with
+/// [onCopy]. Tappable as a whole only when [onTap] is given.
 class QuestionCard extends StatelessWidget {
   const QuestionCard({
     super.key,
@@ -19,6 +19,7 @@ class QuestionCard extends StatelessWidget {
     required this.linkedAppointment,
     required this.now,
     required this.onToggleResolved,
+    required this.onCopy,
     this.isUpdating = false,
     this.showAppointment = true,
     this.onTap,
@@ -34,6 +35,7 @@ class QuestionCard extends StatelessWidget {
   /// Used to show the appointment time relative to today.
   final DateTime now;
   final VoidCallback onToggleResolved;
+  final VoidCallback onCopy;
   final bool isUpdating;
 
   /// Whether to show the linked appointment (or "general question"). Off
@@ -106,6 +108,11 @@ class QuestionCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                ),
+                IconButton(
+                  tooltip: AppStrings.copyQuestion,
+                  onPressed: onCopy,
+                  icon: Icon(Icons.copy_outlined, color: colorScheme.outline),
                 ),
               ],
             ),

@@ -21,6 +21,7 @@ import 'package:mydr/features/questions/widgets/question_card.dart';
 
 import '../../helpers/flaky_repositories.dart';
 import '../../helpers/pump_app.dart';
+import '../../helpers/question_finders.dart';
 
 /// Edge cases across the questions feature: the same question changed from
 /// several screens, navigating back mid-action, overlapping operations and
@@ -110,7 +111,7 @@ void main() {
   Finder inCard(String cardText, String text) =>
       find.descendant(of: card(cardText), matching: find.text(text));
   Finder toggleOf(String text) =>
-      find.descendant(of: card(text), matching: find.byType(IconButton));
+      find.descendant(of: card(text), matching: questionStatusToggle);
 
   group('appointment line', () {
     const appointmentLine = 'ד״ר לוי · ${AppStrings.tomorrow} · 9:30';

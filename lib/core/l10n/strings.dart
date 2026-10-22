@@ -372,6 +372,9 @@ abstract final class AppStrings {
   static const String questionStatusResolved = 'טופלה';
   static const String markQuestionResolved = 'סימון השאלה כטופלה';
   static const String markQuestionUnresolved = 'סימון השאלה כטרם טופלה';
+  static const String copyQuestion = 'העתקת השאלה';
+  static const String questionCopied = 'השאלה הועתקה';
+  static const String questionCopyFailed = 'לא הצלחנו להעתיק את השאלה.';
   static const String generalQuestion = 'שאלה כללית';
   static const String linkedAppointmentMissing = 'משויכת לתור שאינו זמין';
   static const String recordedAnswerLabel = 'התשובה שרשמתם';
